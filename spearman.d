@@ -82,30 +82,52 @@ double[] rank(double[] rank_array){
 }
 
 double[] transform(double[] vector){
-
-  double sum = 0;
-  double var = 0;
+  int n = 0;
+  double mean = 0;
+  double M2 = 0;
+  double delta;
   double[] normalised = new double[vector.length];
 
   foreach(e; vector){
-    sum += e;
+    n++;
+    delta = e - mean;
+    mean += delta / n;
+    M2 += delta * (e - mean);
   }
-  sum /= vector.length;
-
-  foreach(i, e ; vector){
-    normalised[i] = e - sum;
-  }
-
-  foreach(e; normalised){
-    var += e*e;
-  }
-  var = sqrt(var);
-  foreach(ref e; normalised){
-    e /= var;
+  writeln(M2);
+  M2 = sqrt(M2);
+  foreach(i, e; vector){
+    normalised[i] = (e - mean) / M2;
   }
 
   return normalised;
 }
+
+// double[] transform(double[] vector){
+
+//   double sum = 0;
+//   double var = 0;
+//   double[] normalised = new double[vector.length];
+
+//   foreach(e; vector){
+//     sum += e;
+//   }
+//   sum /= vector.length;
+
+//   foreach(i, e ; vector){
+//     normalised[i] = e - sum;
+//   }
+
+//   foreach(e; normalised){
+//     var += e*e;
+//   }
+//   var = sqrt(var);
+//   foreach(ref e; normalised){
+//     e /= var;
+//   }
+
+//   return normalised;
+// }
 
 double[] correlation(double[] vector1, double[] vector2){
 
@@ -124,6 +146,8 @@ void main(string[] args){
   double[] rank_phenotype;
   double[] rank_genotype;
   double[] cor = new double[3];
+  int skip = 0;
+  int phen_column = 0;
   string[] gen_id;
   string[] phen_id;
 
@@ -148,10 +172,16 @@ void main(string[] args){
   if ("gi" in options)
     gen_id = split(chomp(gen_file.readln()));
 
+  if ("gs" in options)
+    skip = to!int(options["gs"]);
+
   writeln(gen_id);
 
   foreach(line; phen_file.byLine()){
-    phenotype ~= to!double(chomp(line));
+    auto phen_line = split(chomp(line));
+    phenotype ~= to!double(phen_line[phen_column]);
+    // if ("pi" in options)
+    //   phen_id ~= phen_line[to!int(options["pi"])-1];
   }
 
   rank_phenotype = transform(rank(phenotype));
@@ -163,7 +193,6 @@ void main(string[] args){
 	}
     rank_genotype = transform(rank(genotype));
     cor = correlation(rank_genotype, rank_phenotype);
-    //writeln(cor[0], "\t", cor[1], "\t", cor[2]);
     writeln(join(to!(string[])(cor), "\t"));
   }
 
