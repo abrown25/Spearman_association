@@ -1,8 +1,43 @@
+/* The MIT License
+
+Copyright (C) 2013-2014 Genome Research Ltd.
+#
+# Author: Andrew Brown <ab25@sanger.ac.uk>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
 import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file;
 
 extern(C) {
   double gsl_cdf_tdist_P (double x, double nu);
 }
+
+auto help_string = "Usage: spearman [options]:
+    Options:
+        -p    :  phenotype file [mandatory]
+        -g    :  genotype file [default stdin]
+        -pi   :  phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
+        -gi   :  genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
+        -pc   :  column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
+        -gs   :  column at which genotype values start, preceding columns are printed
+        -perm :  calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed";
 
 // to do: if headers present for both check IDs, skip first few columns of genotype file, handle permutations, write help file, handle errors
 
@@ -94,7 +129,7 @@ double[] transform(double[] vector){
     mean += delta / n;
     M2 += delta * (e - mean);
   }
-  writeln(M2);
+
   M2 = sqrt(M2);
   foreach(i, e; vector){
     normalised[i] = (e - mean) / M2;
@@ -129,7 +164,7 @@ void main(string[] args){
   auto gen_file = File();
 
   if (args.length == 1){
-    writeln("All the options");
+    writeln(help_string);
     exit(0);
   }
   
