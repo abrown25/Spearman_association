@@ -5,7 +5,7 @@ extern(C) {
 }
 
 // to do: if headers present for both check IDs
-//skip first few columns of genotype file, handle permutations, figure out immutable status
+//skip first few columns of genotype file, handle permutations
 
 string[string] arg_parse(string[] args){
   // options: -p phenotype, -g genotype, -pi phen ids, -gi gen ids, -perm generate permuations -pc phenotype column, -gs genotype skip
@@ -21,6 +21,12 @@ string[string] arg_parse(string[] args){
 	break;
       case "g":
 	opts["g"] = args[i+1].idup;
+	break;
+      case "gi":
+	opts["gi"] = "T";
+	break;
+      case "pi":
+	opts["pi"] = "T";
 	break;
       default:
 	writeln("Unknown option");
@@ -98,11 +104,12 @@ double[] transform(double[] vector){
 
 double[] correlation(double[] vector1, double[] vector2){
 
-  double[] results = [0.0, 0.0];
+  double[] results = [0.0, 0.0, 0.0];
   foreach(i, e; vector1){
     results[0] += e*vector2[i];
   }
   results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0]*results[0]));
+  results[2] = gsl_cdf_tdist_P(-fabs(results[1]), vector1.length - 2) * 2;
   return results;
 }
 
@@ -111,7 +118,10 @@ void main(string[] args){
   double[] phenotype;
   double[] rank_phenotype;
   double[] rank_genotype;
-  double[] cor = new double[2];
+  double[] cor = new double[3];
+  string[] gen_id;
+  string[] phen_id;
+
   auto phen_file = File();
   auto gen_file = File();
 
@@ -129,12 +139,13 @@ void main(string[] args){
     gen_file = File(options["g"]);
   else
     gen_file = stdin;
-    //  auto phen_file = File(options["p"]);
-  //if (!("p" in options))
-  //input_file = File(options["p"]);
-  //   writeln(e, options[e]);
 
-      foreach(line; phen_file.byLine()){
+  if ("gi" in options)
+    gen_id = split(chomp(gen_file.readln()));
+
+  writeln(gen_id);
+
+  foreach(line; phen_file.byLine()){
     phenotype ~= to!double(chomp(line));
   }
 
@@ -147,8 +158,7 @@ void main(string[] args){
 	}
     rank_genotype = transform(rank(genotype));
     cor = correlation(rank_genotype, rank_phenotype);
-    double p_value = gsl_cdf_tdist_P(-fabs(cor[1]), rank_genotype.length - 2) * 2;
-    writeln(cor[0], "\t", cor[1], "\t", p_value);
+    writeln(cor[0], "\t", cor[1], "\t", cor[2]);
   }
 
 }
