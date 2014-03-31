@@ -4,12 +4,14 @@ extern(C) {
   double gsl_cdf_tdist_P (double x, double nu);
 }
 
-// to do: take filenames, if genotype is missing take from stdin, if headers present for both check IDs
+// to do: if headers present for both check IDs
 //skip first few columns of genotype file, handle permutations, figure out immutable status
 
 string[string] arg_parse(string[] args){
+  // options: -p phenotype, -g genotype, -pi phen ids, -gi gen ids, -perm generate permuations -pc phenotype column, -gs genotype skip
   string[string] opts;
   string prefix;
+
   foreach(i, arg; args){
     if (arg.startsWith("-")){
       prefix = chompPrefix(arg.idup,"-");
@@ -28,6 +30,10 @@ string[string] arg_parse(string[] args){
   }
   if ("p" in opts && !opts["p"].exists){
     writeln("Phenotype file missing");
+    exit(0);
+  }
+  if ("g" in opts && !opts["g"].exists){
+    writeln("Genotype file missing");
     exit(0);
   }
   return opts;
