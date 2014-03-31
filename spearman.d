@@ -4,8 +4,7 @@ extern(C) {
   double gsl_cdf_tdist_P (double x, double nu);
 }
 
-// to do: if headers present for both check IDs
-//skip first few columns of genotype file, handle permutations
+// to do: if headers present for both check IDs, skip first few columns of genotype file, handle permutations
 
 string[string] arg_parse(string[] args){
   // options: -p phenotype, -g genotype, -pi phen ids, -gi gen ids, -perm generate permuations -pc phenotype column, -gs genotype skip
@@ -28,8 +27,14 @@ string[string] arg_parse(string[] args){
       case "pi":
 	opts["pi"] = "T";
 	break;
+      case "pc":
+	opts["pc"] = args[i+1].idup;
+	break;
+      case "gs":
+	opts["gs"] = args[i+1].idup;
+	break;
       default:
-	writeln("Unknown option");
+	writeln("Unknown option: ", prefix);
 	break;
       }
     }
@@ -151,15 +156,15 @@ void main(string[] args){
 
   rank_phenotype = transform(rank(phenotype));
 
-  foreach(line; File("genotype.txt").byLine()){
+  foreach(line; gen_file.byLine()){
     double genotype[];
     foreach(e; split(line)){
       genotype ~= to!double(e);
 	}
     rank_genotype = transform(rank(genotype));
     cor = correlation(rank_genotype, rank_phenotype);
-    writeln(cor[0], "\t", cor[1], "\t", cor[2]);
+    //writeln(cor[0], "\t", cor[1], "\t", cor[2]);
+    writeln(join(to!(string[])(cor), "\t"));
   }
 
 }
-
