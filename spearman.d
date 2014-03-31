@@ -4,7 +4,7 @@ extern(C) {
   double gsl_cdf_tdist_P (double x, double nu);
 }
 
-// to do: if headers present for both check IDs, skip first few columns of genotype file, handle permutations
+// to do: if headers present for both check IDs, skip first few columns of genotype file, handle permutations, write help file, handle errors
 
 string[string] arg_parse(string[] args){
   // options: -p phenotype, -g genotype, -pi phen ids, -gi gen ids, -perm generate permuations -pc phenotype column, -gs genotype skip
@@ -102,32 +102,6 @@ double[] transform(double[] vector){
 
   return normalised;
 }
-
-// double[] transform(double[] vector){
-
-//   double sum = 0;
-//   double var = 0;
-//   double[] normalised = new double[vector.length];
-
-//   foreach(e; vector){
-//     sum += e;
-//   }
-//   sum /= vector.length;
-
-//   foreach(i, e ; vector){
-//     normalised[i] = e - sum;
-//   }
-
-//   foreach(e; normalised){
-//     var += e*e;
-//   }
-//   var = sqrt(var);
-//   foreach(ref e; normalised){
-//     e /= var;
-//   }
-
-//   return normalised;
-// }
 
 double[] correlation(double[] vector1, double[] vector2){
 
