@@ -24,231 +24,85 @@ THE SOFTWARE.
 */
 
 import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file, std.random;
-
-extern(C) {
-  double gsl_cdf_tdist_P (double x, double nu);
-}
-
-auto help_string = "Usage: spearman [options]:
-  Options:
-    -p    :  phenotype file [mandatory]
-    -g    :  genotype file [default stdin]
-    -pi   :  phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
-    -gi   :  genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
-    -pc   :  column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
-    -gs   :  column at which genotype values start, preceding columns are printed
-    -perm :  calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed
-
-Input file formats:
-  phenotype  :  Tab or whitespace separated file with phenotype values in column specified by -pc, and optional subject IDs in column 1
-  genotype   :  Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by -gs are copied to results file
-    
-Output:
-  Output is sent to the stdout, contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns and then a p value column for every calculated permutation of the data
-";
-
-// to do: handle permutations, handle errors
-
-string[string] arg_parse(string[] args){
-  // options: -p phenotype, -g genotype, -pi phen ids, -gi gen ids, -perm generate permuations -pc phenotype column, -gs genotype skip
-  string[string] opts;
-  string prefix;
-
-  foreach(i, arg; args){
-    if (arg.startsWith("-")){
-      prefix = chompPrefix(arg.idup,"-");
-      switch (prefix){
-      case "p":
-	opts["p"] = args[i+1].idup;
-	break;
-      case "g":
-	opts["g"] = args[i+1].idup;
-	break;
-      case "gi":
-	opts["gi"] = "T";
-	break;
-      case "pi":
-	opts["pi"] = "T";
-	break;
-      case "pc":
-	opts["pc"] = args[i+1].idup;
-	break;
-      case "gs":
-	opts["gs"] = args[i+1].idup;
-	break;
-      case "perm":
-	opts["perm"] = args[i+1].idup;
-	break;
-      default:
-	writeln("Unknown option: ", prefix);
-	break;
-      }
-    }
-  }
-  if ("p" in opts && !opts["p"].exists){
-    writeln("Phenotype file missing");
-    exit(0);
-  }
-  if ("g" in opts && !opts["g"].exists){
-    writeln("Genotype file missing");
-    exit(0);
-  }
-  return opts;
-}
-
-double[] rank(ref double[] rank_array){
-
-  ulong[] order_index = new ulong[rank_array.length];
-  double[] rank_index = new double[rank_array.length];
-  ulong sumrank = 0;
-  ulong dupcount = 0;
-  double avgrank;
-
-  foreach(i, ref x; order_index){
-    x = i;
-  }
-
-  sort!((a,b) { return rank_array[a] < rank_array[b] ; } )(order_index);
-  foreach(i, e; order_index){
-    sumrank += i;
-    dupcount++;
-    if (i==(order_index.length - 1) 
-	|| rank_array[e] != rank_array[order_index[i+1]])
-      {
-      avgrank = to!double(sumrank)/dupcount +1;
-      for (ulong j = i - dupcount + 1; j < i + 1; j++){
-	rank_index[order_index[j]] = avgrank;
-      }
-      sumrank = 0;
-      dupcount = 0;
-    }
-  }
-
-  return rank_index;
-}
-
-double[] transform(double[] vector){
-  int n = 0;
-  double mean = 0;
-  double M2 = 0;
-  double delta;
-  double[] normalised = new double[vector.length];
-
-  foreach(e; vector){
-    n++;
-    delta = e - mean;
-    mean += delta / n;
-    M2 += delta * (e - mean);
-  }
-
-  M2 = sqrt(M2);
-  foreach(i, e; vector){
-    normalised[i] = (e - mean) / M2;
-  }
-
-  return normalised;
-}
-
-double[] correlation(double[] vector1, immutable(double[]) vector2){
-
-  double[] results = [0.0, 0.0, 0.0];
-  foreach(i, e; vector1){
-    results[0] += e*vector2[i];
-  }
-  results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0]*results[0]));
-  results[2] = gsl_cdf_tdist_P(-fabs(results[1]), vector1.length - 2) * 2;
-  return results;
-}
-
-double corr2(double[] vector1, double[] vector2){
-
-  double stat = 0.0;
-
-  foreach(i, e; vector1){
-    stat += e*vector2[i];
-  }
-  stat = stat * sqrt((vector1.length - 2) / (1 - stat*stat));
-  stat = gsl_cdf_tdist_P(-fabs(stat), vector1.length - 2) * 2;
-  return stat;
-}
+import arg_parse, calculation;
 
 void main(string[] args){
   string[string] options;
   double[] phenotype;
   double[] cor = new double[3];
   int skip = 0;
-  int phen_column = 0;
-  string[] gen_id;
-  string[] phen_id;
+  int phenColumn = 0;
+  string[] genId;
+  string[] phenId;
 
-  auto phen_file = File();
-  auto gen_file = File();
+  auto phenFile = File();
+  auto genFile = File();
 
   if (args.length == 1){
-    writeln(help_string);
+    giveHelp();  
     exit(0);
   }
   
-  options = arg_parse(args[1..$]);
-
-  phen_file = File(options["p"]);
+  options = getOpts(args[1..$]);
+  phenFile = File(options["p"]);
 
   if ("pi" in options)
-    phen_column++;
+    phenColumn++;
 
   if ("pc" in options)
-    phen_column = (to!int(options["pc"]) - 1);
+    phenColumn = (to!int(options["pc"]) - 1);
   
   if ("g" in options)
-    gen_file = File(options["g"]);
+    genFile = File(options["g"]);
   else
-    gen_file = stdin;
+    genFile = stdin;
 
   if ("gs" in options)
     skip = to!int(options["gs"]);
 
-  if ("gi" in options)
-    gen_id = split(chomp(gen_file.readln()))[skip..$];
-
-  foreach(line; phen_file.byLine()){
-    auto phen_line = split(chomp(line));
-    phenotype ~= to!double(phen_line[phen_column]);
+  foreach(line; phenFile.byLine()){
+    auto phenLine = split(chomp(line));
+    phenotype ~= to!double(phenLine[phenColumn]);
     if ("pi" in options)
-      phen_id ~= phen_line[0].idup;
+      phenId ~= phenLine[0].idup;
   }
 
-  if ("pi" in options 
-	&& "gi" in options
-        && gen_id!=phen_id){
+  if ("gi" in options)
+    genId = split(chomp(genFile.readln()))[skip..$];
+
+  if ("pi" in options
+		&& "gi" in options
+		&& genId!=phenId){
     writeln("Mismatched ID");
     exit(0);
   }
 
   double[] genotype = new double[phenotype.length];
-  double[] rank_genotype = new double[phenotype.length];;
+  double[] rankGenotype = new double[phenotype.length];;
 
-  immutable(double[]) rank_phenotype = cast(immutable) transform(rank(phenotype));
-  double[][5] perms;
+  immutable(double[]) rankPhenotype = cast(immutable) transform(rank(phenotype));
 
-  foreach(ref e; perms){
-    e = rank_phenotype.dup;
+  double[][] tempPerm;
+
+  foreach(ref e; tempPerm){
+    e = rankPhenotype.dup;
     randomShuffle(e);
   }
 
-  foreach(line; gen_file.byLine()){
+  immutable (double[])[] perms = cast(immutable) tempPerm;
+  foreach(line; genFile.byLine()){
     foreach(i, e; split(line)){
       if (i < skip)
 	std.stdio.write(e, "\t");
       else
 	genotype[i - skip] = to!double(e);
     }
-    rank_genotype = transform(rank(genotype));
-    cor = correlation(rank_genotype, rank_phenotype);
+    rankGenotype = transform(rank(genotype));
+    cor = correlation(rankGenotype, rankPhenotype);
     std.stdio.write(join(to!(string[])(cor), "\t"));
     foreach(e; perms)
-      std.stdio.write("\t", corr2(rank_genotype, e));
+      std.stdio.write("\t", corPvalue(rankGenotype, e));
     std.stdio.write("\n");
 
   }
-
 }
