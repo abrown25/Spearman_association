@@ -23,23 +23,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file;
+import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file, std.random;
 
 extern(C) {
   double gsl_cdf_tdist_P (double x, double nu);
 }
 
 auto help_string = "Usage: spearman [options]:
-    Options:
-        -p    :  phenotype file [mandatory]
-        -g    :  genotype file [default stdin]
-        -pi   :  phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
-        -gi   :  genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
-        -pc   :  column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
-        -gs   :  column at which genotype values start, preceding columns are printed
-        -perm :  calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed";
+  Options:
+    -p    :  phenotype file [mandatory]
+    -g    :  genotype file [default stdin]
+    -pi   :  phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
+    -gi   :  genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
+    -pc   :  column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
+    -gs   :  column at which genotype values start, preceding columns are printed
+    -perm :  calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed
 
-// to do: if headers present for both check IDs, skip first few columns of genotype file, handle permutations, write help file, handle errors
+Input file formats:
+  phenotype  :  Tab or whitespace separated file with phenotype values in column specified by -pc, and optional subject IDs in column 1
+  genotype   :  Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by -gs are copied to results file
+    
+Output:
+  Output is sent to the stdout, contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns and then a p value column for every calculated permutation of the data
+";
+
+// to do: handle permutations, handle errors
 
 string[string] arg_parse(string[] args){
   // options: -p phenotype, -g genotype, -pi phen ids, -gi gen ids, -perm generate permuations -pc phenotype column, -gs genotype skip
@@ -68,6 +76,9 @@ string[string] arg_parse(string[] args){
       case "gs":
 	opts["gs"] = args[i+1].idup;
 	break;
+      case "perm":
+	opts["perm"] = args[i+1].idup;
+	break;
       default:
 	writeln("Unknown option: ", prefix);
 	break;
@@ -85,7 +96,7 @@ string[string] arg_parse(string[] args){
   return opts;
 }
 
-double[] rank(double[] rank_array){
+double[] rank(ref double[] rank_array){
 
   ulong[] order_index = new ulong[rank_array.length];
   double[] rank_index = new double[rank_array.length];
@@ -138,7 +149,7 @@ double[] transform(double[] vector){
   return normalised;
 }
 
-double[] correlation(double[] vector1, double[] vector2){
+double[] correlation(double[] vector1, immutable(double[]) vector2){
 
   double[] results = [0.0, 0.0, 0.0];
   foreach(i, e; vector1){
@@ -149,11 +160,21 @@ double[] correlation(double[] vector1, double[] vector2){
   return results;
 }
 
+double corr2(double[] vector1, double[] vector2){
+
+  double stat = 0.0;
+
+  foreach(i, e; vector1){
+    stat += e*vector2[i];
+  }
+  stat = stat * sqrt((vector1.length - 2) / (1 - stat*stat));
+  stat = gsl_cdf_tdist_P(-fabs(stat), vector1.length - 2) * 2;
+  return stat;
+}
+
 void main(string[] args){
   string[string] options;
   double[] phenotype;
-  double[] rank_phenotype;
-  double[] rank_genotype;
   double[] cor = new double[3];
   int skip = 0;
   int phen_column = 0;
@@ -170,39 +191,64 @@ void main(string[] args){
   
   options = arg_parse(args[1..$]);
 
-  writeln(options);
-
   phen_file = File(options["p"]);
+
+  if ("pi" in options)
+    phen_column++;
+
+  if ("pc" in options)
+    phen_column = (to!int(options["pc"]) - 1);
+  
   if ("g" in options)
     gen_file = File(options["g"]);
   else
     gen_file = stdin;
 
-  if ("gi" in options)
-    gen_id = split(chomp(gen_file.readln()));
-
   if ("gs" in options)
     skip = to!int(options["gs"]);
 
-  writeln(gen_id);
+  if ("gi" in options)
+    gen_id = split(chomp(gen_file.readln()))[skip..$];
 
   foreach(line; phen_file.byLine()){
     auto phen_line = split(chomp(line));
     phenotype ~= to!double(phen_line[phen_column]);
-    // if ("pi" in options)
-    //   phen_id ~= phen_line[to!int(options["pi"])-1];
+    if ("pi" in options)
+      phen_id ~= phen_line[0].idup;
   }
 
-  rank_phenotype = transform(rank(phenotype));
+  if ("pi" in options 
+	&& "gi" in options
+        && gen_id!=phen_id){
+    writeln("Mismatched ID");
+    exit(0);
+  }
+
+  double[] genotype = new double[phenotype.length];
+  double[] rank_genotype = new double[phenotype.length];;
+
+  immutable(double[]) rank_phenotype = cast(immutable) transform(rank(phenotype));
+  double[][5] perms;
+
+  foreach(ref e; perms){
+    e = rank_phenotype.dup;
+    randomShuffle(e);
+  }
 
   foreach(line; gen_file.byLine()){
-    double genotype[];
-    foreach(e; split(line)){
-      genotype ~= to!double(e);
-	}
+    foreach(i, e; split(line)){
+      if (i < skip)
+	std.stdio.write(e, "\t");
+      else
+	genotype[i - skip] = to!double(e);
+    }
     rank_genotype = transform(rank(genotype));
     cor = correlation(rank_genotype, rank_phenotype);
-    writeln(join(to!(string[])(cor), "\t"));
+    std.stdio.write(join(to!(string[])(cor), "\t"));
+    foreach(e; perms)
+      std.stdio.write("\t", corr2(rank_genotype, e));
+    std.stdio.write("\n");
+
   }
 
 }
