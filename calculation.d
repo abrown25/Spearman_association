@@ -1,5 +1,5 @@
-import std.algorithm, std.conv, std.math;
-
+import std.algorithm, std.conv, std.math, std.random;
+import arg_parse;
 extern(C) {
   double gsl_cdf_tdist_P (double x, double nu);
 }
@@ -76,4 +76,16 @@ double corPvalue(double[] vector1, immutable(double[]) vector2){
   results = results * sqrt((vector1.length - 2) / (1 - results*results));
   results = gsl_cdf_tdist_P(-fabs(results), vector1.length - 2) * 2;
   return results;
+}
+
+double[][] getPerm(PermOpts permOpts, immutable(double[]) vector1){
+  double[][] outPerm;
+  if (permOpts.give_seed)
+    rndGen.seed(permOpts.seed);
+  outPerm = new double[][permOpts.number];
+ for (int i=0; i<permOpts.number; i++){
+    outPerm[][i] = vector1.dup;
+    randomShuffle(outPerm[][i]);
+ }
+ return outPerm;
 }

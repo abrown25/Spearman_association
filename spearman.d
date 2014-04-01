@@ -34,6 +34,7 @@ void main(string[] args){
   int phenColumn = 0;
   string[] genId;
   string[] phenId;
+  PermOpts permOptions;
 
   auto phenFile = File();
   auto genFile = File();
@@ -44,21 +45,17 @@ void main(string[] args){
   }
   
   options = getOpts(args[1..$]);
+
   phenFile = File(options["p"]);
+  skip = getGenotypeSkip(options);
+  phenColumn = getPhenColumn(options);
+  permOptions = getPermOptions(options);
 
-  if ("pi" in options)
-    phenColumn++;
-
-  if ("pc" in options)
-    phenColumn = (to!int(options["pc"]) - 1);
-  
   if ("g" in options)
     genFile = File(options["g"]);
   else
     genFile = stdin;
 
-  if ("gs" in options)
-    skip = to!int(options["gs"]);
 
   foreach(line; phenFile.byLine()){
     auto phenLine = split(chomp(line));
@@ -81,15 +78,11 @@ void main(string[] args){
   double[] rankGenotype = new double[phenotype.length];;
 
   immutable(double[]) rankPhenotype = cast(immutable) transform(rank(phenotype));
-
-  double[][] tempPerm;
-
-  foreach(ref e; tempPerm){
-    e = rankPhenotype.dup;
-    randomShuffle(e);
+  immutable(double[])[] perms;
+  if (permOptions.run){
+    perms = cast(immutable)getPerm(permOptions, rankPhenotype);
   }
 
-  immutable (double[])[] perms = cast(immutable) tempPerm;
   foreach(line; genFile.byLine()){
     foreach(i, e; split(line)){
       if (i < skip)
@@ -100,8 +93,8 @@ void main(string[] args){
     rankGenotype = transform(rank(genotype));
     cor = correlation(rankGenotype, rankPhenotype);
     std.stdio.write(join(to!(string[])(cor), "\t"));
-    foreach(e; perms)
-      std.stdio.write("\t", corPvalue(rankGenotype, e));
+     foreach(e; perms)
+       std.stdio.write("\t", corPvalue(rankGenotype, e));
     std.stdio.write("\n");
 
   }

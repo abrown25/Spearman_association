@@ -1,4 +1,11 @@
-import std.stdio, std.algorithm, std.file, std.string, std.c.stdlib;
+import std.stdio, std.algorithm, std.file, std.string, std.c.stdlib, std.conv;
+
+struct PermOpts{
+  bool run = false;
+  bool give_seed = false;
+  int number = 0;
+  int seed = 0;
+}
 
 auto helpString = "Usage: spearman [options]:
 Options:
@@ -17,7 +24,6 @@ Output:
 Output is sent to the stdout, contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns and then a p value column for every calculated permutation of the data
 ";
 
-// to do: handle permutations, handle errors
 void giveHelp(){
   writeln(helpString);
 }
@@ -31,6 +37,9 @@ string[string] getOpts(string[] args){
     if (arg.startsWith("-")){
       prefix = chompPrefix(arg.idup,"-");
       switch (prefix){
+      case "-help":
+	giveHelp();
+	exit(0);
       case "p":
 	opts["p"] = args[i+1].idup;
 	break;
@@ -65,6 +74,43 @@ string[string] getOpts(string[] args){
   if ("g" in opts && !opts["g"].exists){
     writeln("Genotype file missing");
     exit(0);
+  }
+  return opts;
+}
+
+int getGenotypeSkip(string[string] opt){
+  int skip = 0;
+  if ("gs" in opt)
+    skip = to!int(opt["gs"]);
+  return skip;
+}
+
+int getPhenColumn(string[string] opt){
+  int phenCol;
+  if ("pc" in opt){
+    phenCol = (to!int(opt["pc"]) - 1);
+  }  
+  else {
+    if ("pi" in opt){
+      phenCol = 1;
+    } else {
+    phenCol = 0;
+  }
+  }
+  return phenCol;
+}
+
+PermOpts getPermOptions(string[string] option){
+  PermOpts opts;
+  string[] value;
+  if ("perm" in option){
+    opts.run = true;
+    value = split(option["perm"], ",");
+    opts.number = to!int(value[0]);
+    if (value.length==2){
+      opts.give_seed = true;
+      opts.seed = to!int(value[1]);
+    }
   }
   return opts;
 }
