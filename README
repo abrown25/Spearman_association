@@ -1,18 +1,18 @@
 Perform non-parametric association tests, with rapid permutations.
 
-Usage: spearman [options]:                                                                                                        
-    Options:                                                                                                                                          
-        -p    :  phenotype file [mandatory]                                                                                                           
-        -g    :  genotype file [default stdin]                                                                                                        
-        -pi   :  phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches                                 
-        -gi   :  genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches                                    
-        -pc   :  column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise                                              
-        -gs   :  column at which genotype values start, preceding columns are printed                                                                 
-        -perm :  calculated permuted p values, one following value indicates the number of permutations, two comma separated values gives number of permutations and the seed
+Usage: spearman [options]:
+Options:
+--help          : Display help file
+-pheno, -p      : phenotype file [mandatory]
+-geno, -g       : genotype file [default stdin]
+-pheno-id, -pi  : phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
+-geno-id, -gi   : genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
+-pheno-col, -pc : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
+-geno-skip, -gs : column at which genotype values start, preceding columns are printed
+-perm           : calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed
 
 Input file formats:
-    phenotype  :  Tab or whitespace separated file with phenotype values in column specified by -pc, and optional subject IDs in column 1
-    genotype   :  Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by -gs are copied to results file
-    
+phenotype       : Tab or whitespace separated file with phenotype values in column specified by -pc, and optional subject IDs in column 1
+genotype        : Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by -gs are copied to results file
 Output:
-    Output is sent to the stdout, contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns and then a p value column for every calculated permutation of the data
+Output is sent to the stdout, contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns and then a p value column for every calculated permutation of the data
