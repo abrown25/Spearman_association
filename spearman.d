@@ -29,20 +29,21 @@ import arg_parse, calculation;
 void main(string[] args){
   string[string] options;
   double[] phenotype;
+  double[] genotype;
+  string[] splitLine;
   double[] cor = new double[3];
   int skip = 0;
   int phenColumn = 0;
   string[] genId;
   string[] phenId;
   PermOpts permOptions;
+  immutable(double[])[] perms;
 
   auto phenFile = File();
   auto genFile = File();
 
-  if (args.length == 1){
+  if (args.length == 1)
     giveHelp();  
-    exit(0);
-  }
   
   options = getOpts(args[1..$]);
 
@@ -56,46 +57,46 @@ void main(string[] args){
   else
     genFile = stdin;
 
-
-  foreach(line; phenFile.byLine()){
-    auto phenLine = split(chomp(line));
-    phenotype ~= to!double(phenLine[phenColumn]);
-    if ("pi" in options)
-      phenId ~= phenLine[0].idup;
-  }
+  foreach(line; phenFile.byLine())
+    {
+      auto phenLine = split(chomp(line));
+      phenotype ~= to!double(phenLine[phenColumn]);
+      if ("pi" in options)
+	phenId ~= phenLine[0].idup;
+    }
 
   if ("gi" in options)
     genId = split(chomp(genFile.readln()))[skip..$];
 
-  if ("pi" in options
-		&& "gi" in options
-		&& genId!=phenId){
-    writeln("Mismatched ID");
-    exit(0);
-  }
-
-  double[] genotype = new double[phenotype.length];
-  double[] rankGenotype = new double[phenotype.length];;
-
-  immutable(double[]) rankPhenotype = cast(immutable) transform(rank(phenotype));
-  immutable(double[])[] perms;
-  if (permOptions.run){
-    perms = cast(immutable)getPerm(permOptions, rankPhenotype);
-  }
-
-  foreach(line; genFile.byLine()){
-    foreach(i, e; split(line)){
-      if (i < skip)
-	std.stdio.write(e, "\t");
-      else
-	genotype[i - skip] = to!double(e);
+  if ("pi" in options && "gi" in options && genId!=phenId)
+    {
+      writeln("Mismatched ID");
+      exit(0);
     }
-    rankGenotype = transform(rank(genotype));
-    cor = correlation(rankGenotype, rankPhenotype);
-    std.stdio.write(join(to!(string[])(cor), "\t"));
-     foreach(e; perms)
-       std.stdio.write("\t", corPvalue(rankGenotype, e));
-    std.stdio.write("\n");
 
-  }
+  double[] rankGenotype = new double[phenotype.length];;
+  immutable(double[]) rankPhenotype = cast(immutable) transform(rank(phenotype));
+
+  if (permOptions.run)
+    perms = cast(immutable)getPerm(permOptions, rankPhenotype);
+
+  foreach(line; genFile.byLine())
+    {
+      splitLine = to!(string[])(split(line));
+      std.stdio.write(join(splitLine[0..skip], "\t"), "\t");
+      if (splitLine.length != phenotype.length + skip)
+	{
+	writeln("fuck");
+      }
+      else
+	{
+	  genotype = to!(double[])(splitLine[skip..$]);
+	  rankGenotype = transform(rank(genotype));
+	  cor = correlation(rankGenotype, rankPhenotype);
+	  std.stdio.write(join(to!(string[])(cor), "\t"));
+	  foreach(e; perms)
+	    std.stdio.write("\t", corPvalue(rankGenotype, e));
+	  std.stdio.write("\n");
+	}
+    }
 }
