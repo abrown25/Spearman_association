@@ -1,6 +1,6 @@
 /* The MIT License
 
-Copyright (C) 2013-2014 Genome Research Ltd.
+Copyright (C) 2014 Genome Research Ltd.
 #
 # Author: Andrew Brown <ab25@sanger.ac.uk>
 
@@ -34,6 +34,8 @@ void main(string[] args){
   double[] cor = new double[3];
   int skip = 0;
   int phenColumn = 0;
+  bool pvalCalc = false;
+  bool permRun = false;
   string[] genId;
   string[] phenId;
   PermOpts permOptions;
@@ -51,6 +53,11 @@ void main(string[] args){
   skip = getGenotypeSkip(options);
   phenColumn = getPhenColumn(options);
   permOptions = getPermOptions(options);
+  if (permOptions.run)
+    permRun = true;
+
+  if ("pval" in options)
+    pvalCalc = true;
 
   if ("g" in options)
     genFile = File(options["g"]);
@@ -66,7 +73,22 @@ void main(string[] args){
     }
 
   if ("gi" in options)
-    genId = split(chomp(genFile.readln()))[skip..$];
+    {
+      splitLine = split(chomp(genFile.readln()));
+      std.stdio.write(join(splitLine[0..skip], "\t"), "\tCor\tT\tP_val\t");
+      if (permRun)
+	{
+	  if(pvalCalc)
+	    writeln("PermP");
+	  else
+	    {
+	      for (auto j = 0; j < permOptions.number; j++)
+		std.stdio.write("P", j+1, "\t");
+	      writeln("P", permOptions.number);
+	    }
+	}
+      genId = splitLine[skip..$];
+    }
 
   if ("pi" in options && "gi" in options && genId!=phenId)
     {
@@ -83,20 +105,36 @@ void main(string[] args){
   foreach(line; genFile.byLine())
     {
       splitLine = to!(string[])(split(line));
-      std.stdio.write(join(splitLine[0..skip], "\t"), "\t");
+      if (skip > 0)
+	std.stdio.write(join(splitLine[0..skip], "\t"), "\t");
       if (splitLine.length != phenotype.length + skip)
 	{
-	writeln("fuck");
-      }
+	  for (auto j=0; j < permOptions.number + 2; j++)
+	    std.stdio.write("NA\t");
+	  writeln("NA");
+	}
       else
 	{
 	  genotype = to!(double[])(splitLine[skip..$]);
 	  rankGenotype = transform(rank(genotype));
 	  cor = correlation(rankGenotype, rankPhenotype);
 	  std.stdio.write(join(to!(string[])(cor), "\t"));
-	  foreach(e; perms)
-	    std.stdio.write("\t", corPvalue(rankGenotype, e));
-	  std.stdio.write("\n");
+	  if (pvalCalc)
+	    {
+	      float countBetter = 0.0;
+	      foreach(e; perms)
+	      	{
+	      	  if (corPvalue(rankGenotype, e) < cor[2])
+	      	    ++countBetter;
+	      	}
+	      writeln("\t", countBetter/perms.length);
+	    }
+	  else	  
+	    {
+	      foreach(e; perms)
+	  	std.stdio.write("\t", corPvalue(rankGenotype, e));
+	      std.stdio.write("\n");
+	    }
 	}
     }
 }
