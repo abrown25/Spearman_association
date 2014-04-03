@@ -36,9 +36,10 @@ string[string] getOpts(string[] args){
   string prefix;
   string[string] optsDictParam = ["p" : "p", "phenotype" : "p", "g" : "g", "genotype" : "g", 
 		      "pc" : "pc", "pheno-col" : "pc", "gs" : "gs", "geno-skip" :"gs", 
-		      "perm" :"perm"];
+				  "perm" :"perm", "keep-min" : "keep-min"];
 
-  string[string] optsDictFlag = ["gi" : "gi", "geno-id" : "gi", "pi" : "pi", "pheno-id" : "pi"];
+  string[string] optsDictFlag = ["gi" : "gi", "geno-id" : "gi", "pi" : "pi", 
+				 "pheno-id" : "pi", "pval" : "pval"];
  
   foreach(i, arg; args)
     {
