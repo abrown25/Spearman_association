@@ -1,35 +1,36 @@
 /* The MIT License
 
-Copyright (C) 2014 Genome Research Ltd.
-#
-# Author: Andrew Brown <ab25@sanger.ac.uk>
+   Copyright (C) 2014 Genome Research Ltd.
+   #
+   # Author: Andrew Brown <ab25@sanger.ac.uk>
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
 */
 
-import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file, std.random;
+import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file, std.random, std.range;
 import arg_parse, calculation;
 
 void main(string[] args){
   string[string] options;
   double[] phenotype;
   double[] genotype;
+  double singlePerm;
   string[] splitLine;
   double[] cor = new double[3];
   int skip = 0;
@@ -72,22 +73,22 @@ void main(string[] args){
 	phenId ~= phenLine[0].idup;
     }
 
+  string headerLine;
   if ("gi" in options)
     {
       splitLine = split(chomp(genFile.readln()));
-      std.stdio.write(join(splitLine[0..skip], "\t"), "\tCor\tT\tP_val\t");
+      genId = splitLine[skip..$];
+      headerLine ~= join(splitLine[0..skip], "\t") ~ "\tCor\tT_stat\tP";
       if (permRun)
 	{
 	  if(pvalCalc)
-	    writeln("PermP");
+	    headerLine ~= "PermP";
 	  else
 	    {
-	      for (auto j = 0; j < permOptions.number; j++)
-		std.stdio.write("P", j+1, "\t");
-	      writeln("P", permOptions.number);
+	      for (auto j = 1; j < permOptions.number + 1; j++)
+		headerLine ~= "\tP" ~ to!string(j);
 	    }
 	}
-      genId = splitLine[skip..$];
     }
 
   if ("pi" in options && "gi" in options && genId!=phenId)
@@ -97,11 +98,29 @@ void main(string[] args){
     }
 
   double[] rankGenotype = new double[phenotype.length];;
-  immutable(double[]) rankPhenotype = cast(immutable) transform(rank(phenotype));
+  double[] rankTemp;
+  try {
+    rankTemp = transform(rank(phenotype));
+  } catch(VarianceException e) {
+    writeln("Phenotype is constant");
+    exit(0);
+  }
 
+  writeln(headerLine);
+  
+  immutable(double[]) rankPhenotype = cast(immutable)rankTemp;
+
+  double[] minPvalues = new double[permOptions.number];
+  
   if (permOptions.run)
-    perms = cast(immutable)getPerm(permOptions, rankPhenotype);
-
+    {
+      perms = cast(immutable)getPerm(permOptions, rankPhenotype);
+      if (permOptions.min)
+	{
+	  minPvalues[] = 1.0;
+	}
+    }
+  
   foreach(line; genFile.byLine())
     {
       splitLine = to!(string[])(split(line));
@@ -116,25 +135,45 @@ void main(string[] args){
       else
 	{
 	  genotype = to!(double[])(splitLine[skip..$]);
-	  rankGenotype = transform(rank(genotype));
-	  cor = correlation(rankGenotype, rankPhenotype);
-	  std.stdio.write(join(to!(string[])(cor), "\t"));
-	  if (pvalCalc)
-	    {
-	      float countBetter = 0.0;
-	      foreach(e; perms)
-	      	{
-	      	  if (corPvalue(rankGenotype, e) < cor[2])
-	      	    ++countBetter;
-	      	}
-	      writeln("\t", countBetter/perms.length);
-	    }
-	  else	  
-	    {
-	      foreach(e; perms)
-	  	std.stdio.write("\t", corPvalue(rankGenotype, e));
-	      std.stdio.write("\n");
-	    }
+	  try {
+	    rankGenotype = transform(rank(genotype));
+	    cor = correlation(rankGenotype, rankPhenotype);
+	    std.stdio.write(join(to!(string[])(cor), "\t"));
+	    if (pvalCalc)
+	      {
+		float countBetter = 0.0;
+		foreach(i, e; perms)
+		  {
+		    singlePerm = corPvalue(rankGenotype, e);
+		    if (singlePerm < minPvalues[i])
+		      minPvalues[i] = singlePerm;
+		    if (singlePerm < cor[2])
+		      ++countBetter;
+		  }
+		writeln("\t", countBetter/perms.length);
+	      }
+	    else	  
+	      {
+		foreach(i, e; perms)
+		  {
+		    singlePerm = corPvalue(rankGenotype, e);
+		    if (singlePerm < minPvalues[i])
+		      minPvalues[i] = singlePerm;
+		    std.stdio.write("\t", singlePerm);
+		  }
+		std.stdio.write("\n");
+	      }
+	  } catch(VarianceException e){
+	    if (pvalCalc)
+	      writeln("NaN\tNaN\tNaN\tNaN");
+	    else
+	      {
+		for (auto j=0; j < permOptions.number + 2; j++)
+		  std.stdio.write("NaN\t");
+		writeln("NaN");
+	      }
+	  }
+	 
 	}
     }
 }

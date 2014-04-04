@@ -1,7 +1,11 @@
-import std.algorithm, std.conv, std.math, std.random;
+import std.algorithm, std.conv, std.math, std.random, std.range;
 import arg_parse;
 extern(C) {
   double gsl_cdf_tdist_P (double x, double nu);
+}
+
+class VarianceException : Exception {
+  this(string s) {super(s);}
 }
 
 double[] rank(ref double[] rankArray){
@@ -47,6 +51,9 @@ double[] transform(double[] vector){
       mean += delta / n;
       M2 += delta * (e - mean);
     }
+
+  if (M2==0)
+    throw new VarianceException(""); 
 
   M2 = sqrt(M2);
 

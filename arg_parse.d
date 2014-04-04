@@ -3,8 +3,10 @@ import std.stdio, std.algorithm, std.file, std.string, std.c.stdlib, std.conv;
 struct PermOpts{
   bool run = false;
   bool give_seed = false;
+  bool min = false;
   int number = 0;
   int seed = 0;
+  string minFile;
 }
 
 auto helpString = "Usage: spearman [options]:
@@ -17,6 +19,8 @@ Options:
 -pheno-col, -pc : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
 -geno-skip, -gs : column at which genotype values start, preceding columns are printed
 -perm           : calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed
+-pval           : report permutation p values for each test (needs perm options to be specified)
+-keep-min       : writes best p value over all SNPs for each permutation to the specified file
 
 Input file formats:
 phenotype       : Tab or whitespace separated file with phenotype values in column specified by -pc, and optional subject IDs in column 1
@@ -115,6 +119,11 @@ PermOpts getPermOptions(string[string] option){
 	{
 	  opts.give_seed = true;
 	  opts.seed = to!int(value[1]);
+	}
+      if ("keep-min" in option)
+	{
+	  opts.min = true;
+	  opts.minFile = option["keep-min"];
 	}
     }
   return opts;
