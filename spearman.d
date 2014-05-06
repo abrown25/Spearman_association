@@ -54,6 +54,16 @@ void main(string[] args){
   else
     genFile = stdin;
 
+  if ("o" in options)
+    {
+      if (opts.min)
+	outFile = File(options["o"] ~ "temp", "w");
+      else
+	outFile = File(options["o"], "w");
+    } 
+  else
+    outFile = stdout;
+
   foreach(line; phenFile.byLine())
     {
       auto phenLine = split(chomp(line));
@@ -67,18 +77,25 @@ void main(string[] args){
     {
       splitLine = split(chomp(genFile.readln()));
       genId = splitLine[opts.skip..$];
-      headerLine ~= join(splitLine[0..opts.skip], "\t") ~ "\tCor\tT_stat\tP";
-      if (opts.run)
+      headerLine ~= join(splitLine[0..opts.skip], "\t");
+      headerLine ~= "\t";
+    }
+
+  headerLine ~= "Cor\tT_stat\tP";
+
+  if (opts.run)
+    {
+      if(opts.pval)
+	headerLine ~= "\tPermP";
+      else if(opts.min)
+	headerLine ~= "\tPermP\tFWER";
+      else
 	{
-	  if(opts.pval)
-	    headerLine ~= "\tPermP";
-	  else
-	    {
-	      for (auto j = 1; j < opts.number + 1; j++)
-		headerLine ~= "\tP" ~ to!string(j);
-	    }
+	  for (auto j = 1; j < opts.number + 1; j++)
+	    headerLine ~= "\tP" ~ to!string(j);
 	}
     }
+    
 
   if ("pi" in options && "gi" in options && genId!=phenId)
     {
@@ -95,17 +112,22 @@ void main(string[] args){
     exit(0);
   }
 
-  writeln(headerLine);
+  outFile.writeln(headerLine);
   
 
   immutable(double[]) rankPhenotype = cast(immutable)rankTemp;
 
   if (!opts.run)
-    noPerm(phenFile, genFile, opts, rankPhenotype);
-  else if (!opts.pval)
-    simplePerm(phenFile, genFile, opts, rankPhenotype);
+    noPerm(phenFile, genFile, outFile, opts, rankPhenotype);
+  else if (!opts.pval && !opts.min)
+    simplePerm(phenFile, genFile, outFile, opts, rankPhenotype);
   else if (!opts.min)
-    pvalPerm(phenFile, genFile, opts, rankPhenotype);
+    pvalPerm(phenFile, genFile, outFile, opts, rankPhenotype);
   else
-    minPerm(phenFile, genFile, opts, rankPhenotype);
+    {
+      double[] minPvalues = minPerm(phenFile, genFile, outFile, opts, rankPhenotype, options["o"]);
+      outFile.close();
+      auto oldFile = File(options["o"] ~ "temp", "r");
+      writeFWER(oldFile, options, minPvalues);
+    }
 }
