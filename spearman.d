@@ -20,7 +20,7 @@
 */
 
 import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file, std.random, std.range;
-import arg_parse, calculation, noPerms;
+import arg_parse, calculation, run_analysis;
 
 void main(string[] args){
   string[string] options;
@@ -97,71 +97,9 @@ void main(string[] args){
   writeln(headerLine);
   
   immutable(double[]) rankPhenotype = cast(immutable)rankTemp;
+  if (!opts.run)
+    noPerm(phenFile, genFile, opts, rankPhenotype);
+  else
+    fuck(phenFile, genFile, opts, rankPhenotype);
 
-  double[] minPvalues = new double[opts.number];
-  
-  if (opts.run)
-    {
-      perms = cast(immutable)getPerm(opts, rankPhenotype);
-      if (opts.min)
-	{
-	  minPvalues[] = 1.0;
-	}
-    }
-  
-  foreach(line; genFile.byLine())
-    {
-      splitLine = to!(string[])(split(line));
-      if (opts.skip > 0)
-	std.stdio.write(join(splitLine[0..opts.skip], "\t"), "\t");
-      if (splitLine.length != phenotype.length + opts.skip)
-	{
-	  for (auto j=0; j < opts.number + 2; j++)
-	    std.stdio.write("NA\t");
-	  writeln("NA");
-	}
-      else
-	{
-	  genotype = to!(double[])(splitLine[opts.skip..$]);
-	  try {
-	    rankGenotype = transform(rank(genotype));
-	    cor = correlation(rankGenotype, rankPhenotype);
-	    std.stdio.write(join(to!(string[])(cor), "\t"));
-	    if (opts.pval)
-	      {
-		float countBetter = 0.0;
-		foreach(i, e; perms)
-		  {
-		    singlePerm = corPvalue(rankGenotype, e);
-		    if (singlePerm < minPvalues[i])
-		      minPvalues[i] = singlePerm;
-		    if (singlePerm < cor[2])
-		      ++countBetter;
-		  }
-		writeln("\t", countBetter/perms.length);
-	      }
-	    else	  
-	      {
-		foreach(i, e; perms)
-		  {
-		    singlePerm = corPvalue(rankGenotype, e);
-		    if (singlePerm < minPvalues[i])
-		      minPvalues[i] = singlePerm;
-		    std.stdio.write("\t", singlePerm);
-		  }
-		std.stdio.write("\n");
-	      }
-	  } catch(VarianceException e){
-	    if (opts.pval)
-	      writeln("NaN\tNaN\tNaN\tNaN");
-	    else
-	      {
-		for (auto j=0; j < opts.number + 2; j++)
-		  std.stdio.write("NaN\t");
-		writeln("NaN");
-	      }
-	  }
-	 
-	}
-    }
 }
