@@ -115,7 +115,7 @@ void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(do
 }
 
 
-double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype,string outF){
+double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
   double[] minPvalues = new double[opts.number];
   double[] rankGenotype;
 
@@ -127,7 +127,6 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
   perms = cast(immutable)getPerm(opts, rankPhenotype);
 
   minPvalues[] = 1.0;
-  
   foreach(line; genFile.byLine())
     {
       try {
@@ -157,7 +156,12 @@ void writeFWER(File oldFile, string[string] options, double[] minPvalues){
   double pVal;
   double adjusted;
   auto sortMin = sort!()(minPvalues);
-  auto newFile = File(options["o"], "w");
+  File newFile;
+  if ("o" in options) 
+    newFile = File(options["o"], "w");
+  else
+    newFile = stdout;
+
   double len = sortMin.length + 1.0;
   newFile.write(oldFile.readln());
 
@@ -173,5 +177,8 @@ void writeFWER(File oldFile, string[string] options, double[] minPvalues){
     	newFile.writeln(line, "\t", adjusted);
       }
   }
-  remove(options["o"] ~ "temp");
+  if ("o" in options)
+    std.file.remove(options["o"] ~ "temp");
+  else
+    std.file.remove("temp");
 }

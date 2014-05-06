@@ -16,7 +16,7 @@ Options:
     --help          : Display help file
     -pheno, -p      : phenotype file [default: last argument]
     -geno, -g       : genotype file [default stdin]
-    -output, -o     : output file [default stdout, cannot be stdout for -fwer to work]
+    -output, -o     : output file [default stdout]
     -pheno-id, -pi  : phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
     -geno-id, -gi   : genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
     -pheno-col, -pc : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
@@ -131,14 +131,7 @@ Opts getOptions(string[string] option){
 	  opts.seed = to!int(value[1]);
 	}
       if ("fwer" in option)
-	{
-	  if (!("o" in option))
-	    {
-	      writeln("Multiple testing correction must be written to file.");
-	      exit(0);
-	    }
-	  opts.min = true;
-	}
+	opts.min = true;
       if ("pval" in option)
 	opts.pval = true;
     }

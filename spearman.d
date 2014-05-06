@@ -62,7 +62,12 @@ void main(string[] args){
 	outFile = File(options["o"], "w");
     } 
   else
-    outFile = stdout;
+    {
+      if (opts.min)
+	outFile = File("temp","w");
+      else
+	outFile = stdout;
+    }
 
   foreach(line; phenFile.byLine())
     {
@@ -125,9 +130,13 @@ void main(string[] args){
     pvalPerm(phenFile, genFile, outFile, opts, rankPhenotype);
   else
     {
-      double[] minPvalues = minPerm(phenFile, genFile, outFile, opts, rankPhenotype, options["o"]);
+      double[] minPvalues = minPerm(phenFile, genFile, outFile, opts, rankPhenotype);
       outFile.close();
-      auto oldFile = File(options["o"] ~ "temp", "r");
+      File oldFile;
+      if ("o" in options)
+      	oldFile = File(options["o"] ~ "temp", "r");
+      else
+      	oldFile = File("temp", "r");
       writeFWER(oldFile, options, minPvalues);
     }
 }
