@@ -14,9 +14,9 @@ struct Opts{
 auto helpString = "Usage: spearman [options]:
 Options:
     --help          : Display help file
-    -pheno, -p      : phenotype file [mandatory]
+    -pheno, -p      : phenotype file [default: last argument]
     -geno, -g       : genotype file [default stdin]
-    -output, -o     : output file [default stdout, must be specified for -keep-min to work]
+    -output, -o     : output file [default stdout, cannot be stdout for -fwer to work]
     -pheno-id, -pi  : phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
     -geno-id, -gi   : genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
     -pheno-col, -pc : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
@@ -30,7 +30,7 @@ Input file formats:
     genotype        : Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by -gs are copied to results file
 
 Output:
-    Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns and then a p value column for every calculated permutation of the data
+    Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the -pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if -fwer is used. If neither flag is present, then p values for calculated on permuted datasets are reported next.
 ";
 
 void giveHelp(){
@@ -77,7 +77,9 @@ string[string] getOpts(string[] args){
 	    }
 	}
     }
-  if (!("p" in opts) || !opts["p"].exists)
+  if (!("p" in opts))
+    opts["p"] = args[args.length - 1];
+  if (!opts["p"].exists)
     {
       writeln("Phenotype file missing");
       exit(0);
