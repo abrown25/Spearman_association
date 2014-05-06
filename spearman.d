@@ -24,7 +24,7 @@ import arg_parse, calculation, run_analysis;
 
 void main(string[] args){
   string[string] options;
-  Opts opts;
+  Opts tempOpts;
   double[] phenotype;
   double[] genotype;
   double singlePerm;
@@ -44,8 +44,9 @@ void main(string[] args){
     giveHelp();  
   
   options = getOpts(args[1..$]);
-  opts = getOptions(options);
-
+  tempOpts = getOptions(options);
+  immutable(Opts) opts = cast(immutable) tempOpts;
+ 
   phenFile = File(options["p"]);
 
   if ("g" in options)
@@ -96,10 +97,15 @@ void main(string[] args){
 
   writeln(headerLine);
   
+
   immutable(double[]) rankPhenotype = cast(immutable)rankTemp;
+
   if (!opts.run)
     noPerm(phenFile, genFile, opts, rankPhenotype);
+  else if (!opts.pval)
+    simplePerm(phenFile, genFile, opts, rankPhenotype);
+  else if (!opts.min)
+    pvalPerm(phenFile, genFile, opts, rankPhenotype);
   else
-    fuck(phenFile, genFile, opts, rankPhenotype);
-
+    minPerm(phenFile, genFile, opts, rankPhenotype);
 }
