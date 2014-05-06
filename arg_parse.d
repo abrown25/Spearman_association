@@ -1,12 +1,15 @@
 import std.stdio, std.algorithm, std.file, std.string, std.c.stdlib, std.conv;
 
-struct PermOpts{
+struct Opts{
   bool run = false;
   bool give_seed = false;
   bool min = false;
+  bool pval = false;
   int number = 0;
   int seed = 0;
   string minFile;
+  int skip = 0;
+  int phenC = 0;
 }
 
 auto helpString = "Usage: spearman [options]:
@@ -107,9 +110,13 @@ int getPhenColumn(string[string] opt){
   return phenCol;
 }
 
-PermOpts getPermOptions(string[string] option){
-  PermOpts opts;
+Opts getOptions(string[string] option){
+  Opts opts;
   string[] value;
+  
+  opts.skip = getGenotypeSkip(option);
+  opts.phenC = getPhenColumn(option);
+
   if ("perm" in option)
     {
       opts.run = true;
@@ -125,6 +132,8 @@ PermOpts getPermOptions(string[string] option){
 	  opts.min = true;
 	  opts.minFile = option["keep-min"];
 	}
+      if ("pval" in option)
+	opts.pval = true;
     }
   return opts;
 }

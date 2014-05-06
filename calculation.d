@@ -85,7 +85,7 @@ double corPvalue(double[] vector1, immutable(double[]) vector2){
   return results;
 }
 
-double[][] getPerm(PermOpts permOpts, immutable(double[]) vector1){
+double[][] getPerm(Opts permOpts, immutable(double[]) vector1){
   double[][] outPerm;
 
   if (permOpts.give_seed)

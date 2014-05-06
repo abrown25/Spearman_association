@@ -20,41 +20,33 @@
 */
 
 import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file, std.random, std.range;
-import arg_parse, calculation;
+import arg_parse, calculation, noPerms;
 
 void main(string[] args){
   string[string] options;
+  Opts opts;
   double[] phenotype;
   double[] genotype;
   double singlePerm;
   string[] splitLine;
   double[] cor = new double[3];
-  int skip = 0;
-  int phenColumn = 0;
-  bool pvalCalc = false;
-  bool permRun = false;
   string[] genId;
   string[] phenId;
-  PermOpts permOptions;
-  immutable(double[])[] perms;
 
   auto phenFile = File();
   auto genFile = File();
+  auto outFile = File();
+
+  immutable(double[])[] perms;
+
 
   if (args.length == 1)
     giveHelp();  
   
   options = getOpts(args[1..$]);
+  opts = getOptions(options);
 
   phenFile = File(options["p"]);
-  skip = getGenotypeSkip(options);
-  phenColumn = getPhenColumn(options);
-  permOptions = getPermOptions(options);
-  if (permOptions.run)
-    permRun = true;
-
-  if ("pval" in options)
-    pvalCalc = true;
 
   if ("g" in options)
     genFile = File(options["g"]);
@@ -64,7 +56,7 @@ void main(string[] args){
   foreach(line; phenFile.byLine())
     {
       auto phenLine = split(chomp(line));
-      phenotype ~= to!double(phenLine[phenColumn]);
+      phenotype ~= to!double(phenLine[opts.phenC]);
       if ("pi" in options)
 	phenId ~= phenLine[0].idup;
     }
@@ -73,15 +65,15 @@ void main(string[] args){
   if ("gi" in options)
     {
       splitLine = split(chomp(genFile.readln()));
-      genId = splitLine[skip..$];
-      headerLine ~= join(splitLine[0..skip], "\t") ~ "\tCor\tT_stat\tP";
-      if (permRun)
+      genId = splitLine[opts.skip..$];
+      headerLine ~= join(splitLine[0..opts.skip], "\t") ~ "\tCor\tT_stat\tP";
+      if (opts.run)
 	{
-	  if(pvalCalc)
-	    headerLine ~= "PermP";
+	  if(opts.pval)
+	    headerLine ~= "\tPermP";
 	  else
 	    {
-	      for (auto j = 1; j < permOptions.number + 1; j++)
+	      for (auto j = 1; j < opts.number + 1; j++)
 		headerLine ~= "\tP" ~ to!string(j);
 	    }
 	}
@@ -106,12 +98,12 @@ void main(string[] args){
   
   immutable(double[]) rankPhenotype = cast(immutable)rankTemp;
 
-  double[] minPvalues = new double[permOptions.number];
+  double[] minPvalues = new double[opts.number];
   
-  if (permOptions.run)
+  if (opts.run)
     {
-      perms = cast(immutable)getPerm(permOptions, rankPhenotype);
-      if (permOptions.min)
+      perms = cast(immutable)getPerm(opts, rankPhenotype);
+      if (opts.min)
 	{
 	  minPvalues[] = 1.0;
 	}
@@ -120,22 +112,22 @@ void main(string[] args){
   foreach(line; genFile.byLine())
     {
       splitLine = to!(string[])(split(line));
-      if (skip > 0)
-	std.stdio.write(join(splitLine[0..skip], "\t"), "\t");
-      if (splitLine.length != phenotype.length + skip)
+      if (opts.skip > 0)
+	std.stdio.write(join(splitLine[0..opts.skip], "\t"), "\t");
+      if (splitLine.length != phenotype.length + opts.skip)
 	{
-	  for (auto j=0; j < permOptions.number + 2; j++)
+	  for (auto j=0; j < opts.number + 2; j++)
 	    std.stdio.write("NA\t");
 	  writeln("NA");
 	}
       else
 	{
-	  genotype = to!(double[])(splitLine[skip..$]);
+	  genotype = to!(double[])(splitLine[opts.skip..$]);
 	  try {
 	    rankGenotype = transform(rank(genotype));
 	    cor = correlation(rankGenotype, rankPhenotype);
 	    std.stdio.write(join(to!(string[])(cor), "\t"));
-	    if (pvalCalc)
+	    if (opts.pval)
 	      {
 		float countBetter = 0.0;
 		foreach(i, e; perms)
@@ -160,11 +152,11 @@ void main(string[] args){
 		std.stdio.write("\n");
 	      }
 	  } catch(VarianceException e){
-	    if (pvalCalc)
+	    if (opts.pval)
 	      writeln("NaN\tNaN\tNaN\tNaN");
 	    else
 	      {
-		for (auto j=0; j < permOptions.number + 2; j++)
+		for (auto j=0; j < opts.number + 2; j++)
 		  std.stdio.write("NaN\t");
 		writeln("NaN");
 	      }
