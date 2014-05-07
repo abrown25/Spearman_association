@@ -116,7 +116,6 @@ int getPhenColumn(string[string] opt){
 
 Opts getOptions(string[string] option){
   Opts opts;
-  string[] value;
   
   opts.skip = getGenotypeSkip(option);
   opts.phenC = getPhenColumn(option);
@@ -124,7 +123,7 @@ Opts getOptions(string[string] option){
   if ("perm" in option)
     {
       opts.run = true;
-      value = split(option["perm"], ",");
+      string[] value = split(option["perm"], ",");
       opts.number = to!int(value[0]);
       if (value.length==2)
 	{

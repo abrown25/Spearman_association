@@ -23,37 +23,23 @@ import std.string, std.conv, std.stdio, std.c.stdlib;
 import arg_parse, calculation, run_analysis;
 
 void main(string[] args){
-  string[string] options;
-  Opts tempOpts;
-  double[] phenotype;
-  double[] genotype;
-  double singlePerm;
-  string[] splitLine;
-  double[] cor = new double[3];
-  string[] genId;
-  string[] phenId;
-
-  File phenFile;
-  File genFile;
-  File outFile;
-
-  immutable(double[])[] perms;
-
 
   if (args.length == 1)
     giveHelp();  
   
-  options = getOpts(args[1..$]);
-  tempOpts = getOptions(options);
+  string[string] options = getOpts(args[1..$]);
+  Opts tempOpts = getOptions(options);
   immutable(Opts) opts = cast(immutable) tempOpts;
  
-  phenFile = File(options["p"]);
+  File phenFile = File(options["p"]);
 
+  File genFile;
   if ("g" in options)
     genFile = File(options["g"]);
   else
     genFile = stdin;
 
+  File outFile;
   if ("o" in options)
     {
       if (opts.min)
@@ -69,6 +55,9 @@ void main(string[] args){
 	outFile = stdout;
     }
 
+  double[] phenotype;
+  string[] phenId;
+
   foreach(line; phenFile.byLine())
     {
       auto phenLine = split(chomp(line));
@@ -78,6 +67,9 @@ void main(string[] args){
     }
 
   string headerLine;
+  string[] genId;
+  string[] splitLine;
+
   if ("gi" in options)
     {
       splitLine = split(chomp(genFile.readln()));
@@ -121,6 +113,7 @@ void main(string[] args){
     writeln("Failed to run analysis: Phenotype is constant");
     exit(0);
   }
+
 
   outFile.writeln(headerLine);
   

@@ -32,11 +32,7 @@ double[] readGenotype(char[] line, File outFile, Opts opts, ulong indCount){
 }
 
 void noPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
-
-  string[] splitLine;
-  double[] genotype;
   double[] rankGenotype;
-
   double[3] cor;
 
   
@@ -57,7 +53,6 @@ void noPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(doub
 
 void simplePerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
   double[] rankGenotype;
-
   double singlePerm;
   double[3] cor;
 
@@ -86,7 +81,6 @@ void simplePerm(File phenFile, File genFile, File outFile, Opts opts, immutable(
 
 void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
   double[] rankGenotype;
-
   double singlePerm;
   double[3] cor;
 
@@ -98,14 +92,14 @@ void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(do
 	rankGenotype = readGenotype(line, outFile, opts, rankPhenotype.length);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
-	float countBetter = 0.0;
+	double countBetter = 1.0;
 	foreach(i, e; perms)
 	  {
 	    singlePerm = corPvalue(rankGenotype, e);
 	    if (singlePerm < cor[2])
 	      ++countBetter;
 	  }
-	outFile.writeln("\t", countBetter/perms.length);
+	outFile.writeln("\t", countBetter/(perms.length + 1));
       } catch(VarianceException e){
 	writeError("NaN", outFile, 4);
       } catch(InputException e){
@@ -118,13 +112,10 @@ void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(do
 double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
   double[] minPvalues = new double[opts.number];
   double[] rankGenotype;
-
   double singlePerm;
-  double[] cor = new double[3];
+  double[3] cor;
 
-  immutable(double[])[] perms;
-
-  perms = cast(immutable)getPerm(opts, rankPhenotype);
+  immutable(double[])[] perms = cast(immutable)getPerm(opts, rankPhenotype);
 
   minPvalues[] = 1.0;
   foreach(line; genFile.byLine())
@@ -133,7 +124,7 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
 	rankGenotype = readGenotype(line, outFile, opts, rankPhenotype.length);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
-	float countBetter = 0.0;
+	double countBetter = 1.0;
 	foreach(i, e; perms)
 	  {
 	    singlePerm = corPvalue(rankGenotype, e);
@@ -142,7 +133,7 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
 	    if (singlePerm < minPvalues[i])
 	      minPvalues[i] = singlePerm;
 	  }
-	outFile.writeln("\t", countBetter/perms.length);
+	outFile.writeln("\t", countBetter/(perms.length + 1));
       } catch(VarianceException e){
 	writeError("NaN", outFile, 4);
       } catch(InputException e){
