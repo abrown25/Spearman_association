@@ -54,7 +54,7 @@ string[string] getOpts(string[] args){
     {
       if (arg.startsWith("-"))
 	{
-	  prefix = chompPrefix(arg.idup,"-");
+	  prefix = chompPrefix(arg.idup, "-");
 	  if (prefix=="-help")
 	    giveHelp();
 	  if (prefix in optsDictParam)

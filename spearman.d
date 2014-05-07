@@ -50,7 +50,7 @@ void main(string[] args){
   else
     {
       if (opts.min)
-	outFile = File("temp","w");
+	outFile = File("temp", "w");
       else
 	outFile = stdout;
     }
@@ -61,7 +61,12 @@ void main(string[] args){
   foreach(line; phenFile.byLine())
     {
       auto phenLine = split(chomp(line));
-      phenotype ~= to!double(phenLine[opts.phenC]);
+      try{
+	phenotype ~= to!double(phenLine[opts.phenC]);
+      } catch(ConvException e){
+	writeln("Failed to run analysis: Non-numeric data in phenotype");
+	exit(0);
+      }
       if ("pi" in options)
 	phenId ~= phenLine[0].idup;
     }
@@ -114,12 +119,10 @@ void main(string[] args){
     exit(0);
   }
 
+  immutable(double[]) rankPhenotype = cast(immutable)rankTemp;
 
   outFile.writeln(headerLine);
   
-
-  immutable(double[]) rankPhenotype = cast(immutable)rankTemp;
-
   if (!opts.run)
     noPerm(phenFile, genFile, outFile, opts, rankPhenotype);
   else if (!opts.pval && !opts.min)
@@ -130,11 +133,6 @@ void main(string[] args){
     {
       double[] minPvalues = minPerm(phenFile, genFile, outFile, opts, rankPhenotype);
       outFile.close();
-      File oldFile;
-      if ("o" in options)
-      	oldFile = File(options["o"] ~ "temp", "r");
-      else
-      	oldFile = File("temp", "r");
-      writeFWER(oldFile, options, minPvalues);
+      writeFWER(options, minPvalues);
     }
 }

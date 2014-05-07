@@ -7,7 +7,7 @@ class InputException : Exception {
 
 void writeError(string error, File outFile, int count){
   for (auto j = 0; j < count - 1; j++)
-    outFile.write(error,"\t");
+    outFile.write(error, "\t");
   outFile.writeln(error);
 }
 
@@ -46,6 +46,8 @@ void noPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(doub
 	writeError("NaN", outFile, 3);
       } catch(InputException e){
 	writeError("NA", outFile, 3);
+      } catch(ConvException e){
+	writeError("Idiot", outFile, 3);
       }
     }
 }
@@ -68,13 +70,15 @@ void simplePerm(File phenFile, File genFile, File outFile, Opts opts, immutable(
 	foreach(i, e; perms)
 	  {
 	    singlePerm = corPvalue(rankGenotype, e);
-	    outFile.write(singlePerm,"\t");
+	    outFile.write(singlePerm, "\t");
 	  }
 	outFile.write("\n");
       } catch(VarianceException e){
 	writeError("NaN", outFile, 3 + opts.number);
       } catch(InputException e){
 	writeError("NA", outFile, 3 + opts.number);
+      } catch(ConvException e){
+	writeError("Idiot", outFile, 3 + opts.number);
       }
     }
 }
@@ -104,6 +108,8 @@ void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(do
 	writeError("NaN", outFile, 4);
       } catch(InputException e){
 	writeError("NA", outFile, 4);
+      } catch(ConvException e){
+	writeError("Idiot", outFile, 4);
       }
     }
 }
@@ -138,28 +144,38 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
 	writeError("NaN", outFile, 4);
       } catch(InputException e){
 	writeError("NA", outFile, 4);
+      } catch(ConvException e){
+	writeError("Idiot", outFile, 4);
       }
     }
   return minPvalues;
 }
 
-void writeFWER(File oldFile, string[string] options, double[] minPvalues){
-  double pVal;
-  double adjusted;
-  auto sortMin = sort!()(minPvalues);
+void writeFWER(string[string] options, double[] minPvalues){
+
+  File oldFile;
+  if ("o" in options)
+    oldFile = File(options["o"] ~ "temp", "r");
+  else
+    oldFile = File("temp", "r");
+
   File newFile;
   if ("o" in options) 
     newFile = File(options["o"], "w");
   else
     newFile = stdout;
 
+  auto sortMin = sort!()(minPvalues);
   double len = sortMin.length + 1.0;
+
   newFile.write(oldFile.readln());
 
+  double pVal;
+  double adjusted;
   foreach(line; oldFile.byLine()){
     auto splitLine = split(chomp(line));
     auto lastEntry = splitLine[(splitLine.length - 2)];
-    if (lastEntry=="NaN" || lastEntry=="NA")
+    if (lastEntry=="NaN" || lastEntry=="NA" || lastEntry=="Idiot")
       newFile.writeln(line, "\t", lastEntry);
     else
       {

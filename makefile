@@ -1,13 +1,16 @@
 spearman : spearman.d arg_parse.d calculation.d run_analysis.d
 	dmd -L-lgsl -L-lgslcblas spearman.d arg_parse.d calculation.d run_analysis.d
 
-.PHONY : perm.p.calc perm tabix.perm fwer clean release
+.PHONY : perm.p.calc perm tabix.perm fwer clean release gdc
 
 clean:
-	rm -f spearman.o spearman
+	rm -f *.o spearman spearman_gdc
 
 release : spearman.d arg_parse.d calculation.d run_analysis.d
 	dmd -O -release -noboundscheck -L-lgsl -L-lgslcblas spearman.d arg_parse.d calculation.d run_analysis.d
+
+gdc : spearman.d arg_parse.d calculation.d run_analysis.d
+	gdc spearman.d arg_parse.d calculation.d run_analysis.d -L/usr/include/gsl/ -l gsl -L/usr/include/gsl/gsl_cblas -l gslcblas -O3 -o spearman_gdc
 
 perm.p.calc:
 	cat genotype.txt | ./spearman -p phenotype.txt -pi -gi -pc 3 -gs 2 -perm 1000000,12 -pval

@@ -19,16 +19,16 @@ double[] rank(ref double[] rankArray){
   foreach(i, ref x; orderIndex)
     x = i;
 
-  sort!((a,b) { return rankArray[a] < rankArray[b] ; } )(orderIndex);
+  sort!((a, b) { return rankArray[a] < rankArray[b] ; } )(orderIndex);
 
   foreach(i, e; orderIndex)
     {
       sumrank += i;
       dupcount++;
       if (i==(orderIndex.length - 1)
-	  || rankArray[e] != rankArray[orderIndex[i+1]])
+	  || rankArray[e] != rankArray[orderIndex[i + 1]])
 	{
-	  avgrank = to!double(sumrank)/dupcount +1;
+	  avgrank = to!double(sumrank) / dupcount + 1;
 	  for (ulong j = i - dupcount + 1; j < i + 1; j++)
 	    rankIndex[orderIndex[j]] = avgrank;
 	  sumrank = 0;
@@ -64,13 +64,13 @@ double[] transform(double[] vector){
   return normalised;
 }
 
-double[] correlation(double[] vector1, immutable(double[]) vector2){
-  double[] results = [0.0, 0.0, 0.0];
+double[3] correlation(double[] vector1, immutable(double[]) vector2){
+  double[3] results = 0.0;
 
   foreach(i, e; vector1)
-    results[0] += e*vector2[i];
+    results[0] += e * vector2[i];
 
-  results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0]*results[0]));
+  results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0] * results[0]));
   results[2] = gsl_cdf_tdist_P(-fabs(results[1]), vector1.length - 2) * 2;
   return results;
 }
@@ -79,9 +79,9 @@ double corPvalue(double[] vector1, immutable(double[]) vector2){
   double results = 0.0;
   
   foreach(i, e; vector1)
-    results += e*vector2[i];
+    results += e * vector2[i];
 
-  results = results * sqrt((vector1.length - 2) / (1 - results*results));
+  results = results * sqrt((vector1.length - 2) / (1 - results * results));
   results = gsl_cdf_tdist_P(-fabs(results), vector1.length - 2) * 2;
   return results;
 }
