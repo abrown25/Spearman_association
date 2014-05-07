@@ -33,9 +33,9 @@ void main(string[] args){
   string[] genId;
   string[] phenId;
 
-  auto phenFile = File();
-  auto genFile = File();
-  auto outFile = File();
+  File phenFile;
+  File genFile;
+  File outFile;
 
   immutable(double[])[] perms;
 
