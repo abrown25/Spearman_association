@@ -5,6 +5,7 @@ struct Opts{
   bool give_seed = false;
   bool min = false;
   bool pval = false;
+
   int number = 0;
   int seed = 0;
   int skip = 0;
