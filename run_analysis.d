@@ -173,7 +173,7 @@ void writeFWER(File oldFile, string[string] options, double[] minPvalues){
     else
       {
     	pVal = to!double(lastEntry);
-    	adjusted = (sortMin.lowerBound(pVal).length + 1) / len;
+    	adjusted = (sortMin.lowerBound!(SearchPolicy.gallopBackwards)(pVal).length + 1) / len;
     	newFile.writeln(line, "\t", adjusted);
       }
   }
