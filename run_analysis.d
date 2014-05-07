@@ -6,7 +6,7 @@ class InputException : Exception {
 }
 
 void writeError(string error, File outFile, int count){
-  for (auto j = 0; j < count; ++j)
+  for (auto j = 0; j < count - 1; j++)
     outFile.write(error,"\t");
   outFile.writeln(error);
 }
@@ -79,7 +79,7 @@ void simplePerm(File phenFile, File genFile, File outFile, Opts opts, immutable(
       } catch(VarianceException e){
 	writeError("NaN", outFile, 3 + opts.number);
       } catch(InputException e){
-	writeError("NA", outFile, opts.number);
+	writeError("NA", outFile, 3 + opts.number);
       }
     }
 }
@@ -144,9 +144,9 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
 	  }
 	outFile.writeln("\t", countBetter/perms.length);
       } catch(VarianceException e){
-	writeError("NaN", outFile, 5);
+	writeError("NaN", outFile, 4);
       } catch(InputException e){
-	writeError("NA", outFile, 5);
+	writeError("NA", outFile, 4);
       }
     }
   return minPvalues;
