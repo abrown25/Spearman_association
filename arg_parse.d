@@ -61,7 +61,7 @@ string[string] getOpts(string[] args){
 	    {
 	      if (i==(args.length - 1))
 		{
-		  writeln("Missing parameter for -", prefix, " option");
+		  writeln("Failed to run analysis: Missing parameter for -", prefix, " option");
 		  exit(0);
 		}
 	      opts[optsDictParam[prefix]] = args[i+1].idup;
@@ -72,7 +72,7 @@ string[string] getOpts(string[] args){
 		opts[optsDictFlag[prefix]] = "T";
 	      else
 		{
-		  writeln("Unknown parameter");
+		  writeln("Failed to run analysis: Unknown command -", prefix);
 		  exit(0);
 		}
 	    }
@@ -82,12 +82,12 @@ string[string] getOpts(string[] args){
     opts["p"] = args[args.length - 1];
   if (!opts["p"].exists)
     {
-      writeln("Phenotype file missing");
+      writeln("Failed to run analysis: Phenotype file missing");
       exit(0);
     }
   if ("g" in opts && !opts["g"].exists)
     {
-      writeln("Genotype file missing");
+      writeln("Failed to run analysis: Genotype file missing");
       exit(0);
     }
   return opts;
@@ -135,6 +135,12 @@ Opts getOptions(string[string] option){
 	opts.min = true;
       if ("pval" in option)
 	opts.pval = true;
+    } 
+  else if (("fwer" in option) || ("pval" in option))
+    {
+      writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
+      exit(0);
     }
+
   return opts;
 }

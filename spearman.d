@@ -84,6 +84,11 @@ void main(string[] args){
       genId = splitLine[opts.skip..$];
       headerLine ~= join(splitLine[0..opts.skip], "\t");
       headerLine ~= "\t";
+    } 
+  else if(opts.skip > 0)
+    {
+    for (auto j = 1; j < opts.skip + 1; j++)
+      headerLine ~= ("F" ~ to!string(j) ~ "\t");
     }
 
   headerLine ~= "Cor\tT_stat\tP";
@@ -97,14 +102,14 @@ void main(string[] args){
       else
 	{
 	  for (auto j = 1; j < opts.number + 1; j++)
-	    headerLine ~= "\tP" ~ to!string(j);
+	    headerLine ~= ("\tP" ~ to!string(j));
 	}
     }
     
 
   if ("pi" in options && "gi" in options && genId!=phenId)
     {
-      writeln("Mismatched ID");
+      writeln("Failed to run analysis: Mismatched IDs");
       exit(0);
     }
 
@@ -113,7 +118,7 @@ void main(string[] args){
   try {
     rankTemp = transform(rank(phenotype));
   } catch(VarianceException e) {
-    writeln("Phenotype is constant");
+    writeln("Failed to run analysis: Phenotype is constant");
     exit(0);
   }
 
