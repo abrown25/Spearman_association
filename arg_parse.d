@@ -1,4 +1,4 @@
-import std.stdio, std.algorithm, std.file, std.string, std.c.stdlib, std.conv;
+import std.stdio, std.file, std.string, std.c.stdlib, std.conv;
 
 struct Opts{
   bool run = false;

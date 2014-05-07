@@ -1,5 +1,6 @@
-import std.algorithm, std.conv, std.math, std.random, std.range;
+import std.algorithm, std.conv, std.math, std.random;
 import arg_parse;
+
 extern(C) {
   double gsl_cdf_tdist_P (double x, double nu);
 }

@@ -1,4 +1,4 @@
-import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file, std.random, std.range;
+import std.string, std.conv, std.stdio, std.algorithm, std.range;
 import arg_parse, calculation;
 
 class InputException : Exception {

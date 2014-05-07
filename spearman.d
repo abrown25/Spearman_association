@@ -19,7 +19,7 @@
 
 */
 
-import std.string, std.conv, std.stdio, std.algorithm, std.math, std.c.stdlib, std.file, std.random, std.range;
+import std.string, std.conv, std.stdio, std.c.stdlib;
 import arg_parse, calculation, run_analysis;
 
 void main(string[] args){
