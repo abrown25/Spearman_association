@@ -19,7 +19,7 @@
 
 */
 
-import std.string, std.conv, std.stdio, std.c.stdlib;
+import std.string, std.conv, std.stdio, std.c.stdlib, std.file;
 import arg_parse, calculation, run_analysis;
 
 void main(string[] args){
@@ -30,29 +30,46 @@ void main(string[] args){
   string[string] options = getOpts(args[1..$]);
   immutable opts = cast(immutable) getOptions(options);
  
-  File phenFile = File(options["p"]);
+  File phenFile;
+    try{
+      phenFile = File(options["p"]);
+    } catch(Exception e){
+      writeln(e.msg);
+      exit(0);
+    }
 
   File genFile;
-  if ("g" in options)
-    genFile = File(options["g"]);
-  else
-    genFile = stdin;
+
+  try{
+    if ("g" in options)
+      genFile = File(options["g"]);
+    else
+      genFile = stdin;
+  } catch(Exception e){
+    writeln(e.msg);
+    exit(0);
+  }
 
   File outFile;
-  if ("o" in options)
-    {
-      if (opts.min)
-	outFile = File(options["o"] ~ "temp", "w");
-      else
-	outFile = File(options["o"], "w");
-    } 
-  else
-    {
-      if (opts.min)
-	outFile = File("temp", "w");
-      else
-	outFile = stdout;
-    }
+  try{
+    if ("o" in options)
+      {
+	if (opts.min)
+	  outFile = File(options["o"] ~ "temp", "w");
+	else
+	  outFile = File(options["o"], "w");
+      } 
+    else
+      {
+	if (opts.min)
+	  outFile = File("temp", "w");
+	else
+	  outFile = stdout;
+      }
+  } catch(Exception e){
+    writeln(e.msg);
+    exit(0);
+  }
 
   double[] phenotype;
   string[] phenId;

@@ -1,13 +1,10 @@
 spearman : spearman.d arg_parse.d calculation.d run_analysis.d
-	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d spearman.d
+	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d spearman.d -ofspearman
 
 .PHONY : perm.p.calc perm tabix.perm fwer clean release gdc
 
 clean:
 	rm -f *.o spearman spearman_gdc
-
-release : spearman.d arg_parse.d calculation.d run_analysis.d
-	dmd -O -release -noboundscheck -L-lgsl -L-lgslcblas spearman.d arg_parse.d calculation.d run_analysis.d
 
 gdc : spearman.d arg_parse.d calculation.d run_analysis.d
 	gdc spearman.d arg_parse.d calculation.d run_analysis.d -L/usr/include/gsl/ -l gsl -L/usr/include/gsl/gsl_cblas -l gslcblas -O3 -o spearman_gdc
