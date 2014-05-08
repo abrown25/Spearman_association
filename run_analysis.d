@@ -11,21 +11,21 @@ void writeError(string error, File outFile, int count){
   outFile.writeln(error);
 }
 
-double[] readGenotype(char[] line, File outFile, Opts opts, ulong indCount){
+double[] readGenotype(char[] line, File outFile, int skip, ulong indCount){
   string[] splitLine;
   double[] genotype;
   double[] rankGenotype;
 
   splitLine = to!(string[])(split(line));
     
-  if (opts.skip > 0)
-    outFile.write(join(splitLine[0..opts.skip], "\t"), "\t");
+  if (skip > 0)
+    outFile.write(join(splitLine[0..skip], "\t"), "\t");
 
-  if (splitLine.length != indCount + opts.skip)
+  if (splitLine.length != indCount + skip)
     throw new InputException("");
   else
     {
-      genotype = to!(double[])(splitLine[opts.skip..$]);
+      genotype = to!(double[])(splitLine[skip..$]);
       rankGenotype = transform(rank(genotype));
     }
   return(rankGenotype);
@@ -34,12 +34,13 @@ double[] readGenotype(char[] line, File outFile, Opts opts, ulong indCount){
 void noPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
   double[] rankGenotype;
   double[3] cor;
+  const nInd = rankPhenotype.length;
+  const skip = opts.skip;
 
-  
   foreach(line; genFile.byLine())
     {
       try {
-	rankGenotype = readGenotype(line, outFile, opts, rankPhenotype.length);
+	rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.writeln(join(to!(string[])(cor), "\t"));
       } catch(VarianceException e){
@@ -57,13 +58,15 @@ void simplePerm(File phenFile, File genFile, File outFile, Opts opts, immutable(
   double[] rankGenotype;
   double singlePerm;
   double[3] cor;
+  const nInd = rankPhenotype.length;
+  const skip = opts.skip;
 
   immutable(double[])[] perms = cast(immutable)getPerm(opts, rankPhenotype);
   
   foreach(line; genFile.byLine())
     {
       try {
-	rankGenotype = readGenotype(line, outFile, opts, rankPhenotype.length);
+	rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
 	outFile.write("\t");
@@ -87,13 +90,16 @@ void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(do
   double[] rankGenotype;
   double singlePerm;
   double[3] cor;
+  const nInd = rankPhenotype.length;
+  const skip = opts.skip;
 
   immutable(double[])[] perms = cast(immutable)getPerm(opts, rankPhenotype);
+  const nPerm = perms.length;
   
   foreach(line; genFile.byLine())
     {
       try {
-	rankGenotype = readGenotype(line, outFile, opts, rankPhenotype.length);
+	rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
 	double countBetter = 1.0;
@@ -103,7 +109,7 @@ void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(do
 	    if (singlePerm < cor[2])
 	      ++countBetter;
 	  }
-	outFile.writeln("\t", countBetter/(perms.length + 1));
+	outFile.writeln("\t", countBetter/(nPerm + 1));
       } catch(VarianceException e){
 	writeError("NaN", outFile, 4);
       } catch(InputException e){
@@ -120,14 +126,17 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
   double[] rankGenotype;
   double singlePerm;
   double[3] cor;
+  const nInd = rankPhenotype.length;
+  const skip = opts.skip;
 
   immutable(double[])[] perms = cast(immutable)getPerm(opts, rankPhenotype);
+  const nPerm = perms.length;
 
   minPvalues[] = 1.0;
   foreach(line; genFile.byLine())
     {
       try {
-	rankGenotype = readGenotype(line, outFile, opts, rankPhenotype.length);
+	rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
 	double countBetter = 1.0;
@@ -139,7 +148,7 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
 	    if (singlePerm < minPvalues[i])
 	      minPvalues[i] = singlePerm;
 	  }
-	outFile.writeln("\t", countBetter/(perms.length + 1));
+	outFile.writeln("\t", countBetter/(nPerm + 1));
       } catch(VarianceException e){
 	writeError("NaN", outFile, 4);
       } catch(InputException e){

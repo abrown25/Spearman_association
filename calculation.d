@@ -91,8 +91,9 @@ double[][] getPerm(Opts permOpts, immutable(double[]) vector1){
 
   if (permOpts.give_seed)
     rndGen.seed(permOpts.seed);
+
   outPerm = new double[][permOpts.number];
-  for (int i=0; i<permOpts.number; i++)
+  for (int i = 0; i < permOpts.number; i++)
     {
       outPerm[][i] = vector1.dup;
       randomShuffle(outPerm[][i]);
