@@ -1,5 +1,5 @@
 spearman : spearman.d arg_parse.d calculation.d run_analysis.d
-	dmd -O -release -noboundscheck -L-lgsl -L-lgslcblas spearman.d arg_parse.d calculation.d run_analysis.d
+	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d spearman.d
 
 .PHONY : perm.p.calc perm tabix.perm fwer clean release gdc
 
