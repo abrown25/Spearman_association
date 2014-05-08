@@ -102,14 +102,14 @@ void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(do
 	rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
-	double countBetter = 1.0;
+	double countBetter = 0.0;
 	foreach(i, e; perms)
 	  {
 	    singlePerm = corPvalue(rankGenotype, e);
 	    if (singlePerm < cor[2])
 	      ++countBetter;
 	  }
-	outFile.writeln("\t", countBetter/(nPerm + 1));
+	outFile.writeln("\t", countBetter / nPerm);
       } catch(VarianceException e){
 	writeError("NaN", outFile, 4);
       } catch(InputException e){
@@ -139,7 +139,7 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
 	rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
-	double countBetter = 1.0;
+	double countBetter = 0.0;
 	foreach(i, e; perms)
 	  {
 	    singlePerm = corPvalue(rankGenotype, e);
@@ -148,7 +148,7 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
 	    if (singlePerm < minPvalues[i])
 	      minPvalues[i] = singlePerm;
 	  }
-	outFile.writeln("\t", countBetter/(nPerm + 1));
+	outFile.writeln("\t", countBetter/ nPerm);
       } catch(VarianceException e){
 	writeError("NaN", outFile, 4);
       } catch(InputException e){
@@ -160,7 +160,7 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
   return minPvalues;
 }
 
-void writeFWER(string[string] options, double[] minPvalues){
+void writeFWER(string[string] options, ref double[] minPvalues){
 
   File oldFile;
   if ("o" in options)
@@ -175,21 +175,24 @@ void writeFWER(string[string] options, double[] minPvalues){
     newFile = stdout;
 
   auto sortMin = sort!()(minPvalues);
-  double len = sortMin.length + 1.0;
+  double len = sortMin.length;
 
-  newFile.write(oldFile.readln());
+  auto headerLine = oldFile.readln();
+  newFile.write(headerLine);
+
+  auto pvalCol = split(chomp(headerLine)).length - 3;
 
   double pVal;
   double adjusted;
   foreach(line; oldFile.byLine()){
     auto splitLine = split(chomp(line));
-    auto lastEntry = splitLine[(splitLine.length - 2)];
+    auto lastEntry = splitLine[pvalCol];
     if (lastEntry=="NaN" || lastEntry=="NA" || lastEntry=="Idiot")
       newFile.writeln(line, "\t", lastEntry);
     else
       {
     	pVal = to!double(lastEntry);
-    	adjusted = (sortMin.lowerBound!(SearchPolicy.gallopBackwards)(pVal).length + 1) / len;
+    	adjusted = sortMin.lowerBound!(SearchPolicy.gallopBackwards)(pVal).length / len;
     	newFile.writeln(line, "\t", adjusted);
       }
   }

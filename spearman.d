@@ -28,8 +28,7 @@ void main(string[] args){
     giveHelp();  
   
   string[string] options = getOpts(args[1..$]);
-  Opts tempOpts = getOptions(options);
-  immutable(Opts) opts = cast(immutable) tempOpts;
+  immutable opts = cast(immutable) getOptions(options);
  
   File phenFile = File(options["p"]);
 
@@ -110,7 +109,6 @@ void main(string[] args){
       exit(0);
     }
 
-  double[] rankGenotype = new double[phenotype.length];;
   double[] rankTemp;
   try {
     rankTemp = transform(rank(phenotype));
@@ -118,11 +116,11 @@ void main(string[] args){
     writeln("Failed to run analysis: Phenotype is constant");
     exit(0);
   }
-
-  immutable(double[]) rankPhenotype = cast(immutable)rankTemp;
+  
+  immutable rankPhenotype = cast(immutable) rankTemp;
 
   outFile.writeln(headerLine);
-  
+
   if (!opts.run)
     noPerm(phenFile, genFile, outFile, opts, rankPhenotype);
   else if (!opts.pval && !opts.min)
