@@ -83,7 +83,7 @@ void main(string[] args){
 	writeln("Failed to run analysis: Non-numeric data in phenotype");
 	exit(0);
       }
-      if ("pi" in options)
+      if (opts.pid)
 	phenId ~= phenLine[0].idup;
     }
 
@@ -91,7 +91,7 @@ void main(string[] args){
   string[] genId;
   string[] splitLine;
 
-  if ("gi" in options)
+  if (opts.gid)
     {
       splitLine = split(chomp(genFile.readln()));
       genId = splitLine[opts.skip..$];
@@ -120,7 +120,7 @@ void main(string[] args){
     }
     
 
-  if ("pi" in options && "gi" in options && genId!=phenId)
+  if (opts.pid && opts.gid && genId!=phenId)
     {
       writeln("Failed to run analysis: Mismatched IDs");
       exit(0);
