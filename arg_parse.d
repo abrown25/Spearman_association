@@ -14,7 +14,7 @@ struct Opts{
   int phenC = 0;
 }
 
-auto helpString = "Usage: spearman [options]:
+immutable auto helpString = "Usage: spearman [options]:
 Options:
     --help           : Display help file
     -pheno, -p       : phenotype file [default: last argument]
@@ -45,11 +45,11 @@ void giveHelp(){
 string[string] getOpts(string[] args){
   string[string] opts;
   string prefix;
-  string[string] optsDictParam = ["p" : "p", "phenotype" : "p", "g" : "g", "genotype" : "g", 
+  immutable string[string] optsDictParam = ["p" : "p", "phenotype" : "p", "g" : "g", "genotype" : "g", 
 				  "pc" : "pc", "pheno-col" : "pc", "gs" : "gs", "geno-skip" :"gs", 
 				  "perm" :"perm", "output" : "o", "o" : "o"];
 
-  string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", 
+  immutable string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", 
 				 "pheno-id" : "pid", "pval" : "pval", "fwer" : "fwer"];
  
   foreach(i, arg; args)

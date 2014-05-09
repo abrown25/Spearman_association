@@ -31,12 +31,12 @@ void main(string[] args){
   immutable opts = cast(immutable) getOptions(options);
  
   File phenFile;
-    try{
-      phenFile = File(options["p"]);
-    } catch(Exception e){
-      writeln(e.msg);
-      exit(0);
-    }
+  try{
+    phenFile = File(options["p"]);
+  } catch(Exception e){
+    writeln(e.msg);
+    exit(0);
+  }
 
   File genFile;
 
@@ -100,8 +100,8 @@ void main(string[] args){
     } 
   else if(opts.skip > 0)
     {
-    for (auto j = 1; j < opts.skip + 1; j++)
-      headerLine ~= ("F" ~ to!string(j) ~ "\t");
+      for (auto j = 1; j < opts.skip + 1; j++)
+	headerLine ~= ("F" ~ to!string(j) ~ "\t");
     }
 
   headerLine ~= "Cor\tT_stat\tP";
@@ -129,7 +129,7 @@ void main(string[] args){
   double[] rankTemp;
   try {
     rankTemp = transform(rank(phenotype));
-  } catch(VarianceException e) {
+  } catch(VarianceException e){
     writeln("Failed to run analysis: Phenotype is constant");
     exit(0);
   }

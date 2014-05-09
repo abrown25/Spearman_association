@@ -12,22 +12,17 @@ void writeError(string error, File outFile, int count){
 }
 
 double[] readGenotype(char[] line, File outFile, int skip, ulong indCount){
-  string[] splitLine;
-  double[] genotype;
-  double[] rankGenotype;
-
-  splitLine = to!(string[])(split(line));
+  auto splitLine = split(chomp(line));
     
   if (skip > 0)
     outFile.write(join(splitLine[0..skip], "\t"), "\t");
 
   if (splitLine.length != indCount + skip)
     throw new InputException("");
-  else
-    {
-      genotype = to!(double[])(splitLine[skip..$]);
-      rankGenotype = transform(rank(genotype));
-    }
+
+  auto genotype = to!(double[])(splitLine[skip..$]);
+  auto rankGenotype = transform(rank(genotype));
+
   return(rankGenotype);
 }
 
@@ -184,18 +179,20 @@ void writeFWER(string[string] options, ref double[] minPvalues){
 
   double pVal;
   double adjusted;
-  foreach(line; oldFile.byLine()){
-    auto splitLine = split(chomp(line));
-    auto lastEntry = splitLine[pvalCol];
-    if (lastEntry=="NaN" || lastEntry=="NA" || lastEntry=="Idiot")
-      newFile.writeln(line, "\t", lastEntry);
-    else
-      {
-    	pVal = to!double(lastEntry);
-    	adjusted = sortMin.lowerBound!(SearchPolicy.gallopBackwards)(pVal).length / len;
-    	newFile.writeln(line, "\t", adjusted);
-      }
-  }
+  foreach(line; oldFile.byLine())
+    {
+      auto splitLine = split(chomp(line));
+      auto pValString = splitLine[pvalCol];
+      if (pValString=="NaN" || pValString=="NA" || pValString=="Idiot")
+	newFile.writeln(line, "\t", pValString);
+      else
+	{
+	  pVal = to!double(pValString);
+	  adjusted = sortMin.lowerBound!(SearchPolicy.gallopBackwards)(pVal).length / len;
+	  newFile.writeln(line, "\t", adjusted);
+	}
+    }
+
   if ("o" in options)
     std.file.remove(options["o"] ~ "temp");
   else
