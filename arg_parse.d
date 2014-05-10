@@ -1,4 +1,5 @@
-import std.stdio, std.file, std.string, std.c.stdlib, std.conv;
+import std.stdio, std.file, std.string, std.conv;
+import std.c.stdlib : exit;
 
 struct Opts{
   bool run = false;
@@ -42,7 +43,7 @@ void giveHelp(){
 }
 
  
-string[string] getOpts(string[] args){
+string[string] getOpts(in string[] args){
   string[string] opts;
   string prefix;
   immutable string[string] optsDictParam = ["p" : "p", "phenotype" : "p", "g" : "g", "genotype" : "g", 
@@ -59,19 +60,21 @@ string[string] getOpts(string[] args){
 	  prefix = chompPrefix(arg.idup, "-");
 	  if (prefix=="-help")
 	    giveHelp();
-	  if (prefix in optsDictParam)
+	  auto pParam = prefix in optsDictParam;
+	  if (pParam)
 	    {
 	      if (i==(args.length - 1))
 		{
 		  writeln("Failed to run analysis: Missing parameter for -", prefix, " option");
 		  exit(0);
 		}
-	      opts[optsDictParam[prefix]] = args[i+1].idup;
+	      opts[*pParam] = args[i+1].idup;
 	    }
 	  else 
 	    {
-	      if (prefix in optsDictFlag)
-		opts[optsDictFlag[prefix]] = "T";
+	      auto pFlag = prefix in optsDictFlag;
+	      if (pFlag)
+		opts[*pFlag] = "T";
 	      else
 		{
 		  writeln("Failed to run analysis: Unknown command -", prefix);
@@ -80,6 +83,7 @@ string[string] getOpts(string[] args){
 	    }
 	}
     }
+
   if (!("p" in opts))
     opts["p"] = args[args.length - 1];
   if (!opts["p"].exists)
@@ -87,7 +91,8 @@ string[string] getOpts(string[] args){
       writeln("Failed to run analysis: Phenotype file missing");
       exit(0);
     }
-  if ("g" in opts && !opts["g"].exists)
+  auto pGen = "g" in opts;
+  if (pGen && !(*pGen).exists)
     {
       writeln("Failed to run analysis: Genotype file missing");
       exit(0);
@@ -95,11 +100,10 @@ string[string] getOpts(string[] args){
   return opts;
 }
 
-int getGenotypeSkip(string[string] opt){
+int getGenotypeSkip(in string[string] opt){
   int skip = 0;
-  if ("gs" in opt)
     try{
-      skip = to!int(opt["gs"]);
+      skip = to!int(opt.get("gs", "0"));
     } catch (ConvException e){
       writeln("Failed to run analysis: Non-numeric argument to -geno-skip");
       exit(0);
@@ -107,28 +111,29 @@ int getGenotypeSkip(string[string] opt){
   return skip;
 }
 
-int getPhenColumn(string[string] opt){
+int getPhenColumn(in string[string] opt){
   int phenCol;
-  if ("pc" in opt)
+  auto p = "pc" in opt;
+  if (!p)
+    {
+      if ("pid" in opt)
+	phenCol = 1;
+      else
+	phenCol = 0;
+    }
+  else
     {
       try{
-	phenCol = (to!int(opt["pc"]) - 1);
+	phenCol = (to!int(*p) - 1);
       } catch (ConvException e){
 	writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
 	exit(0);
       }
     }
-  else 
-    {
-      if ("pid" in opt)
-	phenCol = 1;
-      else 
-	phenCol = 0;
-    }
   return phenCol;
 }
 
-Opts getOptions(string[string] option){
+Opts getOptions(in string[string] option){
   Opts opts;
   
   opts.skip = getGenotypeSkip(option);
@@ -139,10 +144,11 @@ Opts getOptions(string[string] option){
   if ("gid" in option)
     opts.gid = true;
   
-  if ("perm" in option)
+  auto p = "perm" in option;
+  if (p)
     {
       opts.run = true;
-      string[] value = split(option["perm"], ",");
+      string[] value = split(*p, ",");
       try{
 	opts.number = to!int(value[0]);
       } catch (ConvException e){
@@ -163,7 +169,7 @@ Opts getOptions(string[string] option){
 	opts.min = true;
       if ("pval" in option)
 	opts.pval = true;
-    } 
+    }
   else if (("fwer" in option) || ("pval" in option))
     {
       writeln("Failed to run analysis: Permutations must be specified with the -perm flag");

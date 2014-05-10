@@ -9,9 +9,10 @@ class VarianceException : Exception {
   this(string s) {super(s);}
 }
 
-void rank(double[] rankArray){
+void rank(ref double[] rankArray){
 
-  auto orderIndex = new size_t[rankArray.length];
+  size_t len = rankArray.length;
+  auto orderIndex = new size_t[len];
   makeIndex!("a < b")(rankArray, orderIndex);
 
   double sumrank = 0.0;
@@ -22,8 +23,7 @@ void rank(double[] rankArray){
     {
       sumrank += i;
       dupcount++;
-      if (i==(orderIndex.length - 1)
-	  || rankArray[e] != rankArray[orderIndex[i + 1]])
+      if (i == (len - 1) || rankArray[e] != rankArray[orderIndex[i + 1]])
 	{
 	  avgrank = sumrank / dupcount + 1;
 	  for (auto j = i - dupcount + 1; j < i + 1; j++)
@@ -34,7 +34,7 @@ void rank(double[] rankArray){
     }
 }
 
-void transform(double[] vector){
+void transform(ref double[] vector){
   int n = 0;
   double mean = 0;
   double M2 = 0;
@@ -58,24 +58,24 @@ void transform(double[] vector){
 
 }
 
-double[3] correlation(double[] vector1, immutable(double[]) vector2){
+double[3] correlation(in double[] vector1, in immutable(double[]) vector2){
   double[3] results;
 
-  results[0] = reduce!((a,b) => a + b[0] * b[1])(0.0, zip(vector1, vector2));
+  results[0] = 0.0.reduce!((a,b) => a + b[0] * b[1])(zip(vector1, vector2));
   results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0] * results[0]));
   results[2] = gsl_cdf_tdist_P(-fabs(results[1]), vector1.length - 2) * 2;
   return results;
 }
 
-double corPvalue(double[] vector1, immutable(double[]) vector2){
+double corPvalue(in double[] vector1, in immutable(double[]) vector2){
 
-  double results = reduce!((a,b) => a + b[0] * b[1])(0.0, zip(vector1, vector2));
+  double results = 0.0.reduce!((a,b) => a + b[0] * b[1])(zip(vector1, vector2));
   results = results * sqrt((vector1.length - 2) / (1 - results * results));
   results = gsl_cdf_tdist_P(-fabs(results), vector1.length - 2) * 2;
   return results;
 }
 
-double[][] getPerm(Opts permOpts, immutable(double[]) vector){
+double[][] getPerm(in Opts permOpts, in immutable(double[]) vector){
   double[][] outPerm;
 
   if (permOpts.give_seed)
@@ -89,6 +89,3 @@ double[][] getPerm(Opts permOpts, immutable(double[]) vector){
     }
   return outPerm;
 }
-
-
-

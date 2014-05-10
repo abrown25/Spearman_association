@@ -19,11 +19,12 @@
 
 */
 
-import std.string, std.conv, std.stdio, std.c.stdlib, std.file;
+import std.string, std.conv, std.stdio, std.file;
 import arg_parse, run_analysis;
 import calculation : rank, transform, VarianceException;
+import std.c.stdlib : exit;
 
-void main(string[] args){
+void main(in string[] args){
 
   if (args.length == 1)
     giveHelp();  
@@ -40,10 +41,10 @@ void main(string[] args){
   }
 
   File genFile;
-
+  auto pGen = "g" in options;
   try{
-    if ("g" in options)
-      genFile = File(options["g"]);
+    if (pGen)
+      genFile = File(*pGen);
     else
       genFile = stdin;
   } catch(Exception e){
@@ -52,21 +53,16 @@ void main(string[] args){
   }
 
   File outFile;
+  auto pOut = "o" in options;
   try{
-    if ("o" in options)
-      {
-	if (opts.min)
-	  outFile = File(options["o"] ~ "temp", "w");
-	else
-	  outFile = File(options["o"], "w");
-      } 
+    if (!pOut && !opts.min)
+      outFile = stdout;
+    else if (pOut && opts.min)
+      outFile = File(*pOut ~ "temp", "w");
+    else if (pOut)
+      outFile = File(*pOut, "w");
     else
-      {
-	if (opts.min)
-	  outFile = File("temp", "w");
-	else
-	  outFile = stdout;
-      }
+      outFile = File("temp", "w");
   } catch(Exception e){
     writeln(e.msg);
     exit(0);

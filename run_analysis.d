@@ -1,18 +1,19 @@
 import std.string, std.conv, std.stdio, std.file, std.algorithm, std.range;
 import arg_parse: Opts;
 import calculation;
+import std.c.stdlib : exit;
 
 class InputException : Exception {
   this(string s) {super(s);}
 }
 
-void writeError(string error, File outFile, int count){
+void writeError(in string error, ref File outFile, in int count){
   for (auto j = 0; j < count - 1; j++)
     outFile.write(error, "\t");
   outFile.writeln(error);
 }
 
-double[] readGenotype(char[] line, File outFile, int skip, ulong indCount){
+double[] readGenotype(in char[] line, ref File outFile, in int skip, size_t indCount){
   auto splitLine = split(chomp(line));
     
   if (skip > 0)
@@ -28,8 +29,7 @@ double[] readGenotype(char[] line, File outFile, int skip, ulong indCount){
   return(genotype);
 }
 
-void noPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
-  double[] rankGenotype;
+void noPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, in immutable(double[]) rankPhenotype){
   double[3] cor;
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
@@ -37,7 +37,7 @@ void noPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(doub
   foreach(line; genFile.byLine())
     {
       try {
-	rankGenotype = readGenotype(line, outFile, skip, nInd);
+	auto rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.writeln(join(to!(string[])(cor), "\t"));
       } catch(VarianceException e){
@@ -51,8 +51,7 @@ void noPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(doub
 }
 
 
-void simplePerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
-  double[] rankGenotype;
+void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, in immutable(double[]) rankPhenotype){
   double singlePerm;
   double[3] cor;
   const nInd = rankPhenotype.length;
@@ -63,7 +62,7 @@ void simplePerm(File phenFile, File genFile, File outFile, Opts opts, immutable(
   foreach(line; genFile.byLine())
     {
       try {
-	rankGenotype = readGenotype(line, outFile, skip, nInd);
+	auto rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
 	outFile.write("\t");
@@ -83,8 +82,7 @@ void simplePerm(File phenFile, File genFile, File outFile, Opts opts, immutable(
     }
 }
 
-void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
-  double[] rankGenotype;
+void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, in immutable(double[]) rankPhenotype){
   double singlePerm;
   double[3] cor;
   const nInd = rankPhenotype.length;
@@ -96,11 +94,11 @@ void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(do
   foreach(line; genFile.byLine())
     {
       try {
-	rankGenotype = readGenotype(line, outFile, skip, nInd);
+	auto rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
-	foreach(i, e; perms)
+	foreach(e; perms)
 	  {
 	    singlePerm = corPvalue(rankGenotype, e);
 	    if (singlePerm < cor[2])
@@ -118,9 +116,8 @@ void pvalPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(do
 }
 
 
-double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
+double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, in immutable(double[]) rankPhenotype){
   double[] minPvalues = new double[opts.number];
-  double[] rankGenotype;
   double singlePerm;
   double[3] cor;
   const nInd = rankPhenotype.length;
@@ -133,7 +130,7 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
   foreach(line; genFile.byLine())
     {
       try {
-	rankGenotype = readGenotype(line, outFile, skip, nInd);
+	auto rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
@@ -158,18 +155,21 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
   return minPvalues;
 }
 
-void writeFWER(string[string] options, ref double[] minPvalues){
-  File oldFile;
-  if ("o" in options)
-    oldFile = File(options["o"] ~ "temp", "r");
-  else
-    oldFile = File("temp", "r");
+void writeFWER(in string[string] options, ref double[] minPvalues){
+
+  File oldFile = File(options.get("o", "") ~ "temp", "r");
 
   File newFile;
-  if ("o" in options) 
-    newFile = File(options["o"], "w");
-  else
-    newFile = stdout;
+  try{
+    auto p = "o" in options;
+    if (p)
+      newFile = File(*p, "w");
+    else
+      newFile = stdout;
+  } catch(Exception e){
+    writeln(e.msg);
+    exit(0);
+  }
 
   auto sortMin = sort!()(minPvalues);
   double len = sortMin.length;
