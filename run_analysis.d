@@ -1,5 +1,6 @@
-import std.string, std.conv, std.stdio, std.algorithm, std.range;
-import arg_parse, calculation;
+import std.string, std.conv, std.stdio, std.file, std.algorithm, std.range;
+import arg_parse: Opts;
+import calculation;
 
 class InputException : Exception {
   this(string s) {super(s);}
@@ -21,9 +22,10 @@ double[] readGenotype(char[] line, File outFile, int skip, ulong indCount){
     throw new InputException("");
 
   auto genotype = to!(double[])(splitLine[skip..$]);
-  auto rankGenotype = transform(rank(genotype));
+  rank(genotype);
+  transform(genotype);
 
-  return(rankGenotype);
+  return(genotype);
 }
 
 void noPerm(File phenFile, File genFile, File outFile, Opts opts, immutable(double[]) rankPhenotype){
@@ -152,11 +154,11 @@ double[] minPerm(File phenFile, File genFile, File outFile, Opts opts, immutable
 	writeError("Idiot", outFile, 4);
       }
     }
+  sort(minPvalues);
   return minPvalues;
 }
 
 void writeFWER(string[string] options, ref double[] minPvalues){
-
   File oldFile;
   if ("o" in options)
     oldFile = File(options["o"] ~ "temp", "r");

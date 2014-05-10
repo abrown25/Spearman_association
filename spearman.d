@@ -20,7 +20,8 @@
 */
 
 import std.string, std.conv, std.stdio, std.c.stdlib, std.file;
-import arg_parse, calculation, run_analysis;
+import arg_parse, run_analysis;
+import calculation : rank, transform, VarianceException;
 
 void main(string[] args){
 
@@ -126,15 +127,16 @@ void main(string[] args){
       exit(0);
     }
 
-  double[] rankTemp;
+  // double[] rankTemp;
   try {
-    rankTemp = transform(rank(phenotype));
+    rank(phenotype);
+    transform(phenotype);
   } catch(VarianceException e){
     writeln("Failed to run analysis: Phenotype is constant");
     exit(0);
   }
   
-  immutable rankPhenotype = cast(immutable) rankTemp;
+  immutable rankPhenotype = cast(immutable) phenotype;
 
   outFile.writeln(headerLine);
 
