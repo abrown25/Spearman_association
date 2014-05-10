@@ -13,7 +13,7 @@ void writeError(in string error, ref File outFile, in int count){
   outFile.writeln(error);
 }
 
-double[] readGenotype(in char[] line, ref File outFile, in int skip, size_t indCount){
+double[] readGenotype(in char[] line, ref File outFile, in int skip, in size_t indCount){
   auto splitLine = split(chomp(line));
     
   if (skip > 0)
@@ -29,7 +29,7 @@ double[] readGenotype(in char[] line, ref File outFile, in int skip, size_t indC
   return(genotype);
 }
 
-void noPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, in immutable(double[]) rankPhenotype){
+void noPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
   double[3] cor;
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
@@ -51,7 +51,7 @@ void noPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts,
 }
 
 
-void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, in immutable(double[]) rankPhenotype){
+void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
   double singlePerm;
   double[3] cor;
   const nInd = rankPhenotype.length;
@@ -82,7 +82,7 @@ void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts o
     }
 }
 
-void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, in immutable(double[]) rankPhenotype){
+void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
   double singlePerm;
   double[3] cor;
   const nInd = rankPhenotype.length;
@@ -116,7 +116,7 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
 }
 
 
-double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, in immutable(double[]) rankPhenotype){
+double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
   double[] minPvalues = new double[opts.number];
   double singlePerm;
   double[3] cor;

@@ -49,7 +49,7 @@ void transform(ref double[] vector){
     }
 
   if (M2==0)
-    throw new VarianceException(""); 
+    throw new VarianceException("");
 
   M2 = sqrt(M2);
 
@@ -58,30 +58,34 @@ void transform(ref double[] vector){
 
 }
 
-double[3] correlation(in double[] vector1, in immutable(double[]) vector2){
-  double[3] results;
+double[3] correlation(in double[] vector1, immutable(double[]) vector2){
+  double[3] results = 0;
 
-  results[0] = 0.0.reduce!((a,b) => a + b[0] * b[1])(zip(vector1, vector2));
+  foreach(i, ref e; vector1)
+    results[0] += e * vector2[i];
+
   results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0] * results[0]));
   results[2] = gsl_cdf_tdist_P(-fabs(results[1]), vector1.length - 2) * 2;
   return results;
 }
 
-double corPvalue(in double[] vector1, in immutable(double[]) vector2){
+double corPvalue(in double[] vector1, immutable(double[]) vector2){
+  double results = 0;
+  foreach(i, ref e; vector1)
+    results += e * vector2[i];
 
-  double results = 0.0.reduce!((a,b) => a + b[0] * b[1])(zip(vector1, vector2));
   results = results * sqrt((vector1.length - 2) / (1 - results * results));
   results = gsl_cdf_tdist_P(-fabs(results), vector1.length - 2) * 2;
   return results;
 }
 
-double[][] getPerm(in Opts permOpts, in immutable(double[]) vector){
+double[][] getPerm(in Opts permOpts, immutable(double[]) vector){
   double[][] outPerm;
 
   if (permOpts.give_seed)
     rndGen.seed(permOpts.seed);
-
   outPerm = new double[][permOpts.number];
+
   for (int i = 0; i < permOpts.number; i++)
     {
       outPerm[][i] = vector.dup;
