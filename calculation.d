@@ -15,7 +15,7 @@ void rank(double[] rankArray){
   makeIndex!("a < b")(rankArray, orderIndex);
 
   double sumrank = 0.0;
-  ulong dupcount = 0;
+  size_t dupcount = 0;
   double avgrank;
 
   foreach(i, e; orderIndex)
@@ -59,38 +59,36 @@ void transform(double[] vector){
 }
 
 double[3] correlation(double[] vector1, immutable(double[]) vector2){
-  double[3] results = 0.0;
+  double[3] results;
 
-  foreach(i, ref e; vector1)
-    results[0] += e * vector2[i];
-
+  results[0] = reduce!((a,b) => a + b[0] * b[1])(0.0, zip(vector1, vector2));
   results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0] * results[0]));
   results[2] = gsl_cdf_tdist_P(-fabs(results[1]), vector1.length - 2) * 2;
   return results;
 }
 
 double corPvalue(double[] vector1, immutable(double[]) vector2){
-  double results = 0.0;
-  
-  foreach(i, ref e; vector1)
-    results += e * vector2[i];
 
+  double results = reduce!((a,b) => a + b[0] * b[1])(0.0, zip(vector1, vector2));
   results = results * sqrt((vector1.length - 2) / (1 - results * results));
   results = gsl_cdf_tdist_P(-fabs(results), vector1.length - 2) * 2;
   return results;
 }
 
-double[][] getPerm(Opts permOpts, immutable(double[]) vector1){
+double[][] getPerm(Opts permOpts, immutable(double[]) vector){
   double[][] outPerm;
 
   if (permOpts.give_seed)
     rndGen.seed(permOpts.seed);
-  outPerm = new double[][permOpts.number];
 
+  outPerm = new double[][permOpts.number];
   for (int i = 0; i < permOpts.number; i++)
     {
-      outPerm[][i] = vector1.dup;
+      outPerm[][i] = vector.dup;
       randomShuffle(outPerm[][i]);
     }
   return outPerm;
 }
+
+
+

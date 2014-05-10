@@ -127,7 +127,6 @@ void main(string[] args){
       exit(0);
     }
 
-  // double[] rankTemp;
   try {
     rank(phenotype);
     transform(phenotype);
