@@ -19,10 +19,13 @@
 
 */
 
-import std.string, std.conv, std.stdio, std.file;
+import std.string, std.stdio;
 import arg_parse, run_analysis;
 import calculation : rank, transform, VarianceException;
 import std.c.stdlib : exit;
+import std.algorithm : reduce;
+import std.range : iota;
+import std.conv : to, ConvException;
 
 void main(in string[] args){
 
@@ -96,10 +99,7 @@ void main(in string[] args){
       headerLine ~= "\t";
     } 
   else if(opts.skip > 0)
-    {
-      for (auto j = 1; j < opts.skip + 1; j++)
-	headerLine ~= ("F" ~ to!string(j) ~ "\t");
-    }
+    headerLine ~= "".reduce!((a, b) => a ~ "F" ~ to!string(b) ~ "\t")(iota(1, opts.skip + 1));
 
   headerLine ~= "Cor\tT_stat\tP";
 
@@ -110,10 +110,7 @@ void main(in string[] args){
       else if(opts.min)
 	headerLine ~= "\tPermP\tFWER";
       else
-	{
-	  for (auto j = 1; j < opts.number + 1; j++)
-	    headerLine ~= ("\tP" ~ to!string(j));
-	}
+	headerLine ~= "".reduce!((a, b) => a ~ "\tP" ~ to!string(b))(iota(1, opts.number + 1));
     }
     
 
@@ -124,8 +121,7 @@ void main(in string[] args){
     }
 
   try {
-    rank(phenotype);
-    transform(phenotype);
+    transform(rank(phenotype));
   } catch(VarianceException e){
     writeln("Failed to run analysis: Phenotype is constant");
     exit(0);

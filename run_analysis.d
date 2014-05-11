@@ -1,16 +1,15 @@
-import std.string, std.conv, std.stdio, std.file, std.algorithm, std.range;
+import std.string, std.stdio, std.algorithm, std.range;
 import arg_parse: Opts;
 import calculation;
 import std.c.stdlib : exit;
+import std.conv : to, ConvException;
 
 class InputException : Exception {
   this(string s) {super(s);}
 }
 
 void writeError(in string error, ref File outFile, in int count){
-  for (auto j = 0; j < count - 1; j++)
-    outFile.write(error, "\t");
-  outFile.writeln(error);
+  outFile.writeln(join(error.repeat(count),"\t"));
 }
 
 double[] readGenotype(in char[] line, ref File outFile, in int skip, in size_t indCount){
@@ -23,8 +22,7 @@ double[] readGenotype(in char[] line, ref File outFile, in int skip, in size_t i
     throw new InputException("");
 
   auto genotype = to!(double[])(splitLine[skip..$]);
-  rank(genotype);
-  transform(genotype);
+  transform(rank(genotype));
 
   return(genotype);
 }

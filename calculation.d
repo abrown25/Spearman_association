@@ -9,7 +9,7 @@ class VarianceException : Exception {
   this(string s) {super(s);}
 }
 
-void rank(ref double[] rankArray){
+ref double[] rank(ref double[] rankArray){
 
   size_t len = rankArray.length;
   auto orderIndex = new size_t[len];
@@ -32,6 +32,7 @@ void rank(ref double[] rankArray){
 	  dupcount = 0;
 	}
     }
+  return rankArray;
 }
 
 void transform(ref double[] vector){
@@ -86,10 +87,11 @@ double[][] getPerm(in Opts permOpts, immutable(double[]) vector){
     rndGen.seed(permOpts.seed);
   outPerm = new double[][permOpts.number];
 
-  for (int i = 0; i < permOpts.number; i++)
+  foreach(ref e; outPerm)
     {
-      outPerm[][i] = vector.dup;
-      randomShuffle(outPerm[][i]);
+      e = vector.dup;
+      randomShuffle(e);
     }
+
   return outPerm;
 }
