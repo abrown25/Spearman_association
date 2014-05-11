@@ -1,8 +1,11 @@
-import std.string, std.stdio, std.algorithm, std.range;
+import std.stdio;
 import arg_parse: Opts;
 import calculation;
 import std.c.stdlib : exit;
 import std.conv : to, ConvException;
+import std.string : chomp, join, split;
+import std.range : repeat, SearchPolicy;
+import std.algorithm : sort;
 
 class InputException : Exception {
   this(string s) {super(s);}
@@ -54,9 +57,8 @@ void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts o
   double[3] cor;
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
-
-  immutable(double[])[] perms = cast(immutable)getPerm(opts, rankPhenotype);
-  
+  immutable(double[]) perms = cast(immutable)getPerm(opts, rankPhenotype);
+  const nPerm = perms.length / nInd;
   foreach(line; genFile.byLine())
     {
       try {
@@ -64,9 +66,12 @@ void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts o
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
 	outFile.write("\t");
-	foreach(i, e; perms)
+	for(auto i = 0; i < nPerm; i++)
 	  {
-	    singlePerm = corPvalue(rankGenotype, e);
+	    double results = 0;
+	    for (auto j = 0; j < nInd; j++)
+	      results += rankGenotype[j] * perms[i * nInd +j];
+	    singlePerm = corPvalue(results, nInd);
 	    outFile.write(singlePerm, "\t");
 	  }
 	outFile.write("\n");
@@ -86,8 +91,8 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
 
-  immutable(double[])[] perms = cast(immutable)getPerm(opts, rankPhenotype);
-  const nPerm = perms.length;
+  immutable(double[]) perms = cast(immutable)getPerm(opts, rankPhenotype);
+  const nPerm = perms.length / nInd;
   
   foreach(line; genFile.byLine())
     {
@@ -96,9 +101,12 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
-	foreach(e; perms)
+	for(auto i = 0; i < nPerm; i++)
 	  {
-	    singlePerm = corPvalue(rankGenotype, e);
+	    double results = 0;
+	    for (auto j = 0; j < nInd; j++)
+	      results += rankGenotype[j] * perms[i * nInd +j];
+	    singlePerm = corPvalue(results, nInd);
 	    if (singlePerm < cor[2])
 	      ++countBetter;
 	  }
@@ -121,8 +129,8 @@ double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts 
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
 
-  immutable(double[])[] perms = cast(immutable)getPerm(opts, rankPhenotype);
-  const nPerm = perms.length;
+  double[] perms = getPerm(opts, rankPhenotype);
+  const nPerm = perms.length / nInd;
 
   minPvalues[] = 1.0;
   foreach(line; genFile.byLine())
@@ -132,9 +140,12 @@ double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts 
 	cor = correlation(rankGenotype, rankPhenotype);
 	outFile.write(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
-	foreach(i, e; perms)
+	for(auto i = 0; i < nPerm; i++)
 	  {
-	    singlePerm = corPvalue(rankGenotype, e);
+	    double results = 0;
+	    for (auto j = 0; j < nInd; j++)
+	      results += rankGenotype[j] * perms[i * nInd +j];
+	    singlePerm = corPvalue(results, nInd);
 	    if (singlePerm < cor[2])
 	      ++countBetter;
 	    if (singlePerm < minPvalues[i])

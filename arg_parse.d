@@ -1,5 +1,8 @@
-import std.stdio, std.file, std.string, std.conv;
+import std.stdio;
 import std.c.stdlib : exit;
+import std.file : exists;
+import std.conv : to, ConvException;
+import std.string : chompPrefix, split, startsWith;
 
 struct Opts{
   bool run = false;
@@ -8,14 +11,14 @@ struct Opts{
   bool pval = false;
   bool pid = false;
   bool gid = false;
-
+  bool check = true;
   int number = 0;
   int seed = 0;
   int skip = 0;
   int phenC = 0;
 }
 
-immutable auto helpString = "Usage: spearman [options]:
+static immutable auto helpString = "Usage: spearman [options]:
 Options:
     --help           : Display help file
     -pheno, -p       : phenotype file [default: last argument]
@@ -47,12 +50,13 @@ string[string] getOpts(in string[] args){
   string[string] opts;
   string prefix;
   immutable string[string] optsDictParam = ["p" : "p", "phenotype" : "p", "g" : "g", "genotype" : "g", 
-				  "pc" : "pc", "pheno-col" : "pc", "gs" : "gs", "geno-skip" :"gs", 
-				  "perm" :"perm", "output" : "o", "o" : "o"];
+					    "pc" : "pc", "pheno-col" : "pc", "gs" : "gs", 
+					    "geno-skip" :"gs", "perm" :"perm", "output" : "o", "o" : "o"];
 
-  immutable string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", 
-				 "pheno-id" : "pid", "pval" : "pval", "fwer" : "fwer"];
+  immutable string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", "check" : "check",
+					   "pheno-id" : "pid", "pval" : "pval", "fwer" : "fwer"];
  
+
   foreach(i, arg; args)
     {
       if (arg.startsWith("-"))
@@ -101,7 +105,7 @@ string[string] getOpts(in string[] args){
 }
 
 int getGenotypeSkip(in string[string] opt){
-  int skip = 0;
+  int skip;
     try{
       skip = to!int(opt.get("gs", "0"));
     } catch (ConvException e){
@@ -138,7 +142,8 @@ Opts getOptions(in string[string] option){
   
   opts.skip = getGenotypeSkip(option);
   opts.phenC = getPhenColumn(option);
-
+  if ("check" in option)
+    opts.check = false;
   if ("pid" in option)
     opts.pid = true;
   if ("gid" in option)

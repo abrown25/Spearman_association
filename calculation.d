@@ -1,5 +1,9 @@
-import std.algorithm, std.conv, std.math, std.random, std.range, std.stdio;
+import std.stdio;
 import arg_parse : Opts;
+import std.conv : to, ConvException;
+import std.math : fabs, sqrt;
+import std.algorithm : makeIndex;
+import std.random : rndGen, randomShuffle;
 
 extern(C) {
   double gsl_cdf_tdist_P (double x, double nu);
@@ -70,27 +74,21 @@ double[3] correlation(in double[] vector1, immutable(double[]) vector2){
   return results;
 }
 
-double corPvalue(in double[] vector1, immutable(double[]) vector2){
-  double results = 0;
-  foreach(i, ref e; vector1)
-    results += e * vector2[i];
-
-  results = results * sqrt((vector1.length - 2) / (1 - results * results));
-  results = gsl_cdf_tdist_P(-fabs(results), vector1.length - 2) * 2;
+double corPvalue(in double cor, in size_t len){
+  double results = cor * sqrt((len - 2) / (1 - cor * cor));
+  results = gsl_cdf_tdist_P(-fabs(results), len - 2) * 2;
   return results;
 }
 
-double[][] getPerm(in Opts permOpts, immutable(double[]) vector){
-  double[][] outPerm;
-
+double[] getPerm(in Opts permOpts, immutable(double[]) vector){
   if (permOpts.give_seed)
     rndGen.seed(permOpts.seed);
-  outPerm = new double[][permOpts.number];
 
-  foreach(ref e; outPerm)
+  double[] outPerm = new double[vector.length * permOpts.number];
+  for(auto i = 0; i < permOpts.number; i++)
     {
-      e = vector.dup;
-      randomShuffle(e);
+      outPerm[(i * vector.length)..(i + 1) * vector.length] = vector.dup;
+      randomShuffle(outPerm[(i * vector.length)..(i + 1) * vector.length]);
     }
 
   return outPerm;

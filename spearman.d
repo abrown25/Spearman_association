@@ -19,13 +19,13 @@
 
 */
 
-import std.string, std.stdio;
-import arg_parse, run_analysis;
+import std.stdio; 
 import calculation : rank, transform, VarianceException;
-import std.c.stdlib : exit;
 import std.algorithm : reduce;
 import std.range : iota;
 import std.conv : to, ConvException;
+
+import arg_parse, run_analysis;
 
 void main(in string[] args){
 
@@ -45,31 +45,34 @@ void main(in string[] args){
 
   File genFile;
   auto pGen = "g" in options;
-  try{
-    if (pGen)
+  if (pGen)
+    try{
       genFile = File(*pGen);
-    else
-      genFile = stdin;
-  } catch(Exception e){
-    writeln(e.msg);
-    exit(0);
-  }
+    } catch(Exception e){
+      writeln(e.msg);
+      exit(0);
+    }
+  else
+    genFile = stdin;
 
   File outFile;
   auto pOut = "o" in options;
-  try{
     if (!pOut && !opts.min)
       outFile = stdout;
-    else if (pOut && opts.min)
-      outFile = File(*pOut ~ "temp", "w");
-    else if (pOut)
-      outFile = File(*pOut, "w");
-    else
-      outFile = File("temp", "w");
-  } catch(Exception e){
-    writeln(e.msg);
-    exit(0);
-  }
+    else 
+      {
+	try{
+	  if (pOut && opts.min)
+	    outFile = File(*pOut ~ "temp", "w");
+	  else if (pOut)
+	    outFile = File(*pOut, "w");
+	  else
+	    outFile = File("temp", "w");
+	} catch(Exception e){
+	  writeln(e.msg);
+	  exit(0);
+	}
+      }
 
   double[] phenotype;
   string[] phenId;
@@ -114,7 +117,7 @@ void main(in string[] args){
     }
     
 
-  if (opts.pid && opts.gid && genId!=phenId)
+  if (opts.pid && opts.gid && !opts.check && genId!=phenId)
     {
       writeln("Failed to run analysis: Mismatched IDs");
       exit(0);
