@@ -4,23 +4,69 @@ import std.file : exists;
 import std.conv : to, ConvException;
 import std.string : chompPrefix, split, startsWith;
 
-struct Opts{
+class Opts{
   bool run = false;
   bool give_seed = false;
   bool min = false;
   bool pval = false;
   bool pid = false;
   bool gid = false;
-  bool check = true;
+  bool nocheck = true;
   int number = 0;
   int seed = 0;
   int skip = 0;
   int phenC = 0;
+
+  this(in string[string] option){
+
+    skip = getGenotypeSkip(option);
+    phenC = getPhenColumn(option);
+    if ("nocheck" in option)
+      nocheck = false;
+    if ("pid" in option)
+      pid = true;
+    if ("gid" in option)
+      gid = true;
+
+    auto p = "perm" in option;
+    if (p)
+      {
+	run = true;
+	string[] value = split(*p, ",");
+	try{
+	  number = to!int(value[0]);
+	} catch (ConvException e){
+	  writeln("Failed to run analysis: Non-numeric argument to -perm");
+	  exit(0);
+	}
+	if (value.length==2)
+	  {
+	    give_seed = true;
+	    try{
+	      seed = to!int(value[1]);
+	    } catch (ConvException e){
+	      writeln("Failed to run analysis: Non-numeric argument to -perm");
+	      exit(0);
+	    }
+	  }
+	if ("fwer" in option)
+	  min = true;
+	if ("pval" in option)
+	  pval = true;
+      }
+    else if (("fwer" in option) || ("pval" in option))
+      {
+	writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
+	exit(0);
+      }
+
+  }
+
 }
 
 static immutable auto helpString = "Usage: spearman [options]:
 Options:
-    --help           : Display help file
+    --help           : display help file
     -pheno, -p       : phenotype file [default: last argument]
     -geno, -g        : genotype file [default stdin]
     -output, -o      : output file [default stdout]
@@ -31,6 +77,7 @@ Options:
     -perm            : calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed
     -pval            : report permutation p values for each test (needs perm options to be specified)
     -fwer            : calculates Family Wise Error Rate based on permutations
+    -nocheck         : skip check of IDs when both genotype and phenotype IDs are present
 
 Input file formats:
     phenotype        : Tab or whitespace separated file with phenotype values in column specified by -pc, and optional subject IDs in column 1
@@ -53,7 +100,7 @@ string[string] getOpts(in string[] args){
 					    "pc" : "pc", "pheno-col" : "pc", "gs" : "gs", 
 					    "geno-skip" :"gs", "perm" :"perm", "output" : "o", "o" : "o"];
 
-  immutable string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", "check" : "check",
+  immutable string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", "nocheck" : "nocheck",
 					   "pheno-id" : "pid", "pval" : "pval", "fwer" : "fwer"];
  
 
@@ -106,12 +153,12 @@ string[string] getOpts(in string[] args){
 
 int getGenotypeSkip(in string[string] opt){
   int skip;
-    try{
-      skip = to!int(opt.get("gs", "0"));
-    } catch (ConvException e){
-      writeln("Failed to run analysis: Non-numeric argument to -geno-skip");
-      exit(0);
-    }
+  try{
+    skip = to!int(opt.get("gs", "0"));
+  } catch (ConvException e){
+    writeln("Failed to run analysis: Non-numeric argument to -geno-skip");
+    exit(0);
+  }
   return skip;
 }
 
@@ -137,49 +184,3 @@ int getPhenColumn(in string[string] opt){
   return phenCol;
 }
 
-Opts getOptions(in string[string] option){
-  Opts opts;
-  
-  opts.skip = getGenotypeSkip(option);
-  opts.phenC = getPhenColumn(option);
-  if ("check" in option)
-    opts.check = false;
-  if ("pid" in option)
-    opts.pid = true;
-  if ("gid" in option)
-    opts.gid = true;
-  
-  auto p = "perm" in option;
-  if (p)
-    {
-      opts.run = true;
-      string[] value = split(*p, ",");
-      try{
-	opts.number = to!int(value[0]);
-      } catch (ConvException e){
-	writeln("Failed to run analysis: Non-numeric argument to -perm");
-	exit(0);
-      }
-      if (value.length==2)
-	{
-	  opts.give_seed = true;
-	  try{
-	    opts.seed = to!int(value[1]);
-	  } catch (ConvException e){
-	    writeln("Failed to run analysis: Non-numeric argument to -perm");
-	    exit(0);
-	  }
-	}
-      if ("fwer" in option)
-	opts.min = true;
-      if ("pval" in option)
-	opts.pval = true;
-    }
-  else if (("fwer" in option) || ("pval" in option))
-    {
-      writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
-      exit(0);
-    }
-
-  return opts;
-}

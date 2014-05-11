@@ -33,7 +33,7 @@ void main(in string[] args){
     giveHelp();  
   
   string[string] options = getOpts(args[1..$]);
-  immutable opts = cast(immutable) getOptions(options);
+  auto opts = new Opts(options);
  
   File phenFile;
   try{
@@ -117,7 +117,7 @@ void main(in string[] args){
     }
     
 
-  if (opts.pid && opts.gid && !opts.check && genId!=phenId)
+  if (opts.pid && opts.gid && !opts.nocheck && genId!=phenId)
     {
       writeln("Failed to run analysis: Mismatched IDs");
       exit(0);

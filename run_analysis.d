@@ -53,7 +53,6 @@ void noPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts,
 
 
 void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
-  double singlePerm;
   double[3] cor;
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
@@ -68,10 +67,10 @@ void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts o
 	outFile.write("\t");
 	for(auto i = 0; i < nPerm; i++)
 	  {
-	    double results = 0;
-	    for (auto j = 0; j < nInd; j++)
-	      results += rankGenotype[j] * perms[i * nInd +j];
-	    singlePerm = corPvalue(results, nInd);
+	    double singlePerm = 0;
+	    for(auto j = 0; j < nInd; j++)
+	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
+	    corPvalue(singlePerm, nInd);
 	    outFile.write(singlePerm, "\t");
 	  }
 	outFile.write("\n");
@@ -86,7 +85,6 @@ void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts o
 }
 
 void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
-  double singlePerm;
   double[3] cor;
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
@@ -103,10 +101,10 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
 	double countBetter = 0.0;
 	for(auto i = 0; i < nPerm; i++)
 	  {
-	    double results = 0;
-	    for (auto j = 0; j < nInd; j++)
-	      results += rankGenotype[j] * perms[i * nInd +j];
-	    singlePerm = corPvalue(results, nInd);
+	    double singlePerm = 0;
+	    for(auto j = 0; j < nInd; j++)
+	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
+	    corPvalue(singlePerm, nInd);
 	    if (singlePerm < cor[2])
 	      ++countBetter;
 	  }
@@ -124,7 +122,6 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
 
 double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
   double[] minPvalues = new double[opts.number];
-  double singlePerm;
   double[3] cor;
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
@@ -142,10 +139,10 @@ double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts 
 	double countBetter = 0.0;
 	for(auto i = 0; i < nPerm; i++)
 	  {
-	    double results = 0;
-	    for (auto j = 0; j < nInd; j++)
-	      results += rankGenotype[j] * perms[i * nInd +j];
-	    singlePerm = corPvalue(results, nInd);
+	    double singlePerm = 0;
+	    for(auto j = 0; j < nInd; j++)
+	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
+	    corPvalue(singlePerm, nInd);
 	    if (singlePerm < cor[2])
 	      ++countBetter;
 	    if (singlePerm < minPvalues[i])
@@ -160,7 +157,6 @@ double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts 
 	writeError("Idiot", outFile, 4);
       }
     }
-  sort(minPvalues);
   return minPvalues;
 }
 

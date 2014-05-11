@@ -1,7 +1,7 @@
 spearman : spearman.d arg_parse.d calculation.d run_analysis.d
 	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d spearman.d -ofspearman
 
-.PHONY : perm.p.calc perm tabix.perm fwer clean release gdc
+.PHONY : perm.p.calc perm tabix.perm fwer clean release gdc time
 
 clean:
 	rm -f *.o spearman spearman_gdc
@@ -20,3 +20,6 @@ tabix.perm:
 
 fwer:
 	cat genotype.txt | ./spearman -p phenotype.txt -pid -gid -pc 3 -gs 2 -perm 100000,12 -fwer
+
+time:
+	time ./spearman_gdc -g large_genotype.txt -perm 100,4 -o out -fwer large_phenotype.txt
