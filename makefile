@@ -22,4 +22,4 @@ fwer:
 	cat genotype.txt | ./spearman -p phenotype.txt -pid -gid -pc 3 -gs 2 -perm 100000,12 -fwer
 
 time:
-	time ./spearman_gdc -g large_genotype.txt -perm 100,4 -o out -fwer large_phenotype.txt
+	time -f "Real : %E, User : %U, System : %S\n" ./spearman_gdc -g large_genotype.txt -perm 100,4 -o out -fwer large_phenotype.txt

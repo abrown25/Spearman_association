@@ -8,7 +8,7 @@ import std.range : lockstep;
 import arg_parse : Opts;
 
 extern(C) {
-  double gsl_cdf_tdist_P (double x, double nu);
+  double gsl_cdf_tdist_P(double x, double nu);
 }
 
 class VarianceException : Exception {

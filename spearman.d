@@ -79,7 +79,7 @@ void main(in string[] args){
 
   foreach(line; phenFile.byLine())
     {
-      auto phenLine = split(chomp(line));
+      auto phenLine = split(line);
       try{
 	phenotype ~= to!double(phenLine[opts.phenC]);
       } catch(ConvException e){
@@ -96,13 +96,13 @@ void main(in string[] args){
 
   if (opts.gid)
     {
-      splitLine = split(chomp(genFile.readln()));
+      splitLine = split(genFile.readln());
       genId = splitLine[opts.skip..$];
       headerLine ~= join(splitLine[0..opts.skip], "\t");
       headerLine ~= "\t";
     } 
   else if(opts.skip > 0)
-    headerLine ~= "".reduce!((a, b) => a ~ "F" ~ to!string(b) ~ "\t")(iota(1, opts.skip + 1));
+    headerLine ~= "".reduce!((a, b) => a ~ "F" ~ to!string(b + 1) ~ "\t")(iota(0, opts.skip));
 
   headerLine ~= "Cor\tT_stat\tP";
 
@@ -110,7 +110,7 @@ void main(in string[] args){
     {
       headerLine ~= opts.pval ? "\tPermP"
 	: opts.min ? "\tPermP\tFWER"
-	: "".reduce!((a, b) => a ~ "\tP" ~ to!string(b))(iota(1, opts.number + 1));
+	: "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
     }
     
   if (opts.pid && opts.gid && !opts.nocheck && genId!=phenId)

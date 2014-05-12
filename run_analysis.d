@@ -3,20 +3,21 @@ import arg_parse: Opts;
 import calculation;
 import std.c.stdlib : exit;
 import std.conv : to, ConvException;
-import std.string : chomp, join, split;
+import std.string : join, split;
 import std.range : repeat, SearchPolicy;
 import std.algorithm : sort;
+import std.file : remove;
 
 class InputException : Exception {
   this(string s) {super(s);}
 }
 
 void writeError(in string error, ref File outFile, in int count){
-  outFile.writeln(join(error.repeat(count),"\t"));
+  outFile.writeln(join(error.repeat(count), "\t"));
 }
 
 double[] readGenotype(in char[] line, ref File outFile, in int skip, in size_t indCount){
-  auto splitLine = split(chomp(line));
+  auto splitLine = split(line);
     
   if (skip > 0)
     outFile.write(join(splitLine[0..skip], "\t"), "\t");
@@ -165,8 +166,8 @@ void writeFWER(in string[string] options, ref double[] minPvalues){
   File oldFile = File(options.get("o", "") ~ "temp", "r");
 
   File newFile;
+  auto p = "o" in options;
   try{
-    auto p = "o" in options;
     if (p)
       newFile = File(*p, "w");
     else
@@ -182,13 +183,13 @@ void writeFWER(in string[string] options, ref double[] minPvalues){
   auto headerLine = oldFile.readln();
   newFile.write(headerLine);
 
-  auto pvalCol = split(chomp(headerLine)).length - 3;
+  auto pvalCol = split(headerLine).length - 3;
 
   double pVal;
   double adjusted;
   foreach(line; oldFile.byLine())
     {
-      auto splitLine = split(chomp(line));
+      auto splitLine = split(line);
       auto pValString = splitLine[pvalCol];
       if (pValString=="NaN" || pValString=="NA" || pValString=="Idiot")
 	newFile.writeln(line, "\t", pValString);

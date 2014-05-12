@@ -1,8 +1,8 @@
 import std.stdio;
 import std.c.stdlib : exit;
-import std.file : exists;
 import std.conv : to, ConvException;
-import std.string : chompPrefix, split, startsWith;
+import std.string : chompPrefix, startsWith;
+import std.array: split;
 
 class Opts{
   bool run = false;
@@ -11,7 +11,7 @@ class Opts{
   bool pval = false;
   bool pid = false;
   bool gid = false;
-  bool nocheck = true;
+  bool nocheck = false;
   int number = 0;
   int seed = 0;
   int skip = 0;
@@ -47,7 +47,7 @@ class Opts{
 
   private void getFlags(string[string] option){
     if ("nocheck" in option)
-      nocheck = false;
+      nocheck = true;
     if ("pid" in option)
       pid = true;
     if ("gid" in option)
@@ -169,17 +169,7 @@ string[string] getOpts(in string[] args){
 
   if (!("p" in opts))
     opts["p"] = args[args.length - 1];
-  if (!opts["p"].exists)
-    {
-      writeln("Failed to run analysis: Phenotype file missing");
-      exit(0);
-    }
-  auto pGen = "g" in opts;
-  if (pGen && !(*pGen).exists)
-    {
-      writeln("Failed to run analysis: Genotype file missing");
-      exit(0);
-    }
+
   return opts;
 }
 
