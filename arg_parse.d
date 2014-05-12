@@ -17,17 +17,60 @@ class Opts{
   int skip = 0;
   int phenC = 0;
 
-  this(in string[string] option){
+  this(string[string] option){
+    getGenotypeSkip(option);
+    getPhenColumn(option);
+    getFlags(option);
+    getPerms(option);
+  }
 
-    skip = getGenotypeSkip(option);
-    phenC = getPhenColumn(option);
+  void getGenotypeSkip(string[string] option){
+    auto p = "gs" in option;
+    try{
+      skip = p ? to!int(*p) : 0;
+    } catch (ConvException e){
+      writeln("Failed to run analysis: Non-numeric argument to -geno-skip");
+      exit(0);
+    }
+  }
+
+  private void getPhenColumn(string[string] option){
+    auto p = "pc" in option;
+  try{
+    phenC = p ? to!int(*p) - 1
+      : "pid" in option ? 1 : 0;
+  } catch (ConvException e){
+    writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
+    exit(0);
+  }
+}
+
+  private void getFlags(string[string] option){
     if ("nocheck" in option)
       nocheck = false;
     if ("pid" in option)
       pid = true;
     if ("gid" in option)
       gid = true;
+    if ("fwer" in option)
+      min = true;
+    if ("pval" in option)
+      pval = true;
 
+    if (min && pval)
+      {
+	writeln("Failed to run analysis: Both -fwer and -pval flag specified");
+	exit(0);
+      }
+
+    if ((min || pval) && !("perm" in option))
+      {
+	writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
+	exit(0);
+      }
+  }
+
+  private void getPerms(string[string] option){
     auto p = "perm" in option;
     if (p)
       {
@@ -36,7 +79,7 @@ class Opts{
 	try{
 	  number = to!int(value[0]);
 	} catch (ConvException e){
-	  writeln("Failed to run analysis: Non-numeric argument to -perm");
+	  writeln("Failed to run analysis: Non-integer argument to -perm");
 	  exit(0);
 	}
 	if (value.length==2)
@@ -45,23 +88,12 @@ class Opts{
 	    try{
 	      seed = to!int(value[1]);
 	    } catch (ConvException e){
-	      writeln("Failed to run analysis: Non-numeric argument to -perm");
+	      writeln("Failed to run analysis: Non-integer argument to seed");
 	      exit(0);
 	    }
 	  }
-	if ("fwer" in option)
-	  min = true;
-	if ("pval" in option)
-	  pval = true;
       }
-    else if (("fwer" in option) || ("pval" in option))
-      {
-	writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
-	exit(0);
-      }
-
   }
-
 }
 
 static immutable auto helpString = "Usage: spearman [options]:
@@ -149,38 +181,5 @@ string[string] getOpts(in string[] args){
       exit(0);
     }
   return opts;
-}
-
-int getGenotypeSkip(in string[string] opt){
-  int skip;
-  try{
-    skip = to!int(opt.get("gs", "0"));
-  } catch (ConvException e){
-    writeln("Failed to run analysis: Non-numeric argument to -geno-skip");
-    exit(0);
-  }
-  return skip;
-}
-
-int getPhenColumn(in string[string] opt){
-  int phenCol;
-  auto p = "pc" in opt;
-  if (!p)
-    {
-      if ("pid" in opt)
-	phenCol = 1;
-      else
-	phenCol = 0;
-    }
-  else
-    {
-      try{
-	phenCol = (to!int(*p) - 1);
-      } catch (ConvException e){
-	writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
-	exit(0);
-      }
-    }
-  return phenCol;
 }
 

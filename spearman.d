@@ -30,11 +30,11 @@ import arg_parse, run_analysis;
 void main(in string[] args){
 
   if (args.length == 1)
-    giveHelp();  
-  
+    giveHelp();
+
   string[string] options = getOpts(args[1..$]);
   auto opts = new Opts(options);
- 
+
   File phenFile;
   try{
     phenFile = File(options["p"]);
@@ -57,21 +57,21 @@ void main(in string[] args){
 
   File outFile;
   auto pOut = "o" in options;
-    if (!pOut && !opts.min)
+  if (!pOut && !opts.min)
       outFile = stdout;
     else 
       {
-	try{
-	  if (pOut && opts.min)
-	    outFile = File(*pOut ~ "temp", "w");
-	  else if (pOut)
-	    outFile = File(*pOut, "w");
-	  else
-	    outFile = File("temp", "w");
-	} catch(Exception e){
-	  writeln(e.msg);
-	  exit(0);
-	}
+  	try{
+  	  if (pOut && opts.min)
+  	    outFile = File(*pOut ~ "temp", "w");
+  	  else if (pOut)
+  	    outFile = File(*pOut, "w");
+  	  else
+  	    outFile = File("temp", "w");
+  	} catch(Exception e){
+  	  writeln(e.msg);
+  	  exit(0);
+  	}
       }
 
   double[] phenotype;
@@ -108,15 +108,11 @@ void main(in string[] args){
 
   if (opts.run)
     {
-      if(opts.pval)
-	headerLine ~= "\tPermP";
-      else if(opts.min)
-	headerLine ~= "\tPermP\tFWER";
-      else
-	headerLine ~= "".reduce!((a, b) => a ~ "\tP" ~ to!string(b))(iota(1, opts.number + 1));
+      headerLine ~= opts.pval ? "\tPermP"
+	: opts.min ? "\tPermP\tFWER"
+	: "".reduce!((a, b) => a ~ "\tP" ~ to!string(b))(iota(1, opts.number + 1));
     }
     
-
   if (opts.pid && opts.gid && !opts.nocheck && genId!=phenId)
     {
       writeln("Failed to run analysis: Mismatched IDs");
@@ -129,10 +125,10 @@ void main(in string[] args){
     writeln("Failed to run analysis: Phenotype is constant");
     exit(0);
   }
-  
-  immutable rankPhenotype = cast(immutable) phenotype;
 
+  immutable rankPhenotype = cast(immutable) phenotype;
   outFile.writeln(headerLine);
+  
 
   if (!opts.run)
     noPerm(phenFile, genFile, outFile, opts, rankPhenotype);
