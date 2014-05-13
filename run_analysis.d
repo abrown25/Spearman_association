@@ -1,12 +1,12 @@
-import std.stdio;
-import arg_parse: Opts;
-import calculation;
-import std.c.stdlib : exit;
-import std.conv : to, ConvException;
-import std.string : join, split;
-import std.range : repeat, SearchPolicy;
 import std.algorithm : sort;
+import std.array : split;
+import std.c.stdlib : exit;
 import std.file : remove;
+import std.range : repeat, SearchPolicy;
+import std.stdio : File, stdout, writeln;
+import std.string : join;
+
+import calculation;
 
 class InputException : Exception {
   this(string s) {super(s);}
@@ -57,7 +57,7 @@ void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts o
   double[3] cor;
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
-  immutable(double[]) perms = cast(immutable)getPerm(opts, rankPhenotype);
+  double[] perms = getPerm(opts, rankPhenotype);
   const nPerm = perms.length / nInd;
   foreach(line; genFile.byLine())
     {
@@ -90,7 +90,7 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
   const nInd = rankPhenotype.length;
   const skip = opts.skip;
 
-  immutable(double[]) perms = cast(immutable)getPerm(opts, rankPhenotype);
+  double[] perms = getPerm(opts, rankPhenotype);
   const nPerm = perms.length / nInd;
   
   foreach(line; genFile.byLine())
@@ -202,7 +202,7 @@ void writeFWER(in string[string] options, ref double[] minPvalues){
     }
 
   if ("o" in options)
-    std.file.remove(options["o"] ~ "temp");
+    remove(options["o"] ~ "temp");
   else
-    std.file.remove("temp");
+    remove("temp");
 }

@@ -1,7 +1,6 @@
-import std.stdio;
+import std.algorithm : makeIndex;
 import std.conv : to, ConvException;
 import std.math : fabs, sqrt;
-import std.algorithm : makeIndex;
 import std.random : rndGen, randomShuffle;
 import std.range : lockstep;
 

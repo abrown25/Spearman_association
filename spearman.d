@@ -19,13 +19,13 @@
 
 */
 
-import std.stdio; 
-import calculation : rank, transform, VarianceException;
 import std.algorithm : reduce;
 import std.range : iota;
-import std.conv : to, ConvException;
+import std.stdio : stdin; 
 
-import arg_parse, run_analysis;
+import calculation : rank, transform, VarianceException;
+import arg_parse;
+import run_analysis;
 
 void main(in string[] args){
 

@@ -1,8 +1,8 @@
-import std.stdio;
+import std.array : split;
 import std.c.stdlib : exit;
 import std.conv : to, ConvException;
+import std.stdio : writeln;
 import std.string : chompPrefix, startsWith;
-import std.array: split;
 
 class Opts{
   bool run = false;
@@ -24,7 +24,7 @@ class Opts{
     getPerms(option);
   }
 
-  void getGenotypeSkip(string[string] option){
+  private void getGenotypeSkip(string[string] option){
     auto p = "gs" in option;
     try{
       skip = p ? to!int(*p) : 0;
