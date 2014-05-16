@@ -23,12 +23,11 @@ import std.algorithm : reduce;
 import std.range : iota;
 import std.stdio : stdin; 
 
-import calculation : rank, transform, VarianceException;
+import calculation : rank, transform, VarianceException, covariates;
 import arg_parse;
 import run_analysis;
 
 void main(in string[] args){
-
   if (args.length == 1)
     giveHelp();
 
@@ -80,6 +79,11 @@ void main(in string[] args){
   foreach(line; phenFile.byLine())
     {
       auto phenLine = split(line);
+      if (phenLine.length < opts.phenC)
+	{
+	  writeln("Failed to run analysis: column ", opts.phenC + 1, " in phenotype file doesn't exist");
+	  exit(0);
+	}
       try{
 	phenotype ~= to!double(phenLine[opts.phenC]);
       } catch(ConvException e){
@@ -116,6 +120,18 @@ void main(in string[] args){
   if (opts.pid && opts.gid && !opts.nocheck && genId!=phenId)
     {
       writeln("Failed to run analysis: Mismatched IDs");
+      exit(0);
+    }
+
+  auto p = "cov" in options;
+  if (p)
+    try{
+      covariates(*p, phenotype);
+    } catch(InputException e){
+      writeln(e.msg);
+      exit(0);
+    } catch(ConvException){
+      writeln("Failed to run analysis, non-numeric data in covariates file");
       exit(0);
     }
 

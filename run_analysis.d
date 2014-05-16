@@ -1,5 +1,4 @@
 import std.algorithm : sort;
-import std.array : split;
 import std.c.stdlib : exit;
 import std.file : remove;
 import std.range : repeat, SearchPolicy;

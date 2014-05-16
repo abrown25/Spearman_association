@@ -102,6 +102,7 @@ Options:
     -pheno, -p       : phenotype file [default: last argument]
     -geno, -g        : genotype file [default stdin]
     -output, -o      : output file [default stdout]
+    -cov             : optional covariates file, if specified analysis will be performed on the residuals, after controlling for covariates with least squares regression
     -pheno-id, -pid  : phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
     -geno-id, -gid   : genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
     -pheno-col, -pc  : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
@@ -129,7 +130,7 @@ string[string] getOpts(in string[] args){
   string[string] opts;
   string prefix;
   immutable string[string] optsDictParam = ["p" : "p", "phenotype" : "p", "g" : "g", "genotype" : "g", 
-					    "pc" : "pc", "pheno-col" : "pc", "gs" : "gs", 
+					    "cov" : "cov", "pc" : "pc", "pheno-col" : "pc", "gs" : "gs",
 					    "geno-skip" :"gs", "perm" :"perm", "output" : "o", "o" : "o"];
 
   immutable string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", "nocheck" : "nocheck",

@@ -1,18 +1,57 @@
 import std.algorithm : makeIndex;
+import std.array : split;
 import std.conv : to, ConvException;
 import std.math : fabs, sqrt;
 import std.random : rndGen, randomShuffle;
 import std.range : lockstep;
+import std.stdio : File, writeln;
 
 import arg_parse : Opts;
+import run_analysis : InputException;
 
 extern(C) {
   double gsl_cdf_tdist_P(double x, double nu);
 }
 
+extern(C) {
+  void regress(size_t nInd, size_t nCov, double *x, double *y, double *rOut);
+}
+
 class VarianceException : Exception {
   this(string s) {super(s);}
 }
+
+void covariates(string covF, ref double[] phen){
+  double[] covOut;
+  auto covFile = File(covF);
+  size_t nInd = 1;
+  covOut ~= 1;
+
+  auto firstLine = split(covFile.readln());
+  size_t nCov = firstLine.length;
+  covOut ~= to!(double[])(firstLine);
+
+  foreach(line; covFile.byLine())
+    {
+      covOut ~= 1;
+      auto splitLine = split(line);
+	{
+	  if(splitLine.length != nCov)
+	    throw new InputException("Failed to run analysis, covariate measurements missing");
+	  else
+	    {
+	      covOut ~= to!(double[])(splitLine);
+	      nInd++;
+	    }
+	}
+    }
+
+  if (nInd != phen.length)
+    throw new InputException("Failed to run analysis, covariates file does not have the same number of individuals as phenotype file");
+
+  regress(nInd, nCov + 1, covOut.ptr, phen.dup.ptr, phen.ptr);
+}
+
 
 ref double[] rank(ref double[] rankArray){
 
