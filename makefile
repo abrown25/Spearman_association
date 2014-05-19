@@ -11,6 +11,9 @@ gdc : spearman.d arg_parse.d calculation.d run_analysis.d regress.o
 	gcc -c regress.c -o regress.o -lgsl -lgslcblas
 	gdc spearman.d arg_parse.d calculation.d run_analysis.d regress.o -L/usr/include/gsl/ -l gsl -L/usr/include/gsl/gsl_cblas -l gslcblas -O3 -o spearman_gdc
 
+simple:
+	cat genotype.txt | ./spearman -p phenotype.txt -pid -gid -pc 3 -gs 2
+
 perm.p.calc:
 	cat genotype.txt | ./spearman -p phenotype.txt -pid -gid -pc 3 -gs 2 -perm 1000000,12 -pval
 
