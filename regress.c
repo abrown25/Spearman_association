@@ -13,7 +13,7 @@ void regress(size_t nInd, size_t nCov, double *x, double *y, double *rOut){
   cov = gsl_matrix_alloc(nCov, nCov);
   for(i = 0; i < nInd; i++)
     {
-      gsl_vector_set(yVec, i, *(y+i));
+      gsl_vector_set(yVec, i, *(y + i));
       for(j = 0; j < nCov; j++)
 	gsl_matrix_set(xMat, i, j, *(x + i * nCov + j));
     }

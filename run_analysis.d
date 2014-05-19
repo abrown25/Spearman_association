@@ -105,7 +105,7 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
 	    for(auto j = 0; j < nInd; j++)
 	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
 	    corPvalue(singlePerm, nInd);
-	    if (singlePerm < cor[2])
+	    if (singlePerm <= cor[2])
 	      ++countBetter;
 	  }
 	outFile.writeln("\t", countBetter / nPerm);
@@ -135,7 +135,7 @@ double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts 
       try {
 	auto rankGenotype = readGenotype(line, outFile, skip, nInd);
 	cor = correlation(rankGenotype, rankPhenotype);
-	outFile.write(join(to!(string[])(cor), "\t"));
+	outFile.writef("%g\t%g\t%a", cor[0], cor[1], cor[2]);
 	double countBetter = 0.0;
 	for(auto i = 0; i < nPerm; i++)
 	  {
@@ -143,7 +143,7 @@ double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts 
 	    for(auto j = 0; j < nInd; j++)
 	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
 	    corPvalue(singlePerm, nInd);
-	    if (singlePerm < cor[2])
+	    if (singlePerm <= cor[2])
 	      ++countBetter;
 	    if (singlePerm < minPvalues[i])
 	      minPvalues[i] = singlePerm;
@@ -183,7 +183,7 @@ void writeFWER(in string[string] options, ref double[] minPvalues){
   newFile.write(headerLine);
 
   auto pvalCol = split(headerLine).length - 3;
-
+  size_t countBetter;
   double pVal;
   double adjusted;
   foreach(line; oldFile.byLine())
@@ -195,8 +195,17 @@ void writeFWER(in string[string] options, ref double[] minPvalues){
       else
 	{
 	  pVal = to!double(pValString);
-	  adjusted = sortMin.lowerBound!(SearchPolicy.gallopBackwards)(pVal).length / len;
-	  newFile.writeln(line, "\t", adjusted);
+	  countBetter = sortMin.lowerBound!(SearchPolicy.gallopBackwards)(pVal).length;
+	  if (countBetter == 0)
+	    adjusted = 0.0;
+	  else
+	    {
+	      while (sortMin[countBetter - 1] <= pVal)
+		countBetter++;
+	      adjusted =  countBetter / len;
+	    }
+	  newFile.write(join(splitLine[0..$-2], "\t"));
+	  newFile.writefln("\t%g\t%s\t%g", pVal, splitLine[$-1], adjusted);
 	}
     }
 
