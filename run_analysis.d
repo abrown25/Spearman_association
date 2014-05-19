@@ -200,9 +200,9 @@ void writeFWER(in string[string] options, ref double[] minPvalues){
 	    adjusted = 0.0;
 	  else
 	    {
-	      while (sortMin[countBetter - 1] <= pVal)
+	      while (countBetter <= len && sortMin[countBetter - 1] <= pVal)
 		countBetter++;
-	      adjusted =  countBetter / len;
+	      adjusted = countBetter == len ? 1.0 : countBetter / len;
 	    }
 	  newFile.write(join(splitLine[0..$-2], "\t"));
 	  newFile.writefln("\t%g\t%s\t%g", pVal, splitLine[$-1], adjusted);
