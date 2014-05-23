@@ -55,7 +55,7 @@ void covariates(string covF, ref double[] phen){
 
 ref double[] rank(ref double[] rankArray){
 
-  size_t len = rankArray.length;
+  immutable size_t len = rankArray.length;
   auto orderIndex = new size_t[len];
   makeIndex!("a < b")(rankArray, orderIndex);
 

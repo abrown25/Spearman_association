@@ -28,9 +28,9 @@ import arg_parse;
 import run_analysis;
 
 void main(in string[] args){
+
   if (args.length == 1)
     giveHelp();
-
   string[string] options = getOpts(args[1..$]);
   auto opts = new Opts(options);
 
@@ -58,20 +58,20 @@ void main(in string[] args){
   auto pOut = "o" in options;
   if (!pOut && !opts.min)
       outFile = stdout;
-    else 
-      {
-  	try{
-  	  if (pOut && opts.min)
-  	    outFile = File(*pOut ~ "temp", "w");
-  	  else if (pOut)
-  	    outFile = File(*pOut, "w");
-  	  else
-  	    outFile = File("temp", "w");
-  	} catch(Exception e){
-  	  writeln(e.msg);
-  	  exit(0);
-  	}
+  else
+    {
+      try{
+	if (pOut && opts.min)
+	  outFile = File(*pOut ~ "temp", "w");
+	else if (pOut)
+	  outFile = File(*pOut, "w");
+	else
+	  outFile = File("temp", "w");
+      } catch(Exception e){
+	writeln(e.msg);
+	exit(0);
       }
+    }
 
   double[] phenotype;
   string[] phenId;
