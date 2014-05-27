@@ -1,11 +1,16 @@
+module run_analysis;
+
 import std.algorithm : sort;
 import std.c.stdlib : exit;
 import std.file : remove;
 import std.range : repeat, SearchPolicy;
 import std.stdio : File, stdout, writeln;
 import std.string : join;
+import std.math : fabs;
 
 import calculation;
+
+const double EPSILON = 0.00000001;
 
 class InputException : Exception {
   this(string s) {super(s);}
@@ -52,8 +57,10 @@ void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts o
   double[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-  double[] perms = getPerm(opts, rankPhenotype);
+
+  const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
+
   foreach(line; genFile.byLine())
     {
       try {
@@ -85,7 +92,7 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  double[] perms = getPerm(opts, rankPhenotype);
+  const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
   
   foreach(line; genFile.byLine())
@@ -93,6 +100,7 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
       try {
 	mixin(readGenotype!());
 	cor = correlation(rankGenotype, rankPhenotype);
+	double tReal = fabs(cor[1]) - EPSILON;
 	outFile.write(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
 	for(auto i = 0; i < nPerm; i++)
@@ -100,8 +108,7 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
 	    double singlePerm = 0;
 	    for(auto j = 0; j < nInd; j++)
 	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
-	    corPvalue(singlePerm, nInd);
-	    if (singlePerm <= cor[2])
+	    if (fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm))) > tReal)
 	      ++countBetter;
 	  }
 	outFile.writeln("\t", countBetter / nPerm);
@@ -117,32 +124,33 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
 
 
 double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
-  double[] minPvalues = new double[opts.number];
   double[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  double[] perms = getPerm(opts, rankPhenotype);
+  const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
+  double[] maxT = new double[opts.number];
 
-  minPvalues[] = 1.0;
+  maxT[] = 0.0;
   foreach(line; genFile.byLine())
     {
       try {
 	mixin(readGenotype!());
 	cor = correlation(rankGenotype, rankPhenotype);
-	outFile.writef("%g\t%g\t%a", cor[0], cor[1], cor[2]);
+	double tReal = fabs(cor[1]) - EPSILON;
+	outFile.writef("%g\t%a\t%g", cor[0], cor[1], cor[2]);
 	double countBetter = 0.0;
 	for(auto i = 0; i < nPerm; i++)
 	  {
 	    double singlePerm = 0;
 	    for(auto j = 0; j < nInd; j++)
 	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
-	    corPvalue(singlePerm, nInd);
-	    if (singlePerm <= cor[2])
+	    singlePerm = fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm)));
+	    if (singlePerm > tReal)
 	      ++countBetter;
-	    if (singlePerm < minPvalues[i])
-	      minPvalues[i] = singlePerm;
+	    if (singlePerm > maxT[i])
+	      maxT[i] = singlePerm;
 	  }
 	outFile.writeln("\t", countBetter/ nPerm);
       } catch(VarianceException e){
@@ -153,10 +161,10 @@ double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts 
 	outFile.writeln(join("Idiot".repeat(4), "\t"));
       }
     }
-  return minPvalues;
+  return maxT;
 }
 
-void writeFWER(in string[string] options, ref double[] minPvalues){
+void writeFWER(in string[string] options, ref double[] maxT){
 
   File oldFile = File(options.get("o", "") ~ "temp", "r");
 
@@ -172,29 +180,27 @@ void writeFWER(in string[string] options, ref double[] minPvalues){
     exit(0);
   }
 
-  auto sortMin = sort!()(minPvalues);
-  double len = sortMin.length;
+  auto sortMax = sort!()(maxT);
+  double len = sortMax.length;
 
   auto headerLine = oldFile.readln();
   newFile.write(headerLine);
 
-  auto pvalCol = split(headerLine).length - 3;
-  size_t countBetter;
-  double pVal;
+  auto pvalCol = split(headerLine).length - 4;
+  double tStat;
   double adjusted;
   foreach(line; oldFile.byLine())
     {
       auto splitLine = split(line);
-      auto pValString = splitLine[pvalCol];
-      if (pValString=="NaN" || pValString=="NA" || pValString=="Idiot")
-	newFile.writeln(line, "\t", pValString);
+      auto tString = splitLine[pvalCol];
+      if (tString=="NaN" || tString=="NA" || tString=="Idiot")
+	newFile.writeln(line, "\t", tString);
       else
 	{
-	  pVal = to!double(pValString);
-	  countBetter = sortMin.upperBound!(SearchPolicy.gallopBackwards)(pVal).length;
-	  adjusted = (len - countBetter) / len;
-	  newFile.write(join(splitLine[0..$-2], "\t"));
-	  newFile.writefln("\t%g\t%s\t%g", pVal, splitLine[$-1], adjusted);
+	  tStat = to!double(tString);
+	  adjusted = sortMax.upperBound!(SearchPolicy.gallop)(fabs(tStat) - EPSILON).length / len;
+	  newFile.write(join(splitLine[0..$-3], "\t"));
+	  newFile.writefln("\t%g\t%s\t%s\t%g", tStat, splitLine[$-2], splitLine[$-1], adjusted);
 	}
     }
 

@@ -1,3 +1,5 @@
+module arg_parse;
+
 import std.array : split;
 import std.c.stdlib : exit;
 import std.conv : to, ConvException;

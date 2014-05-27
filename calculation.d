@@ -1,3 +1,5 @@
+module calculation;
+
 import std.algorithm : makeIndex;
 import std.array : split;
 import std.conv : to, ConvException;

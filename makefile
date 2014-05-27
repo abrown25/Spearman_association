@@ -1,15 +1,15 @@
-spearman : spearman.d arg_parse.d calculation.d run_analysis.d regress.o
+spearman : main.d arg_parse.d calculation.d run_analysis.d regress.o
 	gcc -c regress.c -o regress.o -lgsl -lgslcblas
-	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d spearman.d regress.o -ofspearman
+	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d main.d regress.o -ofspearman
 
 .PHONY : perm.p.calc perm tabix.perm fwer clean release gdc time cov
 
 clean:
 	rm -f *.o spearman spearman_gdc
 
-gdc : spearman.d arg_parse.d calculation.d run_analysis.d regress.o
+gdc : main.d arg_parse.d calculation.d run_analysis.d regress.o
 	gcc -c regress.c -o regress.o -lgsl -lgslcblas
-	gdc spearman.d arg_parse.d calculation.d run_analysis.d regress.o -L/usr/include/gsl/ -l gsl -L/usr/include/gsl/gsl_cblas -l gslcblas -O3 -o spearman_gdc
+	gdc main.d arg_parse.d calculation.d run_analysis.d regress.o -L/usr/include/gsl/ -l gsl -L/usr/include/gsl/gsl_cblas -l gslcblas -O3 -o spearman_gdc
 
 simple:
 	cat genotype.txt | ./spearman -p phenotype.txt -pid -gid -pc 3 -gs 2
