@@ -7,6 +7,7 @@ import std.math : fabs, sqrt;
 import std.random : rndGen, randomShuffle;
 import std.range : lockstep;
 import std.stdio : File, writeln;
+import std.numeric: dotProduct;
 
 import arg_parse : Opts;
 import run_analysis : InputException;
@@ -102,15 +103,11 @@ void transform(ref double[] vector){
 
   foreach(ref e; vector)
     e = (e - mean) / M2;
-
 }
 
 double[3] correlation(in double[] vector1, immutable(double[]) vector2){
-  double[3] results = 0;
-
-  foreach(ref a, ref b; lockstep(vector1, vector2))
-    results[0] += a * b;
-
+  double[3] results;
+  results[0] = dotProduct(vector1, vector2);
   results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0] * results[0]));
   results[2] = gsl_cdf_tdist_P(-fabs(results[1]), vector1.length - 2) * 2;
   return results;
@@ -132,6 +129,5 @@ double[] getPerm(in Opts permOpts, immutable(double[]) vector){
       outPerm[(i * vector.length)..(i + 1) * vector.length] = vector.dup;
       randomShuffle(outPerm[(i * vector.length)..(i + 1) * vector.length]);
     }
-
   return outPerm;
 }

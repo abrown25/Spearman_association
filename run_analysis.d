@@ -7,7 +7,7 @@ import std.range : repeat, SearchPolicy;
 import std.stdio : File, stdout, writeln;
 import std.string : join;
 import std.math : fabs;
-
+import std.numeric : dotProduct;
 import calculation;
 
 const double EPSILON = 0.00000001;
@@ -18,7 +18,7 @@ class InputException : Exception {
 
 template readGenotype()
 {
-const char[] readGenotype = "auto splitLine = split(line);
+  const char[] readGenotype = "auto splitLine = split(line);
     
   if (skip > 0)
     outFile.write(join(splitLine[0..skip], \"\t\"), \"\t\");
@@ -70,9 +70,7 @@ void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts o
 	outFile.write("\t");
 	for(auto i = 0; i < nPerm; i++)
 	  {
-	    double singlePerm = 0;
-	    for(auto j = 0; j < nInd; j++)
-	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
+	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);
 	    corPvalue(singlePerm, nInd);
 	    outFile.write(singlePerm, "\t");
 	  }
@@ -105,9 +103,7 @@ void pvalPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opt
 	double countBetter = 0.0;
 	for(auto i = 0; i < nPerm; i++)
 	  {
-	    double singlePerm = 0;
-	    for(auto j = 0; j < nInd; j++)
-	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
+	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);
 	    if (fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm))) > tReal)
 	      ++countBetter;
 	  }
@@ -143,9 +139,7 @@ double[] minPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts 
 	double countBetter = 0.0;
 	for(auto i = 0; i < nPerm; i++)
 	  {
-	    double singlePerm = 0;
-	    for(auto j = 0; j < nInd; j++)
-	      singlePerm += rankGenotype[j] * perms[i * nInd + j];
+	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);
 	    singlePerm = fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm)));
 	    if (singlePerm > tReal)
 	      ++countBetter;
