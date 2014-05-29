@@ -6,14 +6,13 @@ import std.file : remove;
 import std.range : repeat, SearchPolicy;
 import std.stdio : File, stdout, writeln;
 import std.string : join;
-import std.math : fabs;
-import std.numeric : dotProduct;
+
 import calculation;
 
 const double EPSILON = 0.00000001;
 
 class InputException : Exception {
-  this(string s) {super(s);}
+  pure this(string s) {super(s);}
 }
 
 template readGenotype()
@@ -31,10 +30,9 @@ template readGenotype()
 ";
 }
 
-void noPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
+void noPerm(ref File phenFile, ref File genFile, ref File outFile, in size_t skip, immutable(double[]) rankPhenotype){
   double[3] cor;
   immutable size_t nInd = rankPhenotype.length;
-  immutable size_t skip = opts.skip;
 
   foreach(line; genFile.byLine())
     {
@@ -52,7 +50,6 @@ void noPerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts,
     }
 }
 
-
 void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts opts, immutable(double[]) rankPhenotype){
   double[3] cor;
   immutable size_t nInd = rankPhenotype.length;
@@ -66,8 +63,7 @@ void simplePerm(ref File phenFile, ref File genFile, ref File outFile, in Opts o
       try {
 	mixin(readGenotype!());
 	cor = correlation(rankGenotype, rankPhenotype);
-	outFile.write(join(to!(string[])(cor), "\t"));
-	outFile.write("\t");
+	outFile.write(join(to!(string[])(cor), "\t"), "\t");
 	for(auto i = 0; i < nPerm; i++)
 	  {
 	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);

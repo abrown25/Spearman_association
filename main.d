@@ -148,7 +148,7 @@ void main(in string[] args){
   
 
   if (!opts.run)
-    noPerm(phenFile, genFile, outFile, opts, rankPhenotype);
+    noPerm(phenFile, genFile, outFile, opts.skip, rankPhenotype);
   else if (!opts.pval && !opts.min)
     simplePerm(phenFile, genFile, outFile, opts, rankPhenotype);
   else if (!opts.min)
