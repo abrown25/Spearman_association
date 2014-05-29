@@ -183,7 +183,7 @@ void writeFWER(in string[string] options, ref double[] maxT){
     {
       auto splitLine = split(line);
       auto tString = splitLine[pvalCol];
-      if (tString=="NaN" || tString=="NA" || tString=="Idiot")
+      if (tString == "NaN" || tString == "NA" || tString == "Idiot")
 	newFile.writeln(line, "\t", tString);
       else
 	{

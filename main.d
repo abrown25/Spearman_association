@@ -21,6 +21,7 @@
 */
 
 import std.algorithm : reduce;
+import std.file : exists;
 import std.range : iota;
 import std.stdio : stdin; 
 
@@ -28,10 +29,15 @@ import arg_parse;
 import calculation : rank, transform, VarianceException, covariates;
 import run_analysis;
 
+class FileExistsException : Exception {
+  pure nothrow this(string s) {super(s);}
+}
+
 void main(in string[] args){
 
   if (args.length == 1)
     giveHelp();
+
   string[string] options = getOpts(args[1..$]);
   auto opts = new Opts(options);
 
@@ -58,16 +64,25 @@ void main(in string[] args){
   File outFile;
   auto pOut = "o" in options;
   if (!pOut && !opts.min)
-      outFile = stdout;
+    outFile = stdout;
   else
     {
       try{
-	if (pOut && opts.min)
-	  outFile = File(*pOut ~ "temp", "w");
-	else if (pOut)
+	if (pOut && !opts.min)
 	  outFile = File(*pOut, "w");
+	else if (pOut)
+	  {
+	    string outName = (*pOut ~ "temp");
+	    enforce(!outName.exists, new FileExistsException(("Failed to run analysis: file called " ~ outName ~ " already exists.
+Please choose a different name for output file.")));
+	    outFile = File(*pOut ~ "temp", "w");
+	  }
 	else
-	  outFile = File("temp", "w");
+	  {
+	    enforce(!"temp".exists, new FileExistsException("Failed to run analysis: file called temp already exists.
+Please choose a different name for output file."));
+	    outFile = File("temp", "w");
+	  }
       } catch(Exception e){
 	writeln(e.msg);
 	exit(0);
@@ -118,7 +133,7 @@ void main(in string[] args){
 	: "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
     }
     
-  if (opts.pid && opts.gid && !opts.nocheck && genId!=phenId)
+  if (opts.pid && opts.gid && !opts.nocheck && genId != phenId)
     {
       writeln("Failed to run analysis: Mismatched IDs");
       exit(0);

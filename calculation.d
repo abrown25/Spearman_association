@@ -12,6 +12,10 @@ import std.stdio : File;
 import arg_parse : Opts;
 import run_analysis : InputException;
 
+class VarianceException : Exception {
+  pure nothrow this(string s) {super(s);}
+}
+
 pure nothrow extern(C) {
   double gsl_cdf_tdist_P(double x, double nu);
 }
@@ -36,10 +40,6 @@ unittest{
   regress(nInd, nCov, x.ptr, y.ptr, residuals.ptr);
   foreach(i, ref e; residuals)
     assert(approxEqual(e, residualsFromR[i]));
-}
-
-class VarianceException : Exception {
-  pure nothrow this(string s) {super(s);}
 }
 
 void covariates(string covF, ref double[] phen){
@@ -107,9 +107,7 @@ unittest{
   //Simple test of ranking with ties
   double[] vector = [10, 9, 2, 9, 3];
 
-  rank(vector);
-
-  assert(vector==[5, 3.5, 1, 3.5, 2]);
+  assert(rank(vector) == [5, 3.5, 1, 3.5, 2]);
 }
 
 pure void transform(ref double[] vector){
@@ -126,7 +124,7 @@ pure void transform(ref double[] vector){
       M2 += delta * (e - mean);
     }
 
-  enforce(M2!=0, new VarianceException(""));
+  enforce(M2 != 0, new VarianceException(""));
 
   M2 = sqrt(M2);
 
