@@ -3,10 +3,11 @@ module calculation;
 import std.algorithm : makeIndex, reduce;
 import std.array : split;
 import std.conv : to, ConvException;
+import std.exception : enforce;
 import std.math : fabs, sqrt, approxEqual;
+import std.numeric: dotProduct;
 import std.random : rndGen, randomShuffle, uniform;
 import std.stdio : File;
-import std.numeric: dotProduct;
 
 import arg_parse : Opts;
 import run_analysis : InputException;
@@ -55,19 +56,12 @@ void covariates(string covF, ref double[] phen){
     {
       covOut ~= 1;
       auto splitLine = split(line);
-	{
-	  if(splitLine.length != nCov)
-	    throw new InputException("Failed to run analysis, covariate measurements missing");
-	  else
-	    {
-	      covOut ~= to!(double[])(splitLine);
-	      nInd++;
-	    }
-	}
+      enforce(splitLine.length == nCov, new InputException("Failed to run analysis, covariate measurements missing"));
+      covOut ~= to!(double[])(splitLine);
+      nInd++;
     }
 
-  if (nInd != phen.length)
-    throw new InputException("Failed to run analysis, covariates file does not have the same number of individuals as phenotype file");
+  enforce(nInd == phen.length, new InputException("Failed to run analysis, covariates file does not have the same number of individuals as phenotype file"));
 
   regress(nInd, nCov + 1, covOut.ptr, phen.dup.ptr, phen.ptr);
 }
@@ -132,8 +126,7 @@ pure void transform(ref double[] vector){
       M2 += delta * (e - mean);
     }
 
-  if (M2==0)
-    throw new VarianceException("");
+  enforce(M2!=0, new VarianceException(""));
 
   M2 = sqrt(M2);
 

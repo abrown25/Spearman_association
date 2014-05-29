@@ -2,6 +2,7 @@ module run_analysis;
 
 import std.algorithm : sort;
 import std.c.stdlib : exit;
+import std.exception : enforce;
 import std.file : remove;
 import std.range : repeat, SearchPolicy;
 import std.stdio : File, stdout, writeln;
@@ -22,8 +23,7 @@ template readGenotype()
   if (skip > 0)
     outFile.write(join(splitLine[0..skip], \"\t\"), \"\t\");
 
-  if (splitLine.length != nInd + skip)
-    throw new InputException(\"\");
+  enforce(splitLine.length == nInd + skip, new InputException(\"\"));
 
   auto rankGenotype = to!(double[])(splitLine[skip..$]);
   transform(rank(rankGenotype));

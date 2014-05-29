@@ -84,7 +84,7 @@ class Opts{
 	  writeln("Failed to run analysis: Non-integer argument to -perm");
 	  exit(0);
 	}
-	if (value.length==2)
+	if (value.length == 2)
 	  {
 	    give_seed = true;
 	    try{
@@ -144,12 +144,12 @@ string[string] getOpts(in string[] args){
       if (arg.startsWith("-"))
 	{
 	  prefix = chompPrefix(arg.idup, "-");
-	  if (prefix=="-help")
+	  if (prefix == "-help")
 	    giveHelp();
 	  auto pParam = prefix in optsDictParam;
 	  if (pParam)
 	    {
-	      if (i==(args.length - 1))
+	      if (i == (args.length - 1))
 		{
 		  writeln("Failed to run analysis: Missing parameter for -", prefix, " option");
 		  exit(0);

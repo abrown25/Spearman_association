@@ -24,8 +24,8 @@ import std.algorithm : reduce;
 import std.range : iota;
 import std.stdio : stdin; 
 
-import calculation : rank, transform, VarianceException, covariates;
 import arg_parse;
+import calculation : rank, transform, VarianceException, covariates;
 import run_analysis;
 
 void main(in string[] args){
