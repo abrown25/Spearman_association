@@ -44,10 +44,10 @@ unittest{
 
 void covariates(string covF, ref double[] phen){
   double[] covOut;
-  auto covFile = File(covF);
   size_t nInd = 1;
   covOut ~= 1;
 
+  auto covFile = File(covF);
   auto firstLine = split(covFile.readln());
   size_t nCov = firstLine.length;
   covOut ~= to!(double[])(firstLine);

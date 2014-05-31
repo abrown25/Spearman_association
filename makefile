@@ -1,14 +1,14 @@
-spearman : main.d arg_parse.d calculation.d run_analysis.d regress.o
+spearman : main.d arg_parse.d calculation.d run_analysis.d regress.o setup_all.d
 	gcc -c regress.c -o regress.o -lgsl -lgslcblas
-	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d main.d regress.o -ofspearman
+	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d main.d setup_all.d regress.o -ofspearman
 
-gdc : main.d arg_parse.d calculation.d run_analysis.d regress.o
+gdc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o
 	gcc -c regress.c -o regress.o -lgsl -lgslcblas
-	gdc main.d arg_parse.d calculation.d run_analysis.d regress.o -L/usr/include/gsl/ -l gsl -L/usr/include/gsl/gsl_cblas -l gslcblas -O3 -o spearman_gdc
+	gdc main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o -L/usr/include/gsl/ -l gsl -L/usr/include/gsl/gsl_cblas -l gslcblas -O3 -o spearman_gdc
 
-unittest : main.d arg_parse.d calculation.d run_analysis.d regress.o
+unittest : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o
 	gcc -c regress.c -o regress.o -lgsl -lgslcblas
-	dmd -unittest -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d main.d regress.o -ofspearman
+	dmd -unittest -L-lgsl -L-lgslcblas calculation.d setup_all.d run_analysis.d arg_parse.d main.d regress.o -ofspearman
 
 .PHONY : perm.p.calc perm tabix.perm fwer clean release gdc time cov all.tests
 
@@ -34,7 +34,7 @@ tabix.perm :
 	tabix genotype.txt.gz chr1:1-2000 | ./spearman -p phenotype.txt -pid -pc 3 -gs 2 -perm 4,12
 
 time :
-	time -f "Real : %E, User : %U, System : %S\n" ./spearman_gdc -g large_genotype.txt -perm 1000,4 -o out -fwer large_phenotype.txt
+	time -f "Real : %E, User : %U, System : %S\n" ./spearman_gdc -g ../large_genotype.txt -perm 1000,4 -o out -fwer ../large_phenotype.txt
 
 all.tests :
 	cat genotype.txt | ./spearman -p phenotype.txt -pid -gid -pc 3 -gs 2 > output/simple

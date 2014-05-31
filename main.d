@@ -28,10 +28,7 @@ import std.stdio : stdin;
 import arg_parse;
 import calculation : rank, transform, VarianceException, covariates;
 import run_analysis;
-
-class FileExistsException : Exception {
-  pure nothrow this(string s) {super(s);}
-}
+import setup_all : fileSetup, setup;
 
 void main(in string[] args){
 
@@ -41,137 +38,31 @@ void main(in string[] args){
   string[string] options = getOpts(args[1..$]);
   auto opts = new Opts(options);
 
-  File phenFile;
-  try{
-    phenFile = File(options["p"]);
-  } catch(Exception e){
-    writeln(e.msg);
-    exit(0);
+  File[3] fileArray;
+
+  scope(failure){
+    fileArray[outF].close();
+   }
+
+  scope(exit){
+    fileArray[phenF].close();
+    fileArray[genF].close();
   }
 
-  File genFile;
-  auto pGen = "g" in options;
-  if (pGen)
-    try{
-      genFile = File(*pGen);
-    } catch(Exception e){
-      writeln(e.msg);
-      exit(0);
-    }
-  else
-    genFile = stdin;
+  fileSetup(fileArray, opts, options);
 
-  File outFile;
-  auto pOut = "o" in options;
-  if (!pOut && !opts.min)
-    outFile = stdout;
-  else
-    {
-      try{
-	if (pOut && !opts.min)
-	  outFile = File(*pOut, "w");
-	else if (pOut)
-	  {
-	    string outName = (*pOut ~ "temp");
-	    enforce(!outName.exists, new FileExistsException(("Failed to run analysis: file called " ~ outName ~ " already exists.
-Please choose a different name for output file.")));
-	    outFile = File(*pOut ~ "temp", "w");
-	  }
-	else
-	  {
-	    enforce(!"temp".exists, new FileExistsException("Failed to run analysis: file called temp already exists.
-Please choose a different name for output file."));
-	    outFile = File("temp", "w");
-	  }
-      } catch(Exception e){
-	writeln(e.msg);
-	exit(0);
-      }
-    }
-
-  double[] phenotype;
-  string[] phenId;
-
-  foreach(line; phenFile.byLine())
-    {
-      auto phenLine = split(line);
-      if (phenLine.length < opts.phenC)
-	{
-	  writeln("Failed to run analysis: column ", opts.phenC + 1, " in phenotype file doesn't exist");
-	  exit(0);
-	}
-      try{
-	phenotype ~= to!double(phenLine[opts.phenC]);
-      } catch(ConvException e){
-	writeln("Failed to run analysis: Non-numeric data in phenotype");
-	exit(0);
-      }
-      if (opts.pid)
-	phenId ~= phenLine[0].idup;
-    }
-
-  string headerLine;
-  string[] genId;
-  string[] splitLine;
-
-  if (opts.gid)
-    {
-      splitLine = split(genFile.readln());
-      genId = splitLine[opts.skip..$];
-      headerLine ~= join(splitLine[0..opts.skip], "\t");
-      headerLine ~= "\t";
-    } 
-  else if(opts.skip > 0)
-    headerLine ~= "".reduce!((a, b) => a ~ "F" ~ to!string(b + 1) ~ "\t")(iota(0, opts.skip));
-
-  headerLine ~= "Cor\tT_stat\tP";
-
-  if (opts.run)
-    {
-      headerLine ~= opts.pval ? "\tPermP"
-	: opts.min ? "\tPermP\tFWER"
-	: "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
-    }
-    
-  if (opts.pid && opts.gid && !opts.nocheck && genId != phenId)
-    {
-      writeln("Failed to run analysis: Mismatched IDs");
-      exit(0);
-    }
-
-  auto p = "cov" in options;
-  if (p)
-    try{
-      covariates(*p, phenotype);
-    } catch(InputException e){
-      writeln(e.msg);
-      exit(0);
-    } catch(ConvException){
-      writeln("Failed to run analysis, non-numeric data in covariates file");
-      exit(0);
-    }
-
-  try {
-    transform(rank(phenotype));
-  } catch(VarianceException e){
-    writeln("Failed to run analysis: Phenotype is constant");
-    exit(0);
-  }
-
-  immutable rankPhenotype = cast(immutable) phenotype;
-  outFile.writeln(headerLine);
-  
+  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts, options);
 
   if (!opts.run)
-    noPerm(phenFile, genFile, outFile, opts.skip, rankPhenotype);
+    noPerm(fileArray, opts.skip, rankPhenotype);
   else if (!opts.pval && !opts.min)
-    simplePerm(phenFile, genFile, outFile, opts, rankPhenotype);
+    simplePerm(fileArray, opts, rankPhenotype);
   else if (!opts.min)
-    pvalPerm(phenFile, genFile, outFile, opts, rankPhenotype);
+    pvalPerm(fileArray, opts, rankPhenotype);
   else
     {
-      double[] minPvalues = minPerm(phenFile, genFile, outFile, opts, rankPhenotype);
-      outFile.close();
+      double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
+      fileArray[outF].close();
       writeFWER(options, minPvalues);
     }
 }
