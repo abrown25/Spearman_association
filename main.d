@@ -29,40 +29,42 @@ import calculation : rank, transform, VarianceException, covariates;
 import run_analysis;
 import setup_all : fileSetup, setup;
 
-void main(in string[] args){
-  if (args.length == 1)
-    giveHelp(helpString);
+version(unittest) void main() {writeln("All unit tests completed.");}
+ else void main(in string[] args)
+ {
+   if (args.length == 1)
+     giveHelp(helpString);
 
-  string[string] options = getOpts(args[1..$]);
-  auto opts = new Opts(options);
+   string[string] options = getOpts(args[1..$]);
+   auto opts = new Opts(options);
 
-  File[3] fileArray;
+   File[3] fileArray;
 
-  scope(failure){
-    fileArray[outF].close();
-    if (opts.min && (opts.output ~ "temp").exists)
-      remove((opts.output ~ "temp"));
+   scope(failure){
+     fileArray[outF].close();
+     if (opts.min && (opts.output ~ "temp").exists)
+       remove((opts.output ~ "temp"));
    }
 
-  scope(exit){
-    fileArray[phenF].close();
-    fileArray[genF].close();
-  }
+   scope(exit){
+     fileArray[phenF].close();
+     fileArray[genF].close();
+   }
 
-  fileSetup(fileArray, opts);
+   fileSetup(fileArray, opts);
 
-  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
+   immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
 
-  if (!opts.run)
-    noPerm(fileArray, opts.skip, rankPhenotype);
-  else if (!opts.pval && !opts.min)
-    simplePerm(fileArray, opts, rankPhenotype);
-  else if (!opts.min)
-    pvalPerm(fileArray, opts, rankPhenotype);
-  else
-    {
-      double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
-      fileArray[outF].close();
-      writeFWER(opts, minPvalues);
-    }
-}
+   if (!opts.run)
+     noPerm(fileArray, opts.skip, rankPhenotype);
+   else if (!opts.pval && !opts.min)
+     simplePerm(fileArray, opts, rankPhenotype);
+   else if (!opts.min)
+     pvalPerm(fileArray, opts, rankPhenotype);
+   else
+     {
+       double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
+       fileArray[outF].close();
+       writeFWER(opts, minPvalues);
+     }
+ }

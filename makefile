@@ -9,6 +9,10 @@ gdc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o
 unittest : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o
 	gcc -c regress.c -o regress.o -lgsl -lgslcblas
 	dmd -unittest -L-lgsl -L-lgslcblas calculation.d setup_all.d run_analysis.d arg_parse.d main.d regress.o -ofspearman
+	./spearman
+	rm -f *.o spearman spearman_gdc
+	gcc -c regress.c -o regress.o -lgsl -lgslcblas
+	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d main.d setup_all.d regress.o -ofspearman
 
 .PHONY : perm.p.calc perm tabix.perm fwer clean release gdc time cov all.tests
 
