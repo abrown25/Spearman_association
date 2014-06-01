@@ -1,18 +1,24 @@
 module run_analysis;
 
-import std.algorithm : sort;
-import std.c.stdlib : exit;
-import std.exception : enforce;
-import std.file : remove;
-import std.range : repeat, SearchPolicy;
+import std.array : split;
+import std.conv : to, ConvException;
+import std.numeric: dotProduct;
+import std.range : repeat;
 import std.stdio : File, stderr, stdout, writeln;
 import std.string : join;
+
+version(unittest){
+  import setup_all;
+  import std.digest.sha;
+  import std.file : remove;
+}
 
 import calculation;
 
 enum double EPSILON = 0.00000001;
+
 enum{
-  phenF = 0, genF = 1, outF = 2
+  phenF, genF, outF
 }
 
 class InputException : Exception {
@@ -54,8 +60,6 @@ void noPerm(ref File[3] fileArray, in size_t skip, immutable(double[]) rankPheno
 }
 
 unittest{
-  import setup_all;
-  import std.digest.sha;
   string[string] options = ["p" : "phenotype.txt", "g" : "genotype.txt",
 			    "o" : "testtemp", "pid" : "T",
 			    "gid" : "T", "pc" : "3", "gs" : "2"];
@@ -106,8 +110,6 @@ void simplePerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhe
 }
 
 unittest{
-  import setup_all;
-  import std.digest.sha;
   string[string] options = ["p" : "phenotype.txt", "g" : "genotype.txt",
 			    "o" : "testtemp", "pid" : "T", "perm" : "4,12",
 			    "gid" : "T", "pc" : "3", "gs" : "2"];
@@ -160,8 +162,6 @@ void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPheno
 }
 
 unittest{
-  import setup_all;
-  import std.digest.sha;
   string[string] options = ["p" : "phenotype.txt", "g" : "genotype.txt",
 			    "o" : "testtemp", "pid" : "T", "perm" : "1000000,12",
 			    "gid" : "T", "pc" : "3", "gs" : "2", "pval" : "T"];
@@ -219,6 +219,10 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
 }
 
 void writeFWER(in Opts opts, ref double[] maxT){
+  import std.algorithm : sort;
+  import std.c.stdlib : exit;
+  import std.file : remove;
+  import std.range : SearchPolicy;
 
   File oldFile = File(opts.output ~ "temp", "r");
 
@@ -273,8 +277,6 @@ void writeFWER(in Opts opts, ref double[] maxT){
 }
 
 unittest{
-  import setup_all;
-  import std.digest.sha;
   string[string] options = ["p" : "phenotype.txt", "g" : "genotype.txt",
 			    "o" : "testtemp", "pid" : "T", "perm" : "100000,12",
 			    "gid" : "T", "pc" : "3", "gs" : "2", "fwer" : "T"];

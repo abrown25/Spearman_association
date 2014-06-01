@@ -1,4 +1,3 @@
-
 /* The GPL v3 License
 
    Copyright (C) 2014 Genome Research Ltd.
@@ -20,16 +19,19 @@
 
 */
 
-import std.algorithm : reduce;
-import std.file : exists;
-import std.stdio : stdin; 
+import std.file : exists, File, remove;
+import std.stdio : stdin, writeln;
 
-import arg_parse;
+import arg_parse : Opts, giveHelp, getOpts, helpString;
 import calculation : rank, transform, VarianceException, covariates;
-import run_analysis;
+import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, writeFWER;
 import setup_all : fileSetup, setup;
 
-version(unittest) void main() {writeln("All unit tests completed.");}
+enum{
+  phenF, genF, outF
+}
+
+version(unittest) void main() {writeln("All unit tests completed successfully.");}
  else void main(in string[] args)
  {
    if (args.length == 1)

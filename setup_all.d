@@ -19,7 +19,7 @@ class FileExistsException : Exception {
 }
 
 enum{
-  phenF = 0, genF = 1, outF = 2
+  phenF, genF, outF
 }
 
 void fileSetup(ref File[3] fileArray, Opts opts){

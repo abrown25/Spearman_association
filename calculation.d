@@ -1,16 +1,12 @@
 module calculation;
 
-import std.algorithm : makeIndex, reduce;
-import std.array : split;
-import std.conv : to, ConvException;
 import std.exception : enforce;
-import std.math : fabs, sqrt, approxEqual;
-import std.numeric: dotProduct;
-import std.random : rndGen, randomShuffle, uniform;
-import std.stdio : File;
+import std.math : fabs, sqrt;
 
 import arg_parse : Opts;
 import run_analysis : InputException;
+
+version(unittest) import std.math : approxEqual;
 
 class VarianceException : Exception {
   pure nothrow this(string s) {super(s);}
@@ -31,6 +27,7 @@ pure nothrow extern(C) {
 
 unittest{
   //Runs a sample linear regression and checks values against R residuals
+
   double [] residualsFromR = [-1.00027816411683, -1.72461752433936, -0.275938803894297, 1.51766342141864, 1.48317107093185];
   size_t nInd = 5;
   size_t nCov = 4;
@@ -43,6 +40,10 @@ unittest{
 }
 
 void covariates(string covF, ref double[] phen){
+  import std.array : split;
+  import std.conv : to, ConvException;
+  import std.stdio : File;
+
   double[] covOut;
   size_t nInd = 1;
   covOut ~= 1;
@@ -69,6 +70,7 @@ void covariates(string covF, ref double[] phen){
 unittest{
   //Checks residuals from sample files against residuals calculated by R
   double[] residualsFromR = [-0.0988744898987968, 0.32101118013441, 0.598800504240901, 0.798569051911944, 0.00240916094127165, -0.512816562906186, -0.586676086840575, -0.690613979610441, -0.801131138946856, 0.969322360974328];
+
   double[] phen = [-1.3853088072, -0.785797093643, 1.14540423638, -0.785797093643, 1.03820492508, -1.25652676836, -0.787662180447, -2.05355237841, -0.245457234103, 1.14277217712];
 
   covariates("cov.txt", phen);
@@ -78,6 +80,7 @@ unittest{
 }
 
 pure ref double[] rank(ref double[] rankArray){
+  import std.algorithm : makeIndex;
 
   immutable size_t len = rankArray.length;
   auto orderIndex = new size_t[len];
@@ -134,6 +137,9 @@ pure void transform(ref double[] vector){
 
 unittest{
   //Checks that transform works on randomly generated vector
+  import std.algorithm : reduce;
+  import std.random : uniform;
+
   double[] x;
   for(auto i=0; i < 10; i++)
     x ~= uniform(0, 10.0);
@@ -146,6 +152,8 @@ unittest{
 }
 
 pure nothrow double[3] correlation(in double[] vector1, immutable(double[]) vector2){
+  import std.numeric: dotProduct;
+
   double[3] results;
   results[0] = dotProduct(vector1, vector2);
   results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0] * results[0]));
@@ -176,6 +184,8 @@ pure nothrow ref double corPvalue(ref double results, in size_t len){
 }
 
 double[] getPerm(in Opts permOpts, immutable(double[]) vector){
+  import std.random : rndGen, randomShuffle;
+
   if (permOpts.give_seed)
     rndGen.seed(permOpts.seed);
 
@@ -191,6 +201,8 @@ double[] getPerm(in Opts permOpts, immutable(double[]) vector){
 unittest{
   //Checks permutation p values (option 4,12) for 3rd phenotype against 5th genotype row against values calculated in R based on those permutations
   //Permutations = matrix(c(2, 9, 5, 3, 1, 8, 6, 7, 10, 4, 2, 7, 5, 6, 9, 10, 4, 1, 3, 8, 7, 10, 8, 3, 1, 5, 2, 6, 9, 4, 3, 5, 7, 9, 10, 2, 8, 4, 1, 6), 10, 4)
+  import std.numeric: dotProduct;
+
   double[] permPvalsR = [0.295293228837933, 0.620081751733492, 0.248565693244932, 0.523263392865814];
 
   double[] genotype = [0, 2, 0, 0, 0, 2, 0.252, 1, 0.018, 0.367];
