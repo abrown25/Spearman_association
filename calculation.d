@@ -2,11 +2,11 @@ module calculation;
 
 import std.exception : enforce;
 import std.math : fabs, sqrt;
-
 import arg_parse : Opts;
-import run_analysis : InputException;
 
-version(unittest) import std.math : approxEqual;
+version(unittest){
+  import std.math : approxEqual;
+}
 
 class VarianceException : Exception {
   pure nothrow this(string s) {super(s);}
@@ -43,6 +43,7 @@ void covariates(string covF, ref double[] phen){
   import std.array : split;
   import std.conv : to, ConvException;
   import std.stdio : File;
+  import run_analysis : InputException;
 
   double[] covOut;
   size_t nInd = 1;
