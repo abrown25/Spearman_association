@@ -31,7 +31,7 @@ import setup_all : fileSetup, setup;
 
 void main(in string[] args){
   if (args.length == 1)
-    giveHelp();
+    giveHelp(helpString);
 
   string[string] options = getOpts(args[1..$]);
   auto opts = new Opts(options);

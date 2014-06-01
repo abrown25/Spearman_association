@@ -7,7 +7,7 @@ import std.conv : to, ConvException;
 import std.exception : enforce;
 import std.file : File, exists;
 import std.range : iota;
-import std.stdio : stdin, writeln, stdout;
+import std.stdio : stdin, stderr, writeln, stdout;
 import std.string : join;
 
 import arg_parse : Opts;
@@ -27,7 +27,7 @@ void fileSetup(ref File[3] fileArray, Opts opts){
   try{
     fileArray[phenF] = File(opts.phenotype);
   } catch(Exception e){
-    writeln(e.msg);
+    stderr.writeln(e.msg);
     exit(0);
   }
   version(WINDOWS)
@@ -35,7 +35,7 @@ void fileSetup(ref File[3] fileArray, Opts opts){
       try{
 	fileArray[genF] = File(opts.genotype);
       } catch(Exception e){
-	writeln(e.msg);
+	stderr.writeln(e.msg);
 	exit(0);
       }
       try{
@@ -49,7 +49,7 @@ Please choose a different name for output file or delete temp file.")));
 	    fileArray[outF] = File(opts.output ~ "temp", "w");
 	  }
       } catch(Exception e){
-	writeln(e.msg);
+	stderr.writeln(e.msg);
 	exit(0);
       }
     }
@@ -59,7 +59,7 @@ Please choose a different name for output file or delete temp file.")));
 	try{
 	  fileArray[genF] = File(opts.genotype);
 	} catch(Exception e){
-	  writeln(e.msg);
+	  stderr.writeln(e.msg);
 	  exit(0);
 	}
       else
@@ -86,7 +86,7 @@ Please choose a different name for output file or delete temp file."));
 		fileArray[outF] = File("temp", "w");
 	      }
 	  } catch(Exception e){
-	    writeln(e.msg);
+	    stderr.writeln(e.msg);
 	    exit(0);
 	  }
 	}
@@ -102,13 +102,13 @@ double[] setup(ref File[3] fileArray, Opts opts){
       auto phenLine = split(line);
       if (phenLine.length < opts.phenC)
 	{
-	  writeln("Failed to run analysis: column ", opts.phenC + 1, " in phenotype file doesn't exist");
+	  stderr.writeln("Failed to run analysis: column ", opts.phenC + 1, " in phenotype file doesn't exist");
 	  exit(0);
 	}
       try{
 	phenotype ~= to!double(phenLine[opts.phenC]);
       } catch(ConvException e){
-	writeln("Failed to run analysis: Non-numeric data in phenotype");
+	stderr.writeln("Failed to run analysis: Non-numeric data in phenotype");
 	exit(0);
       }
       if (opts.pid)
@@ -140,7 +140,7 @@ double[] setup(ref File[3] fileArray, Opts opts){
     
   if (opts.pid && opts.gid && !opts.nocheck && genId != phenId)
     {
-      writeln("Failed to run analysis: Mismatched IDs");
+      stderr.writeln("Failed to run analysis: Mismatched IDs");
       exit(0);
     }
 
@@ -148,20 +148,20 @@ double[] setup(ref File[3] fileArray, Opts opts){
     try{
       covariates(opts.cov, phenotype);
     } catch(InputException e){
-      writeln(e.msg);
+      stderr.writeln(e.msg);
       exit(0);
     } catch(ConvException){
-      writeln("Failed to run analysis, non-numeric data in covariates file");
+      stderr.writeln("Failed to run analysis, non-numeric data in covariates file");
       exit(0);
     } catch(Exception e){
-      writeln(e.msg);
+      stderr.writeln(e.msg);
       exit(0);
     }
 
   try {
     transform(rank(phenotype));
   } catch(VarianceException e){
-    writeln("Failed to run analysis: Phenotype is constant");
+    stderr.writeln("Failed to run analysis: Phenotype is constant");
     exit(0);
   }
   

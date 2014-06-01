@@ -5,7 +5,7 @@ import std.c.stdlib : exit;
 import std.exception : enforce;
 import std.file : remove;
 import std.range : repeat, SearchPolicy;
-import std.stdio : File, stdout, writeln;
+import std.stdio : File, stderr, stdout, writeln;
 import std.string : join;
 
 import calculation;
@@ -228,7 +228,7 @@ void writeFWER(in Opts opts, ref double[] maxT){
       try{
 	newFile = File(opts.output, "w");
       } catch(Exception e){
-	writeln(e.msg);
+	stderr.writeln(e.msg);
 	exit(0);
       }
     }
@@ -240,7 +240,7 @@ void writeFWER(in Opts opts, ref double[] maxT){
 	else
 	  newFile = stdout;
       } catch(Exception e){
-	writeln(e.msg);
+	stderr.writeln(e.msg);
 	exit(0);
       }
     }

@@ -3,7 +3,7 @@ module arg_parse;
 import std.array : split;
 import std.c.stdlib : exit;
 import std.conv : to, ConvException;
-import std.stdio : writeln;
+import std.stdio : writeln, stderr;
 import std.string : chompPrefix, startsWith;
 
 class Opts{
@@ -36,7 +36,7 @@ class Opts{
     try{
       skip = p ? to!int(*p) : 0;
     } catch (ConvException e){
-      writeln("Failed to run analysis: Non-numeric argument to -geno-skip");
+      stderr.writeln("Failed to run analysis: Non-numeric argument to -geno-skip");
       exit(0);
     }
   }
@@ -47,7 +47,7 @@ class Opts{
     phenC = p ? to!int(*p) - 1
       : "pid" in option ? 1 : 0;
   } catch (ConvException e){
-    writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
+    stderr.writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
     exit(0);
   }
 }
@@ -66,13 +66,13 @@ class Opts{
 
     if (min && pval)
       {
-	writeln("Failed to run analysis: Both -fwer and -pval flag specified");
+	stderr.writeln("Failed to run analysis: Both -fwer and -pval flag specified");
 	exit(0);
       }
 
     if ((min || pval) && !("perm" in option))
       {
-	writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
+	stderr.writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
 	exit(0);
       }
   }
@@ -86,7 +86,7 @@ class Opts{
 	try{
 	  number = to!int(value[0]);
 	} catch (ConvException e){
-	  writeln("Failed to run analysis: Non-integer argument to -perm");
+	  stderr.writeln("Failed to run analysis: Non-integer argument to -perm");
 	  exit(0);
 	}
 	if (value.length == 2)
@@ -95,7 +95,7 @@ class Opts{
 	    try{
 	      seed = to!int(value[1]);
 	    } catch (ConvException e){
-	      writeln("Failed to run analysis: Non-integer argument to seed");
+	      stderr.writeln("Failed to run analysis: Non-integer argument to seed");
 	      exit(0);
 	    }
 	  }
@@ -143,8 +143,10 @@ Output:
     Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the -pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if -fwer is used. If neither flag is present, then p values for calculated on permuted datasets are reported next.
 ";
 
-void giveHelp(){
-  writeln(helpString);
+static immutable auto versionString = "NP-GWAS, version 0.1.";
+
+void giveHelp(immutable string quitString){
+  writeln(quitString);
   exit(0);
 }
 
@@ -166,13 +168,15 @@ string[string] getOpts(in string[] args){
 	{
 	  prefix = chompPrefix(arg.idup, "-");
 	  if (prefix == "-help")
-	    giveHelp();
+	    giveHelp(helpString);
+	  if (prefix == "-version")
+	    giveHelp(versionString);
 	  auto pParam = prefix in optsDictParam;
 	  if (pParam)
 	    {
 	      if (i == (args.length - 1))
 		{
-		  writeln("Failed to run analysis: Missing parameter for -", prefix, " option");
+		  stderr.writeln("Failed to run analysis: Missing parameter for -", prefix, " option");
 		  exit(0);
 		}
 	      opts[*pParam] = args[i+1].idup;
@@ -184,7 +188,7 @@ string[string] getOpts(in string[] args){
 		opts[*pFlag] = "T";
 	      else
 		{
-		  writeln("Failed to run analysis: Unknown command -", prefix);
+		  stderr.writeln("Failed to run analysis: Unknown command -", prefix);
 		  exit(0);
 		}
 	    }
