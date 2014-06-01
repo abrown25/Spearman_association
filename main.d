@@ -22,7 +22,6 @@
 
 import std.algorithm : reduce;
 import std.file : exists;
-import std.range : iota;
 import std.stdio : stdin; 
 
 import arg_parse;
@@ -31,7 +30,6 @@ import run_analysis;
 import setup_all : fileSetup, setup;
 
 void main(in string[] args){
-
   if (args.length == 1)
     giveHelp();
 
@@ -42,6 +40,8 @@ void main(in string[] args){
 
   scope(failure){
     fileArray[outF].close();
+    if (opts.min && (opts.output ~ "temp").exists)
+      remove((opts.output ~ "temp"));
    }
 
   scope(exit){
@@ -49,9 +49,9 @@ void main(in string[] args){
     fileArray[genF].close();
   }
 
-  fileSetup(fileArray, opts, options);
+  fileSetup(fileArray, opts);
 
-  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts, options);
+  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
 
   if (!opts.run)
     noPerm(fileArray, opts.skip, rankPhenotype);
@@ -63,6 +63,6 @@ void main(in string[] args){
     {
       double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
       fileArray[outF].close();
-      writeFWER(options, minPvalues);
+      writeFWER(opts, minPvalues);
     }
 }

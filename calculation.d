@@ -195,7 +195,7 @@ unittest{
 
   double[] genotype = [0, 2, 0, 0, 0, 2, 0.252, 1, 0.018, 0.367];
   double[] tempPhen = [-1.3853088072, -0.785797093643, 1.14540423638, -0.785797093643, 1.03820492508, -1.25652676836, -0.787662180447, -2.05355237841, -0.245457234103, 1.14277217712];
-  string[string] options = ["perm" : "4,12"];
+  string[string] options = ["perm" : "4,12", "p" : ""];
   auto testOpts = new Opts(options);
 
   transform(rank(tempPhen));

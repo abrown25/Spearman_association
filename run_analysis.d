@@ -10,7 +10,7 @@ import std.string : join;
 
 import calculation;
 
-const double EPSILON = 0.00000001;
+enum double EPSILON = 0.00000001;
 enum{
   phenF = 0, genF = 1, outF = 2
 }
@@ -22,7 +22,7 @@ class InputException : Exception {
 template readGenotype()
 {
   const char[] readGenotype = "auto splitLine = split(line);
-    
+
   if (skip > 0)
     fileArray[outF].write(join(splitLine[0..skip], \"\t\"), \"\t\");
 
@@ -51,6 +51,27 @@ void noPerm(ref File[3] fileArray, in size_t skip, immutable(double[]) rankPheno
 	fileArray[outF].writeln(join("Idiot".repeat(3), "\t"));
       }
     }
+}
+
+unittest{
+  import setup_all;
+  import std.digest.sha;
+  string[string] options = ["p" : "phenotype.txt", "g" : "genotype.txt",
+			    "o" : "testtemp", "pid" : "T",
+			    "gid" : "T", "pc" : "3", "gs" : "2"];
+  Opts opts = new Opts(options);
+  File[3] fileArray;
+  fileSetup(fileArray, opts);
+  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
+  noPerm(fileArray, opts.skip, rankPhenotype);
+  foreach(ref e; fileArray)
+    e.close;
+  SHA1 hash;
+  hash.start();
+  auto buffer = cast(ubyte[]) std.file.read("testtemp");
+  hash.put(buffer);
+  assert(toHexString(hash.finish) == "C7BA06FE182202627D7B882F890133171A2F0E78");
+  "testtemp".remove;
 }
 
 void simplePerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
@@ -84,6 +105,27 @@ void simplePerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhe
     }
 }
 
+unittest{
+  import setup_all;
+  import std.digest.sha;
+  string[string] options = ["p" : "phenotype.txt", "g" : "genotype.txt",
+			    "o" : "testtemp", "pid" : "T", "perm" : "4,12",
+			    "gid" : "T", "pc" : "3", "gs" : "2"];
+  Opts opts = new Opts(options);
+  File[3] fileArray;
+  fileSetup(fileArray, opts);
+  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
+  simplePerm(fileArray, opts, rankPhenotype);
+  foreach(ref e; fileArray)
+    e.close;
+  SHA1 hash;
+  hash.start();
+  auto buffer = cast(ubyte[]) std.file.read("testtemp");
+  hash.put(buffer);
+  assert(toHexString(hash.finish) == "9927C02CEB488C2315C099642661D99782249537");
+  "testtemp".remove;
+}
+
 void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
   double[3] cor;
   immutable size_t nInd = rankPhenotype.length;
@@ -91,7 +133,7 @@ void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPheno
 
   const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
-  
+
   foreach(line; fileArray[genF].byLine())
     {
       try {
@@ -117,12 +159,31 @@ void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPheno
     }
 }
 
+unittest{
+  import setup_all;
+  import std.digest.sha;
+  string[string] options = ["p" : "phenotype.txt", "g" : "genotype.txt",
+			    "o" : "testtemp", "pid" : "T", "perm" : "1000000,12",
+			    "gid" : "T", "pc" : "3", "gs" : "2", "pval" : "T"];
+  Opts opts = new Opts(options);
+  File[3] fileArray;
+  fileSetup(fileArray, opts);
+  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
+  pvalPerm(fileArray, opts, rankPhenotype);
+  foreach(ref e; fileArray)
+    e.close;
+  SHA1 hash;
+  hash.start();
+  auto buffer = cast(ubyte[]) std.file.read("testtemp");
+  hash.put(buffer);
+  assert(toHexString(hash.finish) == "8644F5EFDB30F9466911BF692F5E5BE9ACD38878");
+  "testtemp".remove;
+}
 
 double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
   double[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-
   const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
   double[] maxT = new double[opts.number];
@@ -157,21 +218,32 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
   return maxT;
 }
 
-void writeFWER(in string[string] options, ref double[] maxT){
+void writeFWER(in Opts opts, ref double[] maxT){
 
-  File oldFile = File(options.get("o", "") ~ "temp", "r");
+  File oldFile = File(opts.output ~ "temp", "r");
 
   File newFile;
-  auto p = "o" in options;
-  try{
-    if (p)
-      newFile = File(*p, "w");
-    else
-      newFile = stdout;
-  } catch(Exception e){
-    writeln(e.msg);
-    exit(0);
-  }
+  version(WINDOWS)
+    {
+      try{
+	newFile = File(opts.output, "w");
+      } catch(Exception e){
+	writeln(e.msg);
+	exit(0);
+      }
+    }
+  else
+    {
+      try{
+	if (opts.output != "")
+	  newFile = File(opts.output, "w");
+	else
+	  newFile = stdout;
+      } catch(Exception e){
+	writeln(e.msg);
+	exit(0);
+      }
+    }
 
   auto sortMax = sort!()(maxT);
   double len = sortMax.length;
@@ -197,8 +269,31 @@ void writeFWER(in string[string] options, ref double[] maxT){
 	}
     }
 
-  if ("o" in options)
-    remove(options["o"] ~ "temp");
-  else
-    remove("temp");
+  remove(opts.output ~ "temp");
+}
+
+unittest{
+  import setup_all;
+  import std.digest.sha;
+  string[string] options = ["p" : "phenotype.txt", "g" : "genotype.txt",
+			    "o" : "testtemp", "pid" : "T", "perm" : "100000,12",
+			    "gid" : "T", "pc" : "3", "gs" : "2", "fwer" : "T"];
+  Opts opts = new Opts(options);
+  File[3] fileArray;
+  fileSetup(fileArray, opts);
+  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
+  double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
+
+  fileArray[outF].close();
+
+  writeFWER(opts, minPvalues);
+
+  foreach(ref e; fileArray)
+    e.close;
+  SHA1 hash;
+  hash.start();
+  auto buffer = cast(ubyte[]) std.file.read("testtemp");
+  hash.put(buffer);
+  assert(toHexString(hash.finish) == "B018C9BEC3EAD53106456397ED5699562490B978");
+  "testtemp".remove;
 }

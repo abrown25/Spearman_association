@@ -34,7 +34,7 @@ tabix.perm :
 	tabix genotype.txt.gz chr1:1-2000 | ./spearman -p phenotype.txt -pid -pc 3 -gs 2 -perm 4,12
 
 time :
-	time -f "Real : %E, User : %U, System : %S\n" ./spearman_gdc -g ../large_genotype.txt -perm 1000,4 -o out -fwer ../large_phenotype.txt
+	time -f "Real : %E, User : %U, System : %S\n" ./spearman_gdc -g large_genotype.txt -perm 1000,4 -o out -fwer large_phenotype.txt
 
 all.tests :
 	cat genotype.txt | ./spearman -p phenotype.txt -pid -gid -pc 3 -gs 2 > output/simple

@@ -18,12 +18,17 @@ class Opts{
   int seed = 0;
   int skip = 0;
   int phenC = 0;
+  string genotype = "";
+  string phenotype = "";
+  string output = "";
+  string cov = "";
 
   this(string[string] option){
     getGenotypeSkip(option);
     getPhenColumn(option);
     getFlags(option);
     getPerms(option);
+    getFiles(option);
   }
 
   private void getGenotypeSkip(string[string] option){
@@ -95,6 +100,22 @@ class Opts{
 	    }
 	  }
       }
+  }
+
+  private void getFiles(string[string] option){
+    phenotype = option["p"];
+
+    auto p1 = "g" in option;
+    if (p1)
+      genotype = *p1;
+
+    auto p2 = "o" in option;
+    if (p2)
+      output = *p2;
+
+    auto p3 = "cov" in option;
+    if (p3)
+      cov = *p3;
   }
 }
 
