@@ -24,7 +24,7 @@ import std.stdio : stdin, writeln;
 
 import arg_parse : Opts, giveHelp, getOpts, helpString;
 import calculation : rank, transform, VarianceException, covariates;
-import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, writeFWER;
+import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, writeFWER, fdrCalc;
 import setup_all : fileSetup, setup;
 
 enum{
@@ -43,7 +43,7 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
    File[3] fileArray;
 
    scope(exit){
-     if (opts.min && (opts.output ~ "temp").exists)
+     if ((opts.min || opts.fdr) && (opts.output ~ "temp").exists)
        remove((opts.output ~ "temp"));
    }
 
@@ -53,14 +53,16 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
 
    if (!opts.run)
      noPerm(fileArray, opts.skip, rankPhenotype);
-   else if (!opts.pval && !opts.min)
+   else if (!opts.pval && !opts.min && !opts.fdr)
      simplePerm(fileArray, opts, rankPhenotype);
-   else if (!opts.min)
+   else if (!opts.min && !opts.fdr)
      pvalPerm(fileArray, opts, rankPhenotype);
-   else
+   else if (!opts.fdr)
      {
        double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
        fileArray[outF].close();
        writeFWER(opts, minPvalues);
      }
+   else
+     fdrCalc(fileArray, opts, rankPhenotype);
  }

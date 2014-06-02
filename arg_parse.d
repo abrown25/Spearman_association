@@ -14,6 +14,7 @@ class Opts{
   bool pid = false;
   bool gid = false;
   bool nocheck = false;
+  bool fdr = false;
   int number = 0;
   int seed = 0;
   int skip = 0;
@@ -63,12 +64,24 @@ class Opts{
       min = true;
     if ("pval" in option)
       pval = true;
+    if ("fdr" in option)
+      fdr = true;
     if (min && pval)
       {
 	stderr.writeln("Failed to run analysis: Both -fwer and -pval flag specified");
 	exit(0);
       }
-    if ((min || pval) && !("perm" in option))
+    if (min && fdr)
+      {
+	stderr.writeln("Failed to run analysis: Both -fwer and -fdr flag specified");
+	exit(0);
+      }
+    if (fdr && pval)
+      {
+	stderr.writeln("Failed to run analysis: Both -fdr and -pval flag specified");
+	exit(0);
+      }
+    if ((min || pval || fdr) && !("perm" in option))
       {
 	stderr.writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
 	exit(0);
@@ -127,7 +140,8 @@ Options:
     -geno-skip, -gs  : column at which genotype values start, preceding columns are printed
     -perm            : calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed
     -pval            : report permutation p values for each test (needs perm options to be specified)
-    -fwer            : calculates Family Wise Error Rate based on permutations
+    -fwer            : calculates Family Wise Error Rate (FWER) based on permutations
+    -fdr             : calculates False Discovery Rate (FDR) based on permutations
     -nocheck         : skip check of IDs when both genotype and phenotype IDs are present
 
 Input file formats:
@@ -153,7 +167,7 @@ string[string] getOpts(in string[] args){
 					    "geno-skip" :"gs", "perm" :"perm", "output" : "o", "o" : "o"];
 
   immutable string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", "nocheck" : "nocheck",
-					   "pheno-id" : "pid", "pval" : "pval", "fwer" : "fwer"];
+					   "pheno-id" : "pid", "pval" : "pval", "fwer" : "fwer", "fdr" : "fdr"];
  
   foreach(i, arg; args)
     {

@@ -38,7 +38,7 @@ void fileSetup(ref File[3] fileArray, Opts opts){
 	exit(0);
       }
       try{
-	if (!opts.min)
+	if (!opts.min || !opts.fdr)
 	  fileArray[outF] = File(opts.output, "w");
 	else
 	  {
@@ -64,12 +64,12 @@ Please choose a different name for output file or delete temp file.")));
       else
 	fileArray[genF] = stdin;
 
-      if (opts.output == "" && !opts.min)
+      if (opts.output == "" && !(opts.min || opts.fdr))
 	fileArray[outF] = stdout;
       else
 	{
 	  try{
-	    if (opts.output != "" && !opts.min)
+	    if (opts.output != "" && !(opts.min || opts.fdr))
 	      fileArray[outF] = File(opts.output, "w");
 	    else if (opts.output != "")
 	      {
@@ -134,6 +134,7 @@ double[] setup(ref File[3] fileArray, Opts opts){
     {
       headerLine ~= opts.pval ? "\tPermP"
 	: opts.min ? "\tPermP\tFWER"
+	: opts.fdr ? "\tPermP\tFDR"
 	: "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
     }
     

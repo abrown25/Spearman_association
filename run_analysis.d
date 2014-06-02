@@ -6,6 +6,7 @@ import std.numeric: dotProduct;
 import std.range : repeat;
 import std.stdio : File, stderr, stdout, writeln;
 import std.string : join;
+import std.array : appender;
 
 version(unittest){
   import setup_all;
@@ -39,9 +40,21 @@ template readGenotype()
 ";
 }
 
+string genErrorMsg(int x)
+{
+  string y = to!string(x);
+  string results = "string varErr = join(\"NaN\".repeat(" ~ y ~ "), \"\t\");
+  string inputErr = join(\"NA\".repeat(" ~ y ~ "), \"\t\");
+  string convErr = join(\"Idiot\".repeat(" ~ y ~ "), \"\t\");
+";
+ return results;
+}
+
 void noPerm(ref File[3] fileArray, in size_t skip, immutable(double[]) rankPhenotype){
   double[3] cor;
   immutable size_t nInd = rankPhenotype.length;
+
+  mixin(genErrorMsg(3));
 
   foreach(line; fileArray[genF].byLine())
     {
@@ -50,11 +63,11 @@ void noPerm(ref File[3] fileArray, in size_t skip, immutable(double[]) rankPheno
 	cor = correlation(rankGenotype, rankPhenotype);
 	fileArray[outF].writeln(join(to!(string[])(cor), "\t"));
       } catch(VarianceException e){
-	fileArray[outF].writeln(join("NaN".repeat(3), "\t"));
+	fileArray[outF].writeln(varErr);
       } catch(InputException e){
-	fileArray[outF].writeln(join("NA".repeat(3), "\t"));
+	fileArray[outF].writeln(inputErr);
       } catch(ConvException e){
-	fileArray[outF].writeln(join("Idiot".repeat(3), "\t"));
+	fileArray[outF].writeln(convErr);
       }
     }
 }
@@ -66,6 +79,11 @@ unittest{
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
+  scope(exit){
+    if ("testtemp".exists)
+      "testtemp".remove;
+  }
+
   immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
   noPerm(fileArray, opts.skip, rankPhenotype);
   foreach(ref e; fileArray)
@@ -75,7 +93,6 @@ unittest{
   auto buffer = cast(ubyte[]) std.file.read("testtemp");
   hash.put(buffer);
   assert(toHexString(hash.finish) == "C7BA06FE182202627D7B882F890133171A2F0E78");
-  "testtemp".remove;
 }
 
 void simplePerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
@@ -85,6 +102,10 @@ void simplePerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhe
 
   const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
+
+  string varErr = join("NaN".repeat(3 + nPerm), "\t");
+  string inputErr = join("NA".repeat(3 + nPerm), "\t");
+  string convErr = join("Idiot".repeat(3 + nPerm), "\t");
 
   foreach(line; fileArray[genF].byLine())
     {
@@ -100,11 +121,11 @@ void simplePerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhe
 	  }
 	fileArray[outF].write("\n");
       } catch(VarianceException e){
-	fileArray[outF].writeln(join("NaN".repeat(3 + nPerm), "\t"));
+	fileArray[outF].writeln(varErr);
       } catch(InputException e){
-	fileArray[outF].writeln(join("NA".repeat(3 + nPerm), "\t"));
+	fileArray[outF].writeln(inputErr);
       } catch(ConvException e){
-	fileArray[outF].writeln(join("Idiot".repeat(3 + nPerm), "\t"));
+	fileArray[outF].writeln(convErr);
       }
     }
 }
@@ -116,6 +137,11 @@ unittest{
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
+  scope(exit){
+    if ("testtemp".exists)
+      "testtemp".remove;
+  }
+
   immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
   simplePerm(fileArray, opts, rankPhenotype);
   foreach(ref e; fileArray)
@@ -125,7 +151,6 @@ unittest{
   auto buffer = cast(ubyte[]) std.file.read("testtemp");
   hash.put(buffer);
   assert(toHexString(hash.finish) == "9927C02CEB488C2315C099642661D99782249537");
-  "testtemp".remove;
 }
 
 void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
@@ -135,6 +160,8 @@ void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPheno
 
   const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
+
+  mixin(genErrorMsg(4));
 
   foreach(line; fileArray[genF].byLine())
     {
@@ -152,11 +179,11 @@ void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPheno
 	  }
 	fileArray[outF].writeln("\t", countBetter / nPerm);
       } catch(VarianceException e){
-	fileArray[outF].writeln(join("NaN".repeat(4), "\t"));
+	fileArray[outF].writeln(varErr);
       } catch(InputException e){
-	fileArray[outF].writeln(join("NA".repeat(4), "\t"));
+	fileArray[outF].writeln(inputErr);
       } catch(ConvException e){
-	fileArray[outF].writeln(join("Idiot".repeat(4), "\t"));
+	fileArray[outF].writeln(convErr);
       }
     }
 }
@@ -168,6 +195,11 @@ unittest{
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
+  scope(exit){
+    if ("testtemp".exists)
+      "testtemp".remove;
+  }
+
   immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
   pvalPerm(fileArray, opts, rankPhenotype);
   foreach(ref e; fileArray)
@@ -177,7 +209,6 @@ unittest{
   auto buffer = cast(ubyte[]) std.file.read("testtemp");
   hash.put(buffer);
   assert(toHexString(hash.finish) == "8644F5EFDB30F9466911BF692F5E5BE9ACD38878");
-  "testtemp".remove;
 }
 
 double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
@@ -187,6 +218,7 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
   const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
   double[] maxT = new double[opts.number];
+  mixin(genErrorMsg(4));
 
   maxT[] = 0.0;
   foreach(line; fileArray[genF].byLine())
@@ -208,11 +240,11 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
 	  }
 	fileArray[outF].writeln("\t", countBetter/ nPerm);
       } catch(VarianceException e){
-	fileArray[outF].writeln(join("NaN".repeat(4), "\t"));
+	fileArray[outF].writeln(varErr);
       } catch(InputException e){
-	fileArray[outF].writeln(join("NA".repeat(4), "\t"));
+	fileArray[outF].writeln(inputErr);
       } catch(ConvException e){
-	fileArray[outF].writeln(join("Idiot".repeat(4), "\t"));
+	fileArray[outF].writeln(convErr);
       }
     }
   return maxT;
@@ -281,6 +313,13 @@ unittest{
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
+  scope(exit){
+    if ("testtemp".exists)
+      "testtemp".remove;
+    if ("testtemptemp".exists)
+      "testtemptemp".remove;
+  }
+
   immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
   double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
 
@@ -295,6 +334,128 @@ unittest{
   auto buffer = cast(ubyte[]) std.file.read("testtemp");
   hash.put(buffer);
   assert(toHexString(hash.finish) == "B018C9BEC3EAD53106456397ED5699562490B978");
-  "testtemp".remove;
-  "testtemptemp".remove;
+}
+
+void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
+  import std.algorithm : sort;
+  import std.c.stdlib : exit;
+  import std.file : remove;
+  import std.math : fmin;
+
+  double[3] cor;
+  immutable size_t nInd = rankPhenotype.length;
+  immutable size_t skip = opts.skip;
+  const double[] perms = getPerm(opts, rankPhenotype);
+  immutable size_t nPerm = perms.length / nInd;
+
+  auto permT = appender!(double[])();
+  auto realT = appender!(double[])();
+  mixin(genErrorMsg(4));
+
+  foreach(line; fileArray[genF].byLine())
+    {
+      try {
+	mixin(readGenotype!());
+	cor = correlation(rankGenotype, rankPhenotype);
+	double tReal = fabs(cor[1]) - EPSILON;
+	realT.put(fabs(cor[1]));
+	fileArray[outF].writef("%g\t%a\t%g", cor[0], cor[1], cor[2]);
+	double countBetter = 0.0;
+	for(auto i = 0; i < nPerm; i++)
+	  {
+	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);
+	    singlePerm = fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm)));
+	    if (singlePerm > tReal)
+	      ++countBetter;
+	    permT.put(singlePerm);
+	  }
+	fileArray[outF].writeln("\t", countBetter/ nPerm);
+      } catch(VarianceException e){
+	fileArray[outF].writeln(varErr);
+      } catch(InputException e){
+	fileArray[outF].writeln(inputErr);
+      } catch(ConvException e){
+	fileArray[outF].writeln(convErr);
+      }
+    }
+
+  fileArray[outF].close();
+
+  File oldFile = File(opts.output ~ "temp", "r");
+  File newFile;
+
+  version(WINDOWS)
+    {
+      try{
+	newFile = File(opts.output, "w");
+      } catch(Exception e){
+	stderr.writeln(e.msg);
+	exit(0);
+      }
+    }
+  else
+    {
+      try{
+	if (opts.output != "")
+	  newFile = File(opts.output, "w");
+	else
+	  newFile = stdout;
+      } catch(Exception e){
+	stderr.writeln(e.msg);
+	exit(0);
+      }
+    }
+
+  auto sortPerm = sort!()(permT.data);
+  auto sortReal = sort!()(realT.data);
+
+  auto headerLine = oldFile.readln();
+  newFile.write(headerLine);
+  immutable double doubPerm = cast(immutable double) nPerm;
+  auto pvalCol = split(headerLine).length - 4;
+  double tStat;
+  double adjusted;
+
+  foreach(line; oldFile.byLine())
+    {
+      auto splitLine = split(line);
+      auto tString = splitLine[pvalCol];
+      if (tString == "NaN" || tString == "NA" || tString == "Idiot")
+	newFile.writeln(line, "\t", tString);
+      else
+	{
+	  tStat = to!double(tString);
+	  adjusted = sortPerm.upperBound!()(fabs(tStat) - EPSILON).length / doubPerm;
+	  adjusted = fmin(1, adjusted / sortReal.upperBound!()(fabs(tStat) - EPSILON).length);
+	  newFile.write(join(splitLine[0..$-3], "\t"));
+	  newFile.writefln("\t%g\t%s\t%s\t%g", tStat, splitLine[$-2], splitLine[$-1], adjusted);
+	}
+    }
+}
+
+unittest{
+  string[string] options = ["p" : "phenotype.txt", "g" : "genotype.txt",
+			    "o" : "testtemp", "pid" : "T", "perm" : "100000,12",
+			    "gid" : "T", "pc" : "3", "gs" : "2", "fdr" : "T"];
+  Opts opts = new Opts(options);
+  File[3] fileArray;
+  fileSetup(fileArray, opts);
+  scope(exit){
+    if ("testtemp".exists)
+      "testtemp".remove;
+    if ("testtemptemp".exists)
+      "testtemptemp".remove;
+  }
+
+
+  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
+  fdrCalc(fileArray, opts, rankPhenotype);
+
+  foreach(ref e; fileArray)
+    e.close;
+  SHA1 hash;
+  hash.start();
+  auto buffer = cast(ubyte[]) std.file.read("testtemp");
+  hash.put(buffer);
+  assert(toHexString(hash.finish) == "C88E098A4CA35E036A967489C1DDA1BE5E7F51EF");
 }

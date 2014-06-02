@@ -15,6 +15,7 @@ Options:
     -perm            : calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed
     -pval            : report permutation p values for each test (needs perm options to be specified)
     -fwer            : calculates Family Wise Error Rate based on permutations
+    -fdr             : calculates FDR based on permutations
     -nocheck         : skip check of IDs when both genotype and phenotype IDs are present
 
 Input file formats:
