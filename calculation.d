@@ -27,14 +27,16 @@ pure nothrow extern(C) {
 
 unittest{
   //Runs a sample linear regression and checks values against R residuals
-
   double [] residualsFromR = [-1.00027816411683, -1.72461752433936, -0.275938803894297, 1.51766342141864, 1.48317107093185];
+
   size_t nInd = 5;
   size_t nCov = 4;
   double[] x = [1, 2, 1, 5, 1, 9, 5, 1, 1, 2, 9, 8, 1, 8, 7, 1, 1, 4, 1, 5];
   double[] y = [7, 2, 2, 8, 5];
   double[5] residuals;
+
   regress(nInd, nCov, x.ptr, y.ptr, residuals.ptr);
+
   foreach(i, ref e; residuals)
     assert(approxEqual(e, residualsFromR[i]));
 }

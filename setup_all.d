@@ -23,7 +23,6 @@ enum{
 }
 
 void fileSetup(ref File[3] fileArray, Opts opts){
-
   try{
     fileArray[phenF] = File(opts.phenotype);
   } catch(Exception e){

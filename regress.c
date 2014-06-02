@@ -24,7 +24,6 @@ void regress(size_t nInd, size_t nCov, double *x, double *y, double *rOut){
   gsl_multifit_linear_residuals(xMat, yVec, c, r);
   gsl_multifit_linear_free(work);
  
-
   for(i = 0; i < nInd; i++)
     rOut[i] = gsl_vector_get(r, i); 
 }

@@ -225,8 +225,8 @@ void writeFWER(in Opts opts, ref double[] maxT){
   import std.range : SearchPolicy;
 
   File oldFile = File(opts.output ~ "temp", "r");
-
   File newFile;
+
   version(WINDOWS)
     {
       try{
@@ -272,8 +272,6 @@ void writeFWER(in Opts opts, ref double[] maxT){
 	  newFile.writefln("\t%g\t%s\t%s\t%g", tStat, splitLine[$-2], splitLine[$-1], adjusted);
 	}
     }
-
-  remove(opts.output ~ "temp");
 }
 
 unittest{
@@ -298,4 +296,5 @@ unittest{
   hash.put(buffer);
   assert(toHexString(hash.finish) == "B018C9BEC3EAD53106456397ED5699562490B978");
   "testtemp".remove;
+  "testtemptemp".remove;
 }

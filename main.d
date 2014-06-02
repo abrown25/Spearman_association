@@ -42,15 +42,9 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
 
    File[3] fileArray;
 
-   scope(failure){
-     fileArray[outF].close();
+   scope(exit){
      if (opts.min && (opts.output ~ "temp").exists)
        remove((opts.output ~ "temp"));
-   }
-
-   scope(exit){
-     fileArray[phenF].close();
-     fileArray[genF].close();
    }
 
    fileSetup(fileArray, opts);

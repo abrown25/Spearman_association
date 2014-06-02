@@ -63,13 +63,11 @@ class Opts{
       min = true;
     if ("pval" in option)
       pval = true;
-
     if (min && pval)
       {
 	stderr.writeln("Failed to run analysis: Both -fwer and -pval flag specified");
 	exit(0);
       }
-
     if ((min || pval) && !("perm" in option))
       {
 	stderr.writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
@@ -104,22 +102,19 @@ class Opts{
 
   private void getFiles(string[string] option){
     phenotype = option["p"];
-
     auto p1 = "g" in option;
     if (p1)
       genotype = *p1;
-
     auto p2 = "o" in option;
     if (p2)
       output = *p2;
-
     auto p3 = "cov" in option;
     if (p3)
       cov = *p3;
   }
 }
 
-static immutable auto helpString = "Usage: spearman [options]:
+static immutable string helpString = "Usage: spearman [options]:
 Options:
     --help           : display help file
     -pheno, -p       : phenotype file [default: last argument]
@@ -143,14 +138,13 @@ Output:
     Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the -pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if -fwer is used. If neither flag is present, then p values for calculated on permuted datasets are reported next.
 ";
 
-static immutable auto versionString = "NP-GWAS, version 0.1.";
+static immutable string versionString = "NP-GWAS, version 0.1.";
 
 void giveHelp(immutable string quitString){
   writeln(quitString);
   exit(0);
 }
 
- 
 string[string] getOpts(in string[] args){
   string[string] opts;
   string prefix;
@@ -161,7 +155,6 @@ string[string] getOpts(in string[] args){
   immutable string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", "nocheck" : "nocheck",
 					   "pheno-id" : "pid", "pval" : "pval", "fwer" : "fwer"];
  
-
   foreach(i, arg; args)
     {
       if (arg.startsWith("-"))
@@ -194,10 +187,7 @@ string[string] getOpts(in string[] args){
 	    }
 	}
     }
-
   if (!("p" in opts))
     opts["p"] = args[args.length - 1];
-
   return opts;
 }
-
