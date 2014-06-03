@@ -162,13 +162,13 @@ void giveHelp(immutable string quitString){
 string[string] getOpts(in string[] args){
   string[string] opts;
   string prefix;
-  immutable string[string] optsDictParam = ["p" : "p", "phenotype" : "p", "g" : "g", "genotype" : "g", 
+  immutable string[string] optsDictParam = ["p" : "p", "phenotype" : "p", "g" : "g", "genotype" : "g",
 					    "cov" : "cov", "pc" : "pc", "pheno-col" : "pc", "gs" : "gs",
 					    "geno-skip" :"gs", "perm" :"perm", "output" : "o", "o" : "o"];
 
   immutable string[string] optsDictFlag = ["gid" : "gid", "geno-id" : "gid", "pid" : "pid", "nocheck" : "nocheck",
 					   "pheno-id" : "pid", "pval" : "pval", "fwer" : "fwer", "fdr" : "fdr"];
- 
+
   foreach(i, arg; args)
     {
       if (arg.startsWith("-"))
@@ -188,7 +188,7 @@ string[string] getOpts(in string[] args){
 		}
 	      opts[*pParam] = args[i+1].idup;
 	    }
-	  else 
+	  else
 	    {
 	      auto pFlag = prefix in optsDictFlag;
 	      if (pFlag)

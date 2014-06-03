@@ -99,15 +99,14 @@ double[] setup(ref File[3] fileArray, Opts opts){
   foreach(line; fileArray[phenF].byLine())
     {
       auto phenLine = split(line);
-      if (phenLine.length < opts.phenC)
-	{
-	  stderr.writeln("Failed to run analysis: column ", opts.phenC + 1, " in phenotype file doesn't exist");
-	  exit(0);
-	}
       try{
+	enforce(phenLine.length >= opts.phenC, new InputException(""));
 	phenotype ~= to!double(phenLine[opts.phenC]);
       } catch(ConvException e){
 	stderr.writeln("Failed to run analysis: Non-numeric data in phenotype");
+	exit(0);
+      } catch(InputException e){
+	stderr.writeln("Failed to run analysis: column ", opts.phenC + 1, " in phenotype file doesn't exist");
 	exit(0);
       }
       if (opts.pid)
@@ -124,7 +123,7 @@ double[] setup(ref File[3] fileArray, Opts opts){
       genId = splitLine[opts.skip..$];
       headerLine ~= join(splitLine[0..opts.skip], "\t");
       headerLine ~= "\t";
-    } 
+    }
   else if(opts.skip > 0)
     headerLine ~= "".reduce!((a, b) => a ~ "F" ~ to!string(b + 1) ~ "\t")(iota(0, opts.skip));
 
@@ -137,8 +136,8 @@ double[] setup(ref File[3] fileArray, Opts opts){
 	: opts.fdr ? "\tPermP\tFDR"
 	: "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
     }
-    
-  if (opts.pid && opts.gid && !opts.nocheck && genId != phenId)
+
+  if (!opts.nocheck && opts.pid && opts.gid && genId != phenId)
     {
       stderr.writeln("Failed to run analysis: Mismatched IDs");
       exit(0);
@@ -164,7 +163,7 @@ double[] setup(ref File[3] fileArray, Opts opts){
     stderr.writeln("Failed to run analysis: Phenotype is constant");
     exit(0);
   }
-  
+
   fileArray[outF].writeln(headerLine);
 
   return phenotype;

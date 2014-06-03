@@ -358,8 +358,8 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
 	mixin(readGenotype!());
 	cor = correlation(rankGenotype, rankPhenotype);
 	double tReal = fabs(cor[1]) - EPSILON;
-	realT.put(fabs(cor[1]));
-	fileArray[outF].writef("%g\t%a\t%g", cor[0], cor[1], cor[2]);
+	realT.put(cor[1]);
+	fileArray[outF].writef(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
 	for(auto i = 0; i < nPerm; i++)
 	  {
@@ -407,28 +407,27 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
     }
 
   auto sortPerm = sort!()(permT.data);
-  auto sortReal = sort!()(realT.data);
+  size_t[] orderReal = new size_t[realT.data.length];
+  bestRank(orderReal, realT.data);
 
   auto headerLine = oldFile.readln();
   newFile.write(headerLine);
-  immutable double doubPerm = cast(immutable double) nPerm;
-  auto pvalCol = split(headerLine).length - 4;
-  double tStat;
-  double adjusted;
 
-  foreach(line; oldFile.byLine())
+  immutable double doubPerm = cast(immutable double) nPerm;
+
+  int i = -1;
+  double adjusted;
+  foreach(ref line; oldFile.byLine())
     {
-      auto splitLine = split(line);
-      auto tString = splitLine[pvalCol];
-      if (tString == "NaN" || tString == "NA" || tString == "Idiot")
-	newFile.writeln(line, "\t", tString);
+      auto lastString = split(line)[$-1];
+      if (lastString == "NaN" || lastString == "NA" || lastString == "Idiot")
+	newFile.writeln(line, "\t", lastString);
       else
 	{
-	  tStat = to!double(tString);
-	  adjusted = sortPerm.upperBound!()(fabs(tStat) - EPSILON).length / doubPerm;
-	  adjusted = fmin(1, adjusted / sortReal.upperBound!()(fabs(tStat) - EPSILON).length);
-	  newFile.write(join(splitLine[0..$-3], "\t"));
-	  newFile.writefln("\t%g\t%s\t%s\t%g", tStat, splitLine[$-2], splitLine[$-1], adjusted);
+	  i++;
+	  adjusted = sortPerm.upperBound!()(fabs(realT.data[i]) - EPSILON).length / doubPerm;
+	  adjusted = fmin(1, adjusted / orderReal[i]);
+	  newFile.writeln(line, "\t", adjusted);
 	}
     }
 }
