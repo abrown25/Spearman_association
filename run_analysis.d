@@ -7,6 +7,7 @@ import std.range : repeat;
 import std.stdio : File, stderr, stdout, writeln;
 import std.string : join;
 import std.array : appender;
+import std.range : chunks;
 
 version(unittest){
   import setup_all;
@@ -113,9 +114,9 @@ void simplePerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhe
 	mixin(readGenotype!());
 	cor = correlation(rankGenotype, rankPhenotype);
 	fileArray[outF].write(join(to!(string[])(cor), "\t"), "\t");
-	for(auto i = 0; i < nPerm; i++)
+	foreach(ref perm; chunks(perms, nInd))
 	  {
-	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);
+	    auto singlePerm = dotProduct(rankGenotype, perm);
 	    corPvalue(singlePerm, nInd);
 	    fileArray[outF].write(singlePerm, "\t");
 	  }
@@ -171,9 +172,9 @@ void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPheno
 	double tReal = fabs(cor[1]) - EPSILON;
 	fileArray[outF].write(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
-	for(auto i = 0; i < nPerm; i++)
+	foreach(ref perm; chunks(perms, nInd))
 	  {
-	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);
+	    auto singlePerm = dotProduct(rankGenotype, perm);
 	    if (fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm))) > tReal)
 	      ++countBetter;
 	  }
@@ -219,7 +220,6 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
   immutable size_t nPerm = perms.length / nInd;
   double[] maxT = new double[opts.number];
   mixin(genErrorMsg(4));
-
   maxT[] = 0.0;
   foreach(line; fileArray[genF].byLine())
     {
@@ -229,14 +229,16 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
 	double tReal = fabs(cor[1]) - EPSILON;
 	fileArray[outF].writef("%g\t%a\t%g", cor[0], cor[1], cor[2]);
 	double countBetter = 0.0;
-	for(auto i = 0; i < nPerm; i++)
+	size_t i = 0;
+	foreach(ref perm; chunks(perms, nInd))
 	  {
-	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);
+	    auto singlePerm = dotProduct(rankGenotype, perm);
 	    singlePerm = fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm)));
 	    if (singlePerm > tReal)
 	      ++countBetter;
 	    if (singlePerm > maxT[i])
 	      maxT[i] = singlePerm;
+	    i++;
 	  }
 	fileArray[outF].writeln("\t", countBetter/ nPerm);
       } catch(VarianceException e){
@@ -253,7 +255,6 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
 void writeFWER(in Opts opts, ref double[] maxT){
   import std.algorithm : sort;
   import std.c.stdlib : exit;
-  import std.file : remove;
   import std.range : SearchPolicy;
 
   File oldFile = File(opts.output ~ "temp", "r");
@@ -339,7 +340,6 @@ unittest{
 void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
   import std.algorithm : sort;
   import std.c.stdlib : exit;
-  import std.file : remove;
   import std.math : fmin;
 
   double[3] cor;
@@ -361,7 +361,7 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
 	realT.put(cor[1]);
 	fileArray[outF].writef(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
-	for(auto i = 0; i < nPerm; i++)
+	foreach(size_t i; 0..nPerm)
 	  {
 	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);
 	    singlePerm = fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm)));
@@ -415,7 +415,7 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
 
   immutable double doubPerm = cast(immutable double) nPerm;
 
-  int i = -1;
+  size_t i = 0;
   double adjusted;
   foreach(ref line; oldFile.byLine())
     {
@@ -424,10 +424,10 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
 	newFile.writeln(line, "\t", lastString);
       else
 	{
-	  i++;
 	  adjusted = sortPerm.upperBound!()(fabs(realT.data[i]) - EPSILON).length / doubPerm;
 	  adjusted = fmin(1, adjusted / orderReal[i]);
 	  newFile.writeln(line, "\t", adjusted);
+	  i++;
 	}
     }
 }

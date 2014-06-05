@@ -100,8 +100,8 @@ pure ref double[] rank(ref double[] rankArray){
       if (i == (len - 1) || rankArray[e] != rankArray[orderIndex[i + 1]])
 	{
 	  avgrank = sumrank / dupcount + 1;
-	  for(auto j = i - dupcount + 1; j < i + 1; j++)
-	    rankArray[orderIndex[j]] = avgrank;
+	  foreach(ref j; orderIndex[(i - dupcount + 1)..(i + 1)])
+	    rankArray[j] = avgrank;
 	  sumrank = 0;
 	  dupcount = 0;
 	}
@@ -116,14 +116,13 @@ unittest{
   assert(rank(vector) == [5, 3.5, 1, 3.5, 2]);
 }
 
-ref size_t[] bestRank(ref size_t[] orderReal, double[] rankArray){
+pure ref size_t[] bestRank(ref size_t[] orderReal, in double[] rankArray){
   enum double EPSILON = 0.00000001;
-  import std.algorithm : makeIndex, map;
-  import std.math : fabs;
+  import std.algorithm : makeIndex;
 
   immutable size_t len = rankArray.length;
   auto orderIndex = new size_t[len];
-  makeIndex!("a > b")((rankArray.map!(a => fabs(a))), orderIndex);
+  makeIndex!("fabs(a) > fabs(b)")(rankArray, orderIndex);
   size_t dupcount = 0;
 
   foreach(i, ref e; orderIndex)
@@ -131,20 +130,19 @@ ref size_t[] bestRank(ref size_t[] orderReal, double[] rankArray){
       dupcount++;
       if (i == (len - 1) || fabs(rankArray[e]) > fabs(rankArray[orderIndex[i + 1]]) + EPSILON)
 	{
-	  for(auto j = i - dupcount + 1; j < i + 1; j++)
-	    orderReal[orderIndex[j]] = i + 1;
+	  foreach(ref j; orderIndex[(i - dupcount + 1)..(i + 1)])
+	    orderReal[j] = i + 1;
 	  dupcount = 0;
 	}
     }
-  orderReal[orderIndex[($-1)]] = len;
   return orderReal;
 }
 
 unittest{
-  import std.stdio;
   //Array giving counts of entries greater than or equal to entries in original array
   double[] vector = [10, 9, 2, 9, 3, 3, 3];
   size_t[] outVec = new size_t[7];
+
   assert(bestRank(outVec, vector) == [1, 3, 7, 3, 6, 6, 6]);
 }
 
@@ -176,7 +174,7 @@ unittest{
   import std.random : uniform;
 
   double[] x;
-  for(auto i=0; i < 10; i++)
+  foreach(int i; 0..10)
     x ~= uniform(0, 10.0);
 
   transform(x);

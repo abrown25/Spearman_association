@@ -21,11 +21,17 @@
 
 import std.file : exists, File, remove;
 import std.stdio : stdin, writeln;
+import std.c.stdlib : exit;
+import core.sys.posix.signal;
 
 import arg_parse : Opts, giveHelp, getOpts, helpString;
 import calculation : rank, transform, VarianceException, covariates;
 import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, writeFWER, fdrCalc;
 import setup_all : fileSetup, setup;
+
+extern (C) {
+  void del_temp(int value);
+}
 
 enum{
   phenF, genF, outF
@@ -48,6 +54,9 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
    }
 
    fileSetup(fileArray, opts);
+
+   if ((opts.min || opts.fdr) && opts.output == "")
+     sigset(SIGPIPE, &del_temp);
 
    immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
 

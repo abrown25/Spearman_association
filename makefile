@@ -1,13 +1,17 @@
-spearman : main.d arg_parse.d calculation.d run_analysis.d regress.o setup_all.d
-	gcc -c regress.c -o regress.o -lgsl -lgslcblas
+spearman : main.d arg_parse.d calculation.d run_analysis.d regress.c setup_all.d
+	gcc -c regress.c -o regress.o
 	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d main.d setup_all.d regress.o -ofspearman
 
-gdc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o
-	gcc -c regress.c -o regress.o -lgsl -lgslcblas
-	gdc main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o -L/usr/include/gsl/ -l gsl -L/usr/include/gsl/gsl_cblas -l gslcblas -O3 -o spearman_gdc
+gdc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
+	gcc -c regress.c -o regress.o
+	gdc main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o -lgsl -lgslcblas -O3 -o spearman_gdc
 
-unittest : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o
-	gcc -c regress.c -o regress.o -lgsl -lgslcblas
+ldc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
+	gcc -c regress.c -o regress.o
+	ldc2 main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o -L-lgsl -L-lgslcblas -O3 -of="spearman_ldc"
+
+unittest : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
+	gcc -c regress.c -o regress.o
 	dmd -unittest -L-lgsl -L-lgslcblas calculation.d setup_all.d run_analysis.d arg_parse.d main.d regress.o -ofunittest
 	./unittest
 	rm -f unittest
