@@ -169,13 +169,12 @@ void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPheno
       try {
 	mixin(readGenotype!());
 	cor = correlation(rankGenotype, rankPhenotype);
-	double tReal = fabs(cor[1]) - EPSILON;
+	double corReal = fabs(cor[0]) - EPSILON;
 	fileArray[outF].write(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
 	foreach(ref perm; chunks(perms, nInd))
 	  {
-	    auto singlePerm = dotProduct(rankGenotype, perm);
-	    if (fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm))) > tReal)
+	    if (fabs(dotProduct(rankGenotype, perm)) > corReal)
 	      ++countBetter;
 	  }
 	fileArray[outF].writeln("\t", countBetter / nPerm);
@@ -218,26 +217,25 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
   immutable size_t skip = opts.skip;
   const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
-  double[] maxT = new double[opts.number];
+  double[] maxCor = new double[opts.number];
   mixin(genErrorMsg(4));
-  maxT[] = 0.0;
+  maxCor[] = 0.0;
   foreach(line; fileArray[genF].byLine())
     {
       try {
 	mixin(readGenotype!());
 	cor = correlation(rankGenotype, rankPhenotype);
-	double tReal = fabs(cor[1]) - EPSILON;
-	fileArray[outF].writef("%g\t%a\t%g", cor[0], cor[1], cor[2]);
+	double corReal = fabs(cor[0]) - EPSILON;
+	fileArray[outF].writef("%a\t%g\t%g", cor[0], cor[1], cor[2]);
 	double countBetter = 0.0;
 	size_t i = 0;
 	foreach(ref perm; chunks(perms, nInd))
 	  {
-	    auto singlePerm = dotProduct(rankGenotype, perm);
-	    singlePerm = fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm)));
-	    if (singlePerm > tReal)
+	    auto singlePerm = fabs(dotProduct(rankGenotype, perm));
+	    if (singlePerm > corReal)
 	      ++countBetter;
-	    if (singlePerm > maxT[i])
-	      maxT[i] = singlePerm;
+	    if (singlePerm > maxCor[i])
+	      maxCor[i] = singlePerm;
 	    i++;
 	  }
 	fileArray[outF].writeln("\t", countBetter/ nPerm);
@@ -249,10 +247,10 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
 	fileArray[outF].writeln(convErr);
       }
     }
-  return maxT;
+  return maxCor;
 }
 
-void writeFWER(in Opts opts, ref double[] maxT){
+void writeFWER(in Opts opts, ref double[] maxCor){
   import std.algorithm : sort;
   import std.c.stdlib : exit;
   import std.range : SearchPolicy;
@@ -282,14 +280,14 @@ void writeFWER(in Opts opts, ref double[] maxT){
       }
     }
 
-  auto sortMax = sort!()(maxT);
+  auto sortMax = sort!()(maxCor);
   double len = sortMax.length;
 
   auto headerLine = oldFile.readln();
   newFile.write(headerLine);
 
-  auto pvalCol = split(headerLine).length - 4;
-  double tStat;
+  auto pvalCol = split(headerLine).length - 5;
+  double corStat;
   double adjusted;
   foreach(line; oldFile.byLine())
     {
@@ -299,10 +297,10 @@ void writeFWER(in Opts opts, ref double[] maxT){
 	newFile.writeln(line, "\t", tString);
       else
 	{
-	  tStat = to!double(tString);
-	  adjusted = sortMax.upperBound!(SearchPolicy.gallop)(fabs(tStat) - EPSILON).length / len;
-	  newFile.write(join(splitLine[0..$-3], "\t"));
-	  newFile.writefln("\t%g\t%s\t%s\t%g", tStat, splitLine[$-2], splitLine[$-1], adjusted);
+	  corStat = to!double(tString);
+	  adjusted = sortMax.upperBound!(SearchPolicy.gallop)(fabs(corStat) - EPSILON).length / len;
+	  newFile.write(join(splitLine[0..$-4], "\t"));
+	  newFile.writefln("\t%g\t%s\t%g", corStat, join(splitLine[$-3..$], "\t"), adjusted);
 	}
     }
 }
@@ -348,8 +346,8 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
   const double[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
-  auto permT = appender!(double[])();
-  auto realT = appender!(double[])();
+  auto permCor = appender!(double[])();
+  auto realCor = appender!(double[])();
   mixin(genErrorMsg(4));
 
   foreach(line; fileArray[genF].byLine())
@@ -357,17 +355,16 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
       try {
 	mixin(readGenotype!());
 	cor = correlation(rankGenotype, rankPhenotype);
-	double tReal = fabs(cor[1]) - EPSILON;
-	realT.put(cor[1]);
+	double corReal = fabs(cor[0]) - EPSILON;
+	realCor.put(cor[0]);
 	fileArray[outF].writef(join(to!(string[])(cor), "\t"));
 	double countBetter = 0.0;
-	foreach(size_t i; 0..nPerm)
+	foreach(ref perm; chunks(perms, nInd))
 	  {
-	    auto singlePerm = dotProduct(rankGenotype, perms[i * nInd..(i + 1) * nInd]);
-	    singlePerm = fabs(singlePerm * sqrt((nInd - 2) / (1 - singlePerm * singlePerm)));
-	    if (singlePerm > tReal)
+	    auto singlePerm = fabs(dotProduct(rankGenotype, perm));
+	    if (singlePerm > corReal)
 	      ++countBetter;
-	    permT.put(singlePerm);
+	    permCor.put(singlePerm);
 	  }
 	fileArray[outF].writeln("\t", countBetter/ nPerm);
       } catch(VarianceException e){
@@ -406,9 +403,9 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
       }
     }
 
-  auto sortPerm = sort!()(permT.data);
-  size_t[] orderReal = new size_t[realT.data.length];
-  bestRank(orderReal, realT.data);
+  auto sortPerm = sort!()(permCor.data);
+  size_t[] orderReal = new size_t[realCor.data.length];
+  bestRank(orderReal, realCor.data);
 
   auto headerLine = oldFile.readln();
   newFile.write(headerLine);
@@ -424,7 +421,7 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
 	newFile.writeln(line, "\t", lastString);
       else
 	{
-	  adjusted = sortPerm.upperBound!()(fabs(realT.data[i]) - EPSILON).length / doubPerm;
+	  adjusted = sortPerm.upperBound!()(fabs(realCor.data[i]) - EPSILON).length / doubPerm;
 	  adjusted = fmin(1, adjusted / orderReal[i]);
 	  newFile.writeln(line, "\t", adjusted);
 	  i++;
