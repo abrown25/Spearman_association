@@ -225,13 +225,12 @@ double[] getPerm(in Opts permOpts, immutable(double[]) vector){
     rndGen.seed(permOpts.seed);
 
   double[] outPerm = vector.dup
-                           .randomShuffle
                            .cycle
                            .take(permOpts.number * vector.length)
                            .array;
 
-  //  foreach(ref perm; chunks(outPerm, vector.length))
-  //  randomShuffle(perm);
+  foreach(ref perm; chunks(outPerm, vector.length))
+    randomShuffle(perm);
 
   return outPerm;
 }

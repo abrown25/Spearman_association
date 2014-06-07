@@ -89,6 +89,7 @@ class Opts{
   }
 
   private void getPerms(string[string] option){
+
     if (auto p = "perm" in option)
       {
 	run = true;
@@ -114,6 +115,7 @@ class Opts{
 
   private void getFiles(string[string] option){
     phenotype = option["p"];
+
     if (auto p1 = "g" in option)
       genotype = *p1;
     if (auto p2 = "o" in option)
