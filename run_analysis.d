@@ -13,6 +13,7 @@ version(unittest){
   import setup_all;
   import std.digest.sha;
   import std.file : remove;
+  import std.range : put;
 }
 
 import calculation;
@@ -91,8 +92,7 @@ unittest{
     e.close;
   SHA1 hash;
   hash.start();
-  auto buffer = cast(ubyte[]) std.file.read("testtemp");
-  hash.put(buffer);
+  put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "C7BA06FE182202627D7B882F890133171A2F0E78");
 }
 
@@ -149,8 +149,7 @@ unittest{
     e.close;
   SHA1 hash;
   hash.start();
-  auto buffer = cast(ubyte[]) std.file.read("testtemp");
-  hash.put(buffer);
+  put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "9927C02CEB488C2315C099642661D99782249537");
 }
 
@@ -206,8 +205,7 @@ unittest{
     e.close;
   SHA1 hash;
   hash.start();
-  auto buffer = cast(ubyte[]) std.file.read("testtemp");
-  hash.put(buffer);
+  put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "8644F5EFDB30F9466911BF692F5E5BE9ACD38878");
 }
 
@@ -330,8 +328,7 @@ unittest{
     e.close;
   SHA1 hash;
   hash.start();
-  auto buffer = cast(ubyte[]) std.file.read("testtemp");
-  hash.put(buffer);
+  put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "B018C9BEC3EAD53106456397ED5699562490B978");
 }
 
@@ -451,7 +448,6 @@ unittest{
     e.close;
   SHA1 hash;
   hash.start();
-  auto buffer = cast(ubyte[]) std.file.read("testtemp");
-  hash.put(buffer);
+  put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "C88E098A4CA35E036A967489C1DDA1BE5E7F51EF");
 }
