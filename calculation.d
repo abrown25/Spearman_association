@@ -82,16 +82,16 @@ unittest{
     assert(approxEqual(e, residualsFromR[i]));
 }
 
-pure ref double[] rank(ref double[] rankArray){
+pure ref T[] rank(T)(ref T[] rankArray){
   import std.algorithm : makeIndex;
 
   immutable size_t len = rankArray.length;
   auto orderIndex = new size_t[len];
   makeIndex!("a < b")(rankArray, orderIndex);
 
-  double sumrank = 0.0;
+  T sumrank = 0.0;
   size_t dupcount = 0;
-  double avgrank;
+  T avgrank;
 
   foreach(i, ref e; orderIndex)
     {
@@ -100,7 +100,7 @@ pure ref double[] rank(ref double[] rankArray){
       if (i == (len - 1) || rankArray[e] != rankArray[orderIndex[i + 1]])
 	{
 	  avgrank = sumrank / dupcount + 1;
-	  foreach(ref j; orderIndex[(i - dupcount + 1)..(i + 1)])
+	  foreach(ref j; orderIndex[(i - dupcount + 1) .. (i + 1)])
 	    rankArray[j] = avgrank;
 	  sumrank = 0;
 	  dupcount = 0;
@@ -113,10 +113,10 @@ unittest{
   //Simple test of ranking with ties
   double[] vector = [10, 9, 2, 9, 3];
 
-  assert(rank(vector) == [5, 3.5, 1, 3.5, 2]);
+  assert(rank!(double)(vector) == [5, 3.5, 1, 3.5, 2]);
 }
 
-pure ref size_t[] bestRank(ref size_t[] orderReal, in double[] rankArray){
+pure ref size_t[] bestRank(T)(ref size_t[] orderReal, in T[] rankArray){
   enum double EPSILON = 0.00000001;
   import std.algorithm : makeIndex;
 
@@ -130,7 +130,7 @@ pure ref size_t[] bestRank(ref size_t[] orderReal, in double[] rankArray){
       dupcount++;
       if (i == (len - 1) || fabs(rankArray[e]) > fabs(rankArray[orderIndex[i + 1]]) + EPSILON)
 	{
-	  foreach(ref j; orderIndex[(i - dupcount + 1)..(i + 1)])
+	  foreach(ref j; orderIndex[(i - dupcount + 1) .. (i + 1)])
 	    orderReal[j] = i + 1;
 	  dupcount = 0;
 	}
@@ -143,14 +143,14 @@ unittest{
   double[] vector = [10, 9, 2, 9, 3, 3, 3];
   size_t[] outVec = new size_t[7];
 
-  assert(bestRank(outVec, vector) == [1, 3, 7, 3, 6, 6, 6]);
+  assert(bestRank!(double)(outVec, vector) == [1, 3, 7, 3, 6, 6, 6]);
 }
 
-pure void transform(ref double[] vector){
+pure void transform(T)(ref T[] vector){
   int n = 0;
-  double mean = 0;
-  double M2 = 0;
-  double delta;
+  T mean = 0;
+  T M2 = 0;
+  T delta;
 
   foreach(ref e; vector)
     {
@@ -173,21 +173,21 @@ unittest{
   import std.algorithm : reduce;
   import std.random : uniform;
 
-  double[] x;
-  foreach(int i; 0..10)
-    x ~= uniform(0, 10.0);
+  double[] x = new double[10];
+  foreach(ref e; x)
+    e = uniform(0.0, 10.0);
 
-  transform(x);
+  transform!(double)(x);
   auto mean = 0.0.reduce!((a, b) => a + b)(x);
 
-  assert(approxEqual(mean, 0));
+  assert(approxEqual(mean, 0.0));
   assert(approxEqual(0.0.reduce!((a, b) => a + (b - mean) * (b - mean))(x), 1));
 }
 
-pure nothrow double[3] correlation(in double[] vector1, immutable(double[]) vector2){
+pure nothrow T[3] correlation(T)(in T[] vector1, immutable(T[]) vector2){
   import std.numeric: dotProduct;
 
-  double[3] results;
+  T[3] results;
   results[0] = dotProduct(vector1, vector2);
   results[1] = results[0] * sqrt((vector1.length - 2) / (1 - results[0] * results[0]));
   results[2] = gsl_cdf_tdist_P(-fabs(results[1]), vector1.length - 2) * 2;
@@ -210,13 +210,13 @@ unittest{
   assert(approxEqual(cor[2], corFromR[1]));
 }
 
-pure nothrow ref double corPvalue(ref double results, in size_t len){
+pure nothrow ref T corPvalue(T)(ref T results, in size_t len){
   results = results * sqrt((len - 2) / (1 - results * results));
   results = gsl_cdf_tdist_P(-fabs(results), len - 2) * 2;
   return results;
 }
 
-double[] getPerm(in Opts permOpts, immutable(double[]) vector){
+T[] getPerm(T)(in Opts permOpts, immutable(T[]) vector){
   import std.random : rndGen, randomShuffle;
   import std.range : chunks, cycle, take;
   import std.array : array;
@@ -224,7 +224,7 @@ double[] getPerm(in Opts permOpts, immutable(double[]) vector){
   if (permOpts.give_seed)
     rndGen.seed(permOpts.seed);
 
-  double[] outPerm = vector.dup
+  T[] outPerm = vector.dup
                            .cycle
                            .take(permOpts.number * vector.length)
                            .array;
@@ -254,8 +254,8 @@ unittest{
   double[] perms = getPerm(testOpts, phen);
   for (auto i = 0; i < 4; i++)
     {
-      auto singlePerm = dotProduct(genotype, perms[i * 10..(i + 1) * 10]);
-      corPvalue(singlePerm, 10);
+      auto singlePerm = dotProduct(genotype, perms[i * 10 .. (i + 1) * 10]);
+      corPvalue!(double)(singlePerm, 10);
       assert(approxEqual(singlePerm, permPvalsR[i]));
     }
 }

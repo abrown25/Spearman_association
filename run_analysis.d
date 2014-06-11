@@ -37,7 +37,7 @@ template readGenotype()
 
   enforce(splitLine.length == nInd + skip, new InputException(\"\"));
 
-  auto rankGenotype = to!(double[])(splitLine[skip..$]);
+  auto rankGenotype = to!(T[])(splitLine[skip..$]);
   transform(rank(rankGenotype));
 ";
 }
@@ -52,8 +52,8 @@ string genErrorMsg(int x)
  return results;
 }
 
-void noPerm(ref File[3] fileArray, in size_t skip, immutable(double[]) rankPhenotype){
-  double[3] cor;
+void noPerm(T)(ref File[3] fileArray, in size_t skip, immutable(T[]) rankPhenotype){
+  T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
 
   mixin(genErrorMsg(3));
@@ -62,7 +62,7 @@ void noPerm(ref File[3] fileArray, in size_t skip, immutable(double[]) rankPheno
     {
       try {
 	mixin(readGenotype!());
-	cor = correlation(rankGenotype, rankPhenotype);
+	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	fileArray[outF].writeln(join(to!(string[])(cor), "\t"));
       } catch(VarianceException e){
 	fileArray[outF].writeln(varErr);
@@ -86,8 +86,8 @@ unittest{
       "testtemp".remove;
   }
 
-  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
-  noPerm(fileArray, opts.skip, rankPhenotype);
+  immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
+  noPerm!(double)(fileArray, opts.skip, rankPhenotype);
   foreach(ref e; fileArray)
     e.close;
   SHA1 hash;
@@ -96,12 +96,12 @@ unittest{
   assert(toHexString(hash.finish) == "C7BA06FE182202627D7B882F890133171A2F0E78");
 }
 
-void simplePerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
-  double[3] cor;
+void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
+  T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  const double[] perms = getPerm(opts, rankPhenotype);
+  const T[] perms = getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   string varErr = join("NaN".repeat(3 + nPerm), "\t");
@@ -112,12 +112,12 @@ void simplePerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhe
     {
       try {
 	mixin(readGenotype!());
-	cor = correlation(rankGenotype, rankPhenotype);
+	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	fileArray[outF].write(join(to!(string[])(cor), "\t"), "\t");
 	foreach(ref perm; chunks(perms, nInd))
 	  {
 	    auto singlePerm = dotProduct(rankGenotype, perm);
-	    corPvalue(singlePerm, nInd);
+	    corPvalue!(T)(singlePerm, nInd);
 	    fileArray[outF].write(singlePerm, "\t");
 	  }
 	fileArray[outF].write("\n");
@@ -143,8 +143,8 @@ unittest{
       "testtemp".remove;
   }
 
-  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
-  simplePerm(fileArray, opts, rankPhenotype);
+  immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
+  simplePerm!(double)(fileArray, opts, rankPhenotype);
   foreach(ref e; fileArray)
     e.close;
   SHA1 hash;
@@ -153,12 +153,12 @@ unittest{
   assert(toHexString(hash.finish) == "9927C02CEB488C2315C099642661D99782249537");
 }
 
-void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
-  double[3] cor;
+void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
+  T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  const double[] perms = getPerm(opts, rankPhenotype);
+  const T[] perms = getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   mixin(genErrorMsg(4));
@@ -167,10 +167,10 @@ void pvalPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPheno
     {
       try {
 	mixin(readGenotype!());
-	cor = correlation(rankGenotype, rankPhenotype);
-	double corReal = fabs(cor[0]) - EPSILON;
+	cor = correlation!(T)(rankGenotype, rankPhenotype);
+	T corReal = fabs(cor[0]) - EPSILON;
 	fileArray[outF].write(join(to!(string[])(cor), "\t"));
-	double countBetter = 0.0;
+	T countBetter = 0.0;
 	foreach(ref perm; chunks(perms, nInd))
 	  {
 	    if (fabs(dotProduct(rankGenotype, perm)) > corReal)
@@ -199,8 +199,8 @@ unittest{
       "testtemp".remove;
   }
 
-  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
-  pvalPerm(fileArray, opts, rankPhenotype);
+  immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
+  pvalPerm!(double)(fileArray, opts, rankPhenotype);
   foreach(ref e; fileArray)
     e.close;
   SHA1 hash;
@@ -209,23 +209,23 @@ unittest{
   assert(toHexString(hash.finish) == "8644F5EFDB30F9466911BF692F5E5BE9ACD38878");
 }
 
-double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
-  double[3] cor;
+T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
+  T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-  const double[] perms = getPerm(opts, rankPhenotype);
+  const T[] perms = getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
-  double[] maxCor = new double[opts.number];
+  T[] maxCor = new T[opts.number];
   mixin(genErrorMsg(4));
   maxCor[] = 0.0;
   foreach(line; fileArray[genF].byLine())
     {
       try {
 	mixin(readGenotype!());
-	cor = correlation(rankGenotype, rankPhenotype);
-	double corReal = fabs(cor[0]) - EPSILON;
+	cor = correlation!(T)(rankGenotype, rankPhenotype);
+	T corReal = fabs(cor[0]) - EPSILON;
 	fileArray[outF].writef("%a\t%g\t%g", cor[0], cor[1], cor[2]);
-	double countBetter = 0.0;
+	T countBetter = 0.0;
 	size_t i = 0;
 	foreach(ref perm; chunks(perms, nInd))
 	  {
@@ -248,7 +248,7 @@ double[] minPerm(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPh
   return maxCor;
 }
 
-void writeFWER(in Opts opts, ref double[] maxCor){
+void writeFWER(T)(in Opts opts, ref T[] maxCor){
   import std.algorithm : sort;
   import std.c.stdlib : exit;
   import std.range : SearchPolicy;
@@ -279,14 +279,14 @@ void writeFWER(in Opts opts, ref double[] maxCor){
     }
 
   auto sortMax = sort!()(maxCor);
-  double len = sortMax.length;
+  T len = sortMax.length;
 
   auto headerLine = oldFile.readln();
   newFile.write(headerLine);
 
   auto pvalCol = split(headerLine).length - 5;
-  double corStat;
-  double adjusted;
+  T corStat;
+  T adjusted;
   foreach(line; oldFile.byLine())
     {
       auto splitLine = split(line);
@@ -295,7 +295,7 @@ void writeFWER(in Opts opts, ref double[] maxCor){
 	newFile.writeln(line, "\t", tString);
       else
 	{
-	  corStat = to!double(tString);
+	  corStat = to!T(tString);
 	  adjusted = sortMax.upperBound!(SearchPolicy.gallop)(fabs(corStat) - EPSILON).length / len;
 	  newFile.write(join(splitLine[0..$-4], "\t"));
 	  newFile.writefln("\t%g\t%s\t%g", corStat, join(splitLine[$-3..$], "\t"), adjusted);
@@ -317,12 +317,12 @@ unittest{
       "testtemptemp".remove;
   }
 
-  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
-  double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
+  immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
+  double[] minPvalues = minPerm!(double)(fileArray, opts, rankPhenotype);
 
   fileArray[outF].close();
 
-  writeFWER(opts, minPvalues);
+  writeFWER!(double)(opts, minPvalues);
 
   foreach(ref e; fileArray)
     e.close;
@@ -332,30 +332,30 @@ unittest{
   assert(toHexString(hash.finish) == "B018C9BEC3EAD53106456397ED5699562490B978");
 }
 
-void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenotype){
+void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
   import std.algorithm : sort;
   import std.c.stdlib : exit;
   import std.math : fmin;
 
-  double[3] cor;
+  T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-  const double[] perms = getPerm(opts, rankPhenotype);
+  const T[] perms = getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
-  auto permCor = appender!(double[])();
-  auto realCor = appender!(double[])();
+  auto permCor = appender!(T[])();
+  auto realCor = appender!(T[])();
   mixin(genErrorMsg(4));
 
   foreach(line; fileArray[genF].byLine())
     {
       try {
 	mixin(readGenotype!());
-	cor = correlation(rankGenotype, rankPhenotype);
-	double corReal = fabs(cor[0]) - EPSILON;
+	cor = correlation!(T)(rankGenotype, rankPhenotype);
+	T corReal = fabs(cor[0]) - EPSILON;
 	realCor.put(cor[0]);
 	fileArray[outF].writef(join(to!(string[])(cor), "\t"));
-	double countBetter = 0.0;
+	T countBetter = 0.0;
 	foreach(ref perm; chunks(perms, nInd))
 	  {
 	    auto singlePerm = fabs(dotProduct(rankGenotype, perm));
@@ -407,10 +407,10 @@ void fdrCalc(ref File[3] fileArray, in Opts opts, immutable(double[]) rankPhenot
   auto headerLine = oldFile.readln();
   newFile.write(headerLine);
 
-  immutable double doubPerm = cast(immutable double) nPerm;
+  immutable T doubPerm = cast(immutable T) nPerm;
 
   size_t i = 0;
-  double adjusted;
+  T adjusted;
   foreach(ref line; oldFile.byLine())
     {
       auto lastString = split(line)[$-1];
@@ -441,8 +441,8 @@ unittest{
   }
 
 
-  immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
-  fdrCalc(fileArray, opts, rankPhenotype);
+  immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
+  fdrCalc!(double)(fileArray, opts, rankPhenotype);
 
   foreach(ref e; fileArray)
     e.close;

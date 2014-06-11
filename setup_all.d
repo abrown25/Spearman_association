@@ -92,8 +92,8 @@ Please choose a different name for output file or delete temp file."));
     }
 }
 
-double[] setup(ref File[3] fileArray, Opts opts){
-  double[] phenotype;
+T[] setup(T)(ref File[3] fileArray, Opts opts){
+  T[] phenotype;
   string[] phenId;
 
   foreach(line; fileArray[phenF].byLine())
@@ -101,7 +101,7 @@ double[] setup(ref File[3] fileArray, Opts opts){
       auto phenLine = split(line);
       try{
 	enforce(phenLine.length >= opts.phenC, new InputException(""));
-	phenotype ~= to!double(phenLine[opts.phenC]);
+	phenotype ~= to!T(phenLine[opts.phenC]);
       } catch(ConvException e){
 	stderr.writeln("Failed to run analysis: Non-numeric data in phenotype");
 	exit(0);
@@ -132,9 +132,9 @@ double[] setup(ref File[3] fileArray, Opts opts){
   if (opts.run)
     {
       headerLine ~= opts.pval ? "\tPermP"
-	: opts.min ? "\tPermP\tFWER"
-	: opts.fdr ? "\tPermP\tFDR"
-	: "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
+	                      : opts.min ? "\tPermP\tFWER"
+	                      : opts.fdr ? "\tPermP\tFDR"
+	                      : "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
     }
 
   if (!opts.nocheck && opts.pid && opts.gid && genId != phenId)
@@ -142,19 +142,23 @@ double[] setup(ref File[3] fileArray, Opts opts){
       stderr.writeln("Failed to run analysis: Mismatched IDs");
       exit(0);
     }
-
   if (opts.cov != "")
-    try{
-      covariates(opts.cov, phenotype);
-    } catch(InputException e){
-      stderr.writeln(e.msg);
-      exit(0);
-    } catch(ConvException){
-      stderr.writeln("Failed to run analysis, non-numeric data in covariates file");
-      exit(0);
-    } catch(Exception e){
-      stderr.writeln(e.msg);
-      exit(0);
+    {
+      static if (is(T == double))
+	try{
+	  covariates(opts.cov, phenotype);
+	} catch(InputException e){
+	  stderr.writeln(e.msg);
+	  exit(0);
+	} catch(ConvException){
+	  stderr.writeln("Failed to run analysis, non-numeric data in covariates file");
+	  exit(0);
+	} catch(Exception e){
+	  stderr.writeln(e.msg);
+	  exit(0);
+	}
+      else
+	stderr.writeln("Covariates calculation disabled when using reals for precision");
     }
 
   try {

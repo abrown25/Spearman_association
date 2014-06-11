@@ -57,8 +57,8 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
 
    if ((opts.min || opts.fdr) && opts.output == "")
      sigset(SIGPIPE, &del_temp);
-
-   immutable(double[]) rankPhenotype = cast(immutable)setup(fileArray, opts);
+   // Change double to real in this line and line below to alter precision of calculations
+   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
 
    if (!opts.run)
      noPerm(fileArray, opts.skip, rankPhenotype);
@@ -68,6 +68,7 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
      pvalPerm(fileArray, opts, rankPhenotype);
    else if (!opts.fdr)
      {
+       // Can change double to real here as well
        double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
        fileArray[outF].close();
        writeFWER(opts, minPvalues);
