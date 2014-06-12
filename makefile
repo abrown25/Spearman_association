@@ -1,14 +1,16 @@
+GSL = /usr/lib/libgsl.a /usr/lib/libgslcblas.a
+
 spearman : main.d arg_parse.d calculation.d run_analysis.d regress.c setup_all.d
 	gcc -c regress.c -o regress.o
-	dmd -O -release -noboundscheck -inline -L-lgsl -L-lgslcblas calculation.d run_analysis.d arg_parse.d main.d setup_all.d regress.o -ofspearman
+	dmd -O -release -noboundscheck -inline ${GSL} calculation.d run_analysis.d arg_parse.d main.d setup_all.d regress.o -ofspearman
 
 gdc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
 	gcc -c regress.c -o regress.o
-	gdc main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o -lgsl -lgslcblas -O3 -o spearman_gdc
+	gdc main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o ${GSL} -O3 -o spearman_gdc
 
 ldc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
 	gcc -c regress.c -o regress.o
-	ldc2 main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o -L-lgsl -L-lgslcblas -O3 -of="spearman_ldc"
+	ldc2 main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o ${GSL} -O3 -of="spearman_ldc"
 	rm *.o
 
 unittest : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
