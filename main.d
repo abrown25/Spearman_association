@@ -27,15 +27,12 @@ import core.sys.posix.signal;
 import arg_parse : Opts, giveHelp, getOpts, helpString;
 import calculation : rank, transform, VarianceException, covariates;
 import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, writeFWER, fdrCalc;
-import setup_all : fileSetup, setup;
+import setup_all : fileSetup, setup, F;
 
 extern (C) {
   void del_temp(int value);
 }
 
-enum{
-  phenF, genF, outF
-}
 
 version(unittest) void main() {writeln("All unit tests completed successfully.");}
  else void main(in string[] args)
@@ -71,7 +68,7 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
    else if (!opts.fdr)
      {
        precision[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
-       fileArray[outF].close();
+       fileArray[F.out_].close();
        writeFWER(opts, minPvalues);
      }
    else

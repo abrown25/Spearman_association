@@ -4,6 +4,8 @@ import std.exception : enforce;
 import std.math : fabs, sqrt;
 import arg_parse : Opts;
 
+enum double EPSILON = 0.00000001;
+
 version(unittest){
   import std.math : approxEqual;
 }
@@ -117,7 +119,6 @@ unittest{
 }
 
 pure ref size_t[] bestRank(T)(ref size_t[] orderReal, in T[] rankArray){
-  enum double EPSILON = 0.00000000001;
   import std.algorithm : makeIndex;
 
   immutable size_t len = rankArray.length;

@@ -9,6 +9,8 @@ import std.string : join;
 import std.array : appender;
 import std.range : chunks;
 
+import setup_all : F;
+
 version(unittest){
   import setup_all;
   import std.digest.sha;
@@ -17,12 +19,6 @@ version(unittest){
 }
 
 import calculation;
-
-enum double EPSILON = 0.00000000001;
-
-enum{
-  phenF, genF, outF
-}
 
 class InputException : Exception {
   pure this(string s) {super(s);}
@@ -33,7 +29,7 @@ template readGenotype()
   const char[] readGenotype = "auto splitLine = split(line);
 
   if (skip > 0)
-    fileArray[outF].write(join(splitLine[0..skip], \"\t\"), \"\t\");
+    fileArray[F.out_].write(join(splitLine[0..skip], \"\t\"), \"\t\");
 
   enforce(splitLine.length == nInd + skip, new InputException(\"\"));
 
@@ -58,18 +54,18 @@ void noPerm(T)(ref File[3] fileArray, in size_t skip, immutable(T[]) rankPhenoty
 
   mixin(genErrorMsg(3));
 
-  foreach(line; fileArray[genF].byLine())
+  foreach(line; fileArray[F.gen].byLine())
     {
       try {
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
-	fileArray[outF].writeln(join(to!(string[])(cor), "\t"));
+	fileArray[F.out_].writeln(join(to!(string[])(cor), "\t"));
       } catch(VarianceException e){
-	fileArray[outF].writeln(varErr);
+	fileArray[F.out_].writeln(varErr);
       } catch(InputException e){
-	fileArray[outF].writeln(inputErr);
+	fileArray[F.out_].writeln(inputErr);
       } catch(ConvException e){
-	fileArray[outF].writeln(convErr);
+	fileArray[F.out_].writeln(convErr);
       }
     }
 }
@@ -108,25 +104,25 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPheno
   string inputErr = join("NA".repeat(3 + nPerm), "\t");
   string convErr = join("Idiot".repeat(3 + nPerm), "\t");
 
-  foreach(line; fileArray[genF].byLine())
+  foreach(line; fileArray[F.gen].byLine())
     {
       try {
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
-	fileArray[outF].write(join(to!(string[])(cor), "\t"), "\t");
+	fileArray[F.out_].write(join(to!(string[])(cor), "\t"), "\t");
 	foreach(ref perm; chunks(perms, nInd))
 	  {
 	    auto singlePerm = dotProduct(rankGenotype, perm);
 	    corPvalue!(T)(singlePerm, nInd);
-	    fileArray[outF].write(singlePerm, "\t");
+	    fileArray[F.out_].write(singlePerm, "\t");
 	  }
-	fileArray[outF].write("\n");
+	fileArray[F.out_].write("\n");
       } catch(VarianceException e){
-	fileArray[outF].writeln(varErr);
+	fileArray[F.out_].writeln(varErr);
       } catch(InputException e){
-	fileArray[outF].writeln(inputErr);
+	fileArray[F.out_].writeln(inputErr);
       } catch(ConvException e){
-	fileArray[outF].writeln(convErr);
+	fileArray[F.out_].writeln(convErr);
       }
     }
 }
@@ -163,26 +159,26 @@ void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenoty
 
   mixin(genErrorMsg(4));
 
-  foreach(line; fileArray[genF].byLine())
+  foreach(line; fileArray[F.gen].byLine())
     {
       try {
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
-	fileArray[outF].write(join(to!(string[])(cor), "\t"));
+	fileArray[F.out_].write(join(to!(string[])(cor), "\t"));
 	T countBetter = 0.0;
 	foreach(ref perm; chunks(perms, nInd))
 	  {
 	    if (fabs(dotProduct(rankGenotype, perm)) > corReal)
 	      ++countBetter;
 	  }
-	fileArray[outF].writeln("\t", countBetter / nPerm);
+	fileArray[F.out_].writeln("\t", countBetter / nPerm);
       } catch(VarianceException e){
-	fileArray[outF].writeln(varErr);
+	fileArray[F.out_].writeln(varErr);
       } catch(InputException e){
-	fileArray[outF].writeln(inputErr);
+	fileArray[F.out_].writeln(inputErr);
       } catch(ConvException e){
-	fileArray[outF].writeln(convErr);
+	fileArray[F.out_].writeln(convErr);
       }
     }
 }
@@ -218,13 +214,13 @@ T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
   T[] maxCor = new T[opts.number];
   mixin(genErrorMsg(4));
   maxCor[] = 0.0;
-  foreach(line; fileArray[genF].byLine())
+  foreach(line; fileArray[F.gen].byLine())
     {
       try {
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
-	fileArray[outF].writef("%a\t%g\t%g", cor[0], cor[1], cor[2]);
+	fileArray[F.out_].writef("%a\t%g\t%g", cor[0], cor[1], cor[2]);
 	T countBetter = 0.0;
 	size_t i = 0;
 	foreach(ref perm; chunks(perms, nInd))
@@ -236,13 +232,13 @@ T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
 	      maxCor[i] = singlePerm;
 	    i++;
 	  }
-	fileArray[outF].writeln("\t", countBetter/ nPerm);
+	fileArray[F.out_].writeln("\t", countBetter/ nPerm);
       } catch(VarianceException e){
-	fileArray[outF].writeln(varErr);
+	fileArray[F.out_].writeln(varErr);
       } catch(InputException e){
-	fileArray[outF].writeln(inputErr);
+	fileArray[F.out_].writeln(inputErr);
       } catch(ConvException e){
-	fileArray[outF].writeln(convErr);
+	fileArray[F.out_].writeln(convErr);
       }
     }
   return maxCor;
@@ -321,7 +317,7 @@ unittest{
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
   double[] minPvalues = minPerm!(double)(fileArray, opts, rankPhenotype);
 
-  fileArray[outF].close();
+  fileArray[F.out_].close();
 
   writeFWER!(double)(opts, minPvalues);
 
@@ -348,14 +344,14 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   auto realCor = appender!(T[])();
   mixin(genErrorMsg(4));
 
-  foreach(line; fileArray[genF].byLine())
+  foreach(line; fileArray[F.gen].byLine())
     {
       try {
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
 	realCor.put(cor[0]);
-	fileArray[outF].writef(join(to!(string[])(cor), "\t"));
+	fileArray[F.out_].writef(join(to!(string[])(cor), "\t"));
 	T countBetter = 0.0;
 	foreach(ref perm; chunks(perms, nInd))
 	  {
@@ -364,17 +360,17 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 	      ++countBetter;
 	    permCor.put(singlePerm);
 	  }
-	fileArray[outF].writeln("\t", countBetter/ nPerm);
+	fileArray[F.out_].writeln("\t", countBetter/ nPerm);
       } catch(VarianceException e){
-	fileArray[outF].writeln(varErr);
+	fileArray[F.out_].writeln(varErr);
       } catch(InputException e){
-	fileArray[outF].writeln(inputErr);
+	fileArray[F.out_].writeln(inputErr);
       } catch(ConvException e){
-	fileArray[outF].writeln(convErr);
+	fileArray[F.out_].writeln(convErr);
       }
     }
 
-  fileArray[outF].close();
+  fileArray[F.out_].close();
 
   File oldFile = File(opts.output ~ "temp", "r");
   File newFile;

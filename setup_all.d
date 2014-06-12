@@ -18,13 +18,13 @@ class FileExistsException : Exception {
   pure nothrow this(string s) {super(s);}
 }
 
-enum{
-  phenF, genF, outF
+enum F {
+  phen, gen, out_
 }
 
 void fileSetup(ref File[3] fileArray, Opts opts){
   try{
-    fileArray[phenF] = File(opts.phenotype);
+    fileArray[F.phen] = File(opts.phenotype);
   } catch(Exception e){
     stderr.writeln(e.msg);
     exit(0);
@@ -32,20 +32,20 @@ void fileSetup(ref File[3] fileArray, Opts opts){
   version(WINDOWS)
     {
       try{
-	fileArray[genF] = File(opts.genotype);
+	fileArray[F.gen] = File(opts.genotype);
       } catch(Exception e){
 	stderr.writeln(e.msg);
 	exit(0);
       }
       try{
 	if (!opts.min || !opts.fdr)
-	  fileArray[outF] = File(opts.output, "w");
+	  fileArray[F.out_] = File(opts.output, "w");
 	else
 	  {
 	    string outName = (opts.output ~ "temp");
 	    enforce(!outName.exists, new FileExistsException(("Failed to run analysis: file called " ~ outName ~ " already exists.
 Please choose a different name for output file or delete temp file.")));
-	    fileArray[outF] = File(opts.output ~ "temp", "w");
+	    fileArray[F.out_] = File(opts.output ~ "temp", "w");
 	  }
       } catch(Exception e){
 	stderr.writeln(e.msg);
@@ -56,33 +56,33 @@ Please choose a different name for output file or delete temp file.")));
     {
       if (opts.genotype != "")
 	try{
-	  fileArray[genF] = File(opts.genotype);
+	  fileArray[F.gen] = File(opts.genotype);
 	} catch(Exception e){
 	  stderr.writeln(e.msg);
 	  exit(0);
 	}
       else
-	fileArray[genF] = stdin;
+	fileArray[F.gen] = stdin;
 
       if (opts.output == "" && !(opts.min || opts.fdr))
-	fileArray[outF] = stdout;
+	fileArray[F.out_] = stdout;
       else
 	{
 	  try{
 	    if (opts.output != "" && !(opts.min || opts.fdr))
-	      fileArray[outF] = File(opts.output, "w");
+	      fileArray[F.out_] = File(opts.output, "w");
 	    else if (opts.output != "")
 	      {
 		string outName = (opts.output ~ "temp");
 		enforce(!outName.exists, new FileExistsException(("Failed to run analysis: file called " ~ outName ~ " already exists.
 Please choose a different name for output file or delete temp file.")));
-		fileArray[outF] = File(opts.output ~ "temp", "w");
+		fileArray[F.out_] = File(opts.output ~ "temp", "w");
 	      }
 	    else
 	      {
 		enforce(!"temp".exists, new FileExistsException("Failed to run analysis: file called temp already exists.
 Please choose a different name for output file or delete temp file."));
-		fileArray[outF] = File("temp", "w");
+		fileArray[F.out_] = File("temp", "w");
 	      }
 	  } catch(Exception e){
 	    stderr.writeln(e.msg);
@@ -96,7 +96,7 @@ T[] setup(T)(ref File[3] fileArray, Opts opts){
   T[] phenotype;
   string[] phenId;
 
-  foreach(line; fileArray[phenF].byLine())
+  foreach(line; fileArray[F.phen].byLine())
     {
       auto phenLine = split(line);
       try{
@@ -119,7 +119,7 @@ T[] setup(T)(ref File[3] fileArray, Opts opts){
 
   if (opts.gid)
     {
-      splitLine = split(fileArray[genF].readln());
+      splitLine = split(fileArray[F.gen].readln());
       genId = splitLine[opts.skip..$];
       headerLine ~= join(splitLine[0..opts.skip], "\t");
       headerLine ~= "\t";
@@ -168,7 +168,7 @@ T[] setup(T)(ref File[3] fileArray, Opts opts){
     exit(0);
   }
 
-  fileArray[outF].writeln(headerLine);
+  fileArray[F.out_].writeln(headerLine);
 
   return phenotype;
 }
