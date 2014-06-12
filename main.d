@@ -40,6 +40,8 @@ enum{
 version(unittest) void main() {writeln("All unit tests completed successfully.");}
  else void main(in string[] args)
  {
+   alias precision = double;
+
    if (args.length == 1)
      giveHelp(helpString);
 
@@ -57,8 +59,8 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
 
    if ((opts.min || opts.fdr) && opts.output == "")
      sigset(SIGPIPE, &del_temp);
-   // Change double to real in this line and line below to alter precision of calculations
-   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
+
+   immutable(precision[]) rankPhenotype = cast(immutable)setup!(precision)(fileArray, opts);
 
    if (!opts.run)
      noPerm(fileArray, opts.skip, rankPhenotype);
@@ -68,8 +70,7 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
      pvalPerm(fileArray, opts, rankPhenotype);
    else if (!opts.fdr)
      {
-       // Can change double to real here as well
-       double[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
+       precision[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
        fileArray[outF].close();
        writeFWER(opts, minPvalues);
      }

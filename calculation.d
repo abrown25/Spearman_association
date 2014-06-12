@@ -225,9 +225,9 @@ T[] getPerm(T)(in Opts permOpts, immutable(T[]) vector){
     rndGen.seed(permOpts.seed);
 
   T[] outPerm = vector.dup
-                           .cycle
-                           .take(permOpts.number * vector.length)
-                           .array;
+                      .cycle
+                      .take(permOpts.number * vector.length)
+                      .array;
 
   foreach(ref perm; chunks(outPerm, vector.length))
     randomShuffle(perm);
