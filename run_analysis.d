@@ -18,7 +18,7 @@ version(unittest){
 
 import calculation;
 
-enum double EPSILON = 0.00000001;
+enum double EPSILON = 0.00000000001;
 
 enum{
   phenF, genF, outF
@@ -291,14 +291,15 @@ void writeFWER(T)(in Opts opts, ref T[] maxCor){
     {
       auto splitLine = split(line);
       auto tString = splitLine[pvalCol];
+      if (splitLine.length > 4)
+	newFile.write(join(splitLine[0..$-4], "\t"), "\t");
       if (tString == "NaN" || tString == "NA" || tString == "Idiot")
-	newFile.writeln(line, "\t", tString);
+	newFile.writeln(join(tString.repeat(5), "\t"));
       else
 	{
 	  corStat = to!T(tString);
 	  adjusted = sortMax.upperBound!(SearchPolicy.gallop)(fabs(corStat) - EPSILON).length / len;
-	  newFile.write(join(splitLine[0..$-4], "\t"));
-	  newFile.writefln("\t%g\t%s\t%g", corStat, join(splitLine[$-3..$], "\t"), adjusted);
+	  newFile.writefln("%g\t%s\t%g", corStat, join(splitLine[$-3..$], "\t"), adjusted);
 	}
     }
 }

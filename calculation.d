@@ -117,7 +117,7 @@ unittest{
 }
 
 pure ref size_t[] bestRank(T)(ref size_t[] orderReal, in T[] rankArray){
-  enum double EPSILON = 0.00000001;
+  enum double EPSILON = 0.00000000001;
   import std.algorithm : makeIndex;
 
   immutable size_t len = rankArray.length;
