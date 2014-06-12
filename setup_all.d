@@ -144,21 +144,27 @@ T[] setup(T)(ref File[3] fileArray, Opts opts){
     }
   if (opts.cov != "")
     {
-      static if (is(T == double))
-	try{
+      try{
+	static if (is(T == double))
 	  covariates(opts.cov, phenotype);
-	} catch(InputException e){
-	  stderr.writeln(e.msg);
-	  exit(0);
-	} catch(ConvException){
-	  stderr.writeln("Failed to run analysis, non-numeric data in covariates file");
-	  exit(0);
-	} catch(Exception e){
-	  stderr.writeln(e.msg);
-	  exit(0);
-	}
-      else
-	stderr.writeln("Covariates calculation disabled when using reals for precision");
+	else
+	  {
+	    import std.algorithm : map;
+	    import std.array : array;
+	    double[] tempPhen = phenotype.map!(a => to!double(a)).array;
+	    covariates(opts.cov, tempPhen);
+	    phenotype = tempPhen.map!(a => to!T(a)).array;
+	  }
+      } catch(InputException e){
+	stderr.writeln(e.msg);
+	exit(0);
+      } catch(ConvException){
+	stderr.writeln("Failed to run analysis, non-numeric data in covariates file");
+	exit(0);
+      } catch(Exception e){
+	stderr.writeln(e.msg);
+	exit(0);
+      }
     }
 
   try {
