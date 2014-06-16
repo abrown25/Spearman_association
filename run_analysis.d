@@ -23,6 +23,7 @@ version(unittest){
 class InputException : Exception {
   pure this(string s) {super(s);}
 }
+
 /*mixin code which reads one line of genotype file, writes out first few columns and stores genotypes
 this throws errors if array too short
 */
@@ -39,6 +40,7 @@ template readGenotype()
   transform(rank(rankGenotype));
 ";
 }
+
 //generates error messages during compilation
 string genErrorMsg(int x)
 {
@@ -49,13 +51,14 @@ string genErrorMsg(int x)
 ";
  return results;
 }
+
 //simple analysis, gives corr, t stat and p value
 void noPerm(T)(ref File[3] fileArray, in size_t skip, immutable(T[]) rankPhenotype){
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
 
   mixin(genErrorMsg(3));
-  /*variance error if SNP is monomorphic (write Na), non numeric data give NA
+  /*variance error if SNP is monomorphic (write NA), non numeric data give NaN
    */
   foreach(line; fileArray[F.gen].byLine())
     {
@@ -94,6 +97,7 @@ unittest{
   put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "C8DF91C2B6FBD3F5D9303AE9759E8737A5FFE248");
 }
+
 //writes out statistics as above, then p values from analysis of opts.number permuted datasets
 void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
   T[3] cor;
@@ -151,6 +155,7 @@ unittest{
   put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "DDF70C1EC8A7B9680EA039E701D7F5C07DC0EA82");
 }
+
 //calculates permutation p values
 void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
   T[3] cor;
@@ -410,12 +415,15 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
      T[] adjusted = new T[realCor.length];
      auto orderIndex = new size_t[adjusted.length];
      makeIndex!("fabs(a) > fabs(b)")(realCor, orderIndex);
-     adjusted[orderIndex[0]] = sortPerm.upperBound(fabs(realCor[orderIndex[0]]) - EPSILON).length.to!T;
+     adjusted[orderIndex[0]] = sortPerm.upperBound(fabs(realCor[orderIndex[0]]) - EPSILON)
+                                       .length
+                                       .to!T;
 
      foreach(e; 1..orderIndex.length)
        adjusted[orderIndex[e]] = sortPerm[0 .. (sortPerm.length - cast(size_t)adjusted[orderIndex[e - 1]])]
                                         .upperBound(fabs(realCor[orderIndex[e]]) - EPSILON)
-                                        .length.to!T
+                                        .length
+                                        .to!T
                                         + adjusted[orderIndex[e - 1]];
 
 
@@ -433,7 +441,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
        }
 
      adjusted[orderIndex[0]] = adjusted[orderIndex[0]] > 1 ? 1
-       : adjusted[orderIndex[0]];
+                                                           : adjusted[orderIndex[0]];
 
      foreach(i, ref e; orderIndex[1 .. $])
        {
