@@ -22,7 +22,7 @@ unittest{
   // Checks GSL gives right p value for t statistic
   assert(approxEqual(gsl_cdf_tdist_P(-1.6, 7), 0.07681585));
 }
-
+//C code to regress y on x
 pure nothrow extern(C) {
   void regress(size_t nInd, size_t nCov, double *x, double *y, double *rOut);
 }
@@ -42,7 +42,7 @@ unittest{
   foreach(i, ref e; residuals)
     assert(approxEqual(e, residualsFromR[i]));
 }
-
+//given name of covariate file, and phenotype, produces residuals
 void covariates(string covF, ref double[] phen){
   import std.array : split;
   import std.conv : to, ConvException;
@@ -83,7 +83,7 @@ unittest{
   foreach(i, ref e; phen)
     assert(approxEqual(e, residualsFromR[i]));
 }
-
+//ranks array, giving ties mean rank
 pure ref T[] rank(T)(ref T[] rankArray){
   import std.algorithm : makeIndex;
 
@@ -118,35 +118,7 @@ unittest{
   assert(rank!(double)(vector) == [5, 3.5, 1, 3.5, 2]);
 }
 
-pure ref size_t[] bestRank(T)(ref size_t[] orderReal, in T[] rankArray){
-  import std.algorithm : makeIndex;
-
-  immutable size_t len = rankArray.length;
-  auto orderIndex = new size_t[len];
-  makeIndex!("fabs(a) > fabs(b)")(rankArray, orderIndex);
-  size_t dupcount = 0;
-
-  foreach(i, ref e; orderIndex)
-    {
-      dupcount++;
-      if (i == (len - 1) || fabs(rankArray[e]) > fabs(rankArray[orderIndex[i + 1]]) + EPSILON)
-	{
-	  foreach(ref j; orderIndex[(i - dupcount + 1) .. (i + 1)])
-	    orderReal[j] = i + 1;
-	  dupcount = 0;
-	}
-    }
-  return orderReal;
-}
-
-unittest{
-  //Array giving counts of entries greater than or equal to entries in original array
-  double[] vector = [10, 9, 2, 9, 3, 3, 3];
-  size_t[] outVec = new size_t[7];
-
-  assert(bestRank!(double)(outVec, vector) == [1, 3, 7, 3, 6, 6, 6]);
-}
-
+//transforms array so mean =0 sum of squares = 1
 pure void transform(T)(ref T[] vector){
   int n = 0;
   T mean = 0;
@@ -184,7 +156,7 @@ unittest{
   assert(approxEqual(mean, 0.0));
   assert(approxEqual(0.0.reduce!((a, b) => a + (b - mean) * (b - mean))(x), 1));
 }
-
+//calculates correlation, t stat and p value for two arrays
 pure nothrow T[3] correlation(T)(in T[] vector1, immutable(T[]) vector2){
   import std.numeric: dotProduct;
 
@@ -210,13 +182,13 @@ unittest{
   assert(approxEqual(cor[0], corFromR[0]));
   assert(approxEqual(cor[2], corFromR[1]));
 }
-
+//just returns p value for 2 arrays (only used on permutations
 pure nothrow ref T corPvalue(T)(ref T results, in size_t len){
   results = results * sqrt((len - 2) / (1 - results * results));
   results = gsl_cdf_tdist_P(-fabs(results), len - 2) * 2;
   return results;
 }
-
+//takes array and generates a continuous array of permuted versions of this array
 T[] getPerm(T)(in Opts permOpts, immutable(T[]) vector){
   import std.random : rndGen, randomShuffle;
   import std.range : chunks, cycle, take;
@@ -240,12 +212,12 @@ unittest{
   //Checks permutation p values (option 4,12) for 3rd phenotype against 5th genotype row against values calculated in R based on those permutations
   //Permutations = matrix(c(2, 9, 5, 3, 1, 8, 6, 7, 10, 4, 2, 7, 5, 6, 9, 10, 4, 1, 3, 8, 7, 10, 8, 3, 1, 5, 2, 6, 9, 4, 3, 5, 7, 9, 10, 2, 8, 4, 1, 6), 10, 4)
   import std.numeric: dotProduct;
-
   double[] permPvalsR = [0.295293228837933, 0.620081751733492, 0.248565693244932, 0.523263392865814];
 
   double[] genotype = [0, 2, 0, 0, 0, 2, 0.252, 1, 0.018, 0.367];
   double[] tempPhen = [-1.3853088072, -0.785797093643, 1.14540423638, -0.785797093643, 1.03820492508, -1.25652676836, -0.787662180447, -2.05355237841, -0.245457234103, 1.14277217712];
-  string[string] options = ["perm" : "4,12", "p" : ""];
+
+  string[] options = ["dummy", "--perm" , "4,12", "--p" , ""];
   auto testOpts = new Opts(options);
 
   transform(rank(tempPhen));

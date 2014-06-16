@@ -17,7 +17,7 @@ import run_analysis : InputException;
 class FileExistsException : Exception {
   pure nothrow this(string s) {super(s);}
 }
-
+//files are stored in array, enum defines phenotype, genotype and output slots
 enum F {
   phen, gen, out_
 }
@@ -29,31 +29,32 @@ void fileSetup(ref File[3] fileArray, Opts opts){
     stderr.writeln(e.msg);
     exit(0);
   }
-  version(WINDOWS)
+//   version(WINDOWS)
+//     {
+//       try{
+// 	fileArray[F.gen] = File(opts.genotype);
+//       } catch(Exception e){
+// 	stderr.writeln(e.msg);
+// 	exit(0);
+//       }
+//       try{
+// 	if (!opts.min || !opts.fdr)
+// 	  fileArray[F.out_] = File(opts.output, "w");
+// 	else
+// 	  {
+// 	    string outName = (opts.output ~ "temp");
+// 	    enforce(!outName.exists, new FileExistsException(("Failed to run analysis: file called " ~ outName ~ " already exists.
+// Please choose a different name for output file or delete temp file.")));
+// 	    fileArray[F.out_] = File(opts.output ~ "temp", "w");
+// 	  }
+//       } catch(Exception e){
+// 	stderr.writeln(e.msg);
+// 	exit(0);
+//       }
+//     }
+//   else
     {
-      try{
-	fileArray[F.gen] = File(opts.genotype);
-      } catch(Exception e){
-	stderr.writeln(e.msg);
-	exit(0);
-      }
-      try{
-	if (!opts.min || !opts.fdr)
-	  fileArray[F.out_] = File(opts.output, "w");
-	else
-	  {
-	    string outName = (opts.output ~ "temp");
-	    enforce(!outName.exists, new FileExistsException(("Failed to run analysis: file called " ~ outName ~ " already exists.
-Please choose a different name for output file or delete temp file.")));
-	    fileArray[F.out_] = File(opts.output ~ "temp", "w");
-	  }
-      } catch(Exception e){
-	stderr.writeln(e.msg);
-	exit(0);
-      }
-    }
-  else
-    {
+      //if genotype file not specified then use stdin
       if (opts.genotype != "")
 	try{
 	  fileArray[F.gen] = File(opts.genotype);
@@ -63,7 +64,7 @@ Please choose a different name for output file or delete temp file.")));
 	}
       else
 	fileArray[F.gen] = stdin;
-
+      //if fwer is needed, make temp file for output, output goes to stdout if not specified
       if (opts.output == "" && !(opts.min || opts.fdr))
 	fileArray[F.out_] = stdout;
       else
@@ -95,7 +96,7 @@ Please choose a different name for output file or delete temp file."));
 T[] setup(T)(ref File[3] fileArray, Opts opts){
   T[] phenotype;
   string[] phenId;
-
+  //reading in phenotype from column opts.phenC, if --pid specified, get IDs
   foreach(line; fileArray[F.phen].byLine())
     {
       auto phenLine = split(line);
@@ -116,7 +117,7 @@ T[] setup(T)(ref File[3] fileArray, Opts opts){
   string headerLine;
   string[] genId;
   string[] splitLine;
-
+  //--gid means get the genotype IDs, we're building the header line
   if (opts.gid)
     {
       splitLine = split(fileArray[F.gen].readln());
@@ -124,6 +125,7 @@ T[] setup(T)(ref File[3] fileArray, Opts opts){
       headerLine ~= join(splitLine[0..opts.skip], "\t");
       headerLine ~= "\t";
     }
+  // no header line then write your own
   else if(opts.skip > 0)
     headerLine ~= "".reduce!((a, b) => a ~ "F" ~ to!string(b + 1) ~ "\t")(iota(0, opts.skip));
 
@@ -136,12 +138,13 @@ T[] setup(T)(ref File[3] fileArray, Opts opts){
 	                      : opts.fdr ? "\tPermP\tFDR"
 	                      : "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
     }
-
+  //check IDs match
   if (!opts.nocheck && opts.pid && opts.gid && genId != phenId)
     {
       stderr.writeln("Failed to run analysis: Mismatched IDs");
       exit(0);
     }
+  //if a covariates file is specified, regress covariates out of phenotype
   if (opts.cov != "")
     {
       try{
@@ -166,7 +169,7 @@ T[] setup(T)(ref File[3] fileArray, Opts opts){
 	exit(0);
       }
     }
-
+  //return ranked phenotype, normalised to mean 0, sum of squares 1
   try {
     transform(rank(phenotype));
   } catch(VarianceException e){

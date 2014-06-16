@@ -24,7 +24,7 @@ import std.stdio : stdin, writeln;
 import std.c.stdlib : exit;
 import core.sys.posix.signal;
 
-import arg_parse : Opts, giveHelp, getOpts, helpString;
+import arg_parse : Opts, giveHelp, helpString;
 import calculation : rank, transform, VarianceException, covariates;
 import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, writeFWER, fdrCalc;
 import setup_all : fileSetup, setup, F;
@@ -35,42 +35,47 @@ extern (C) {
 
 
 version(unittest) void main() {writeln("All unit tests completed successfully.");}
- else void main(in string[] args)
+ else void main(string[] args)
  {
+   //set precision to either double or real (very costly in time and memory)
    alias precision = double;
-
+   //print help string and quit if no options are given
    if (args.length == 1)
      giveHelp(helpString);
 
-   string[string] options = getOpts(args[1..$]);
-   auto opts = new Opts(options);
+   auto opts = new Opts(cast(string[]) args);
 
    File[3] fileArray;
-
+   //delete temp file when program finishes
    scope(exit){
      if ((opts.min || opts.fdr) && (opts.output ~ "temp").exists)
        remove((opts.output ~ "temp"));
    }
 
    fileSetup(fileArray, opts);
-
+   //delete temp file if pipe ends process
    if ((opts.min || opts.fdr) && opts.output == "")
      sigset(SIGPIPE, &del_temp);
 
    immutable(precision[]) rankPhenotype = cast(immutable)setup!(precision)(fileArray, opts);
 
    if (!opts.run)
+     //simple analysis with no permutations
      noPerm(fileArray, opts.skip, rankPhenotype);
    else if (!opts.pval && !opts.min && !opts.fdr)
+     //print analysis and p values for permuted datasets
      simplePerm(fileArray, opts, rankPhenotype);
    else if (!opts.min && !opts.fdr)
+     //calculates permutation p values
      pvalPerm(fileArray, opts, rankPhenotype);
    else if (!opts.fdr)
      {
+       //calculates family wise error rate
        precision[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
        fileArray[F.out_].close();
        writeFWER(opts, minPvalues);
      }
    else
+     //calculates FDR
      fdrCalc(fileArray, opts, rankPhenotype);
  }
