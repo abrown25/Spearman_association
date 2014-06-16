@@ -32,8 +32,14 @@ The purpose of this program is to allow genome wide analyses of non normally dis
 
 ###Binaries:
 
-Binaries compiled with ldc or gdc are faster than those copmiled with the reference implementation, but may have slightly biased permutations.
+Binaries are compiled for 64bit linux, using dmd, gdc and ldc compilers, available here:
+
+https://www.dropbox.com/s/vj96sci7ozvtjdm/spearman (dmd version)
+https://www.dropbox.com/s/mzpcoumgdeg8mnq/spearman_gdc (gdc version)
+https://www.dropbox.com/s/44j60a70kqvgj88/spearman_ldc (ldc version)
+
+Binaries compiled with ldc or gdc are faster than those compiled with the reference implementation (dmd), but may have slightly biased permutations.
 
 ###Issues:
 
-The D language changed its random number algorithms to ensure better coverage of the chosen region. The gdc and ldc compilers have yet to catch up to this change, though code compiled with these is significantly faster. These issues mean that the code will fail unittests when using these compilers.
+The D language changed its random number algorithms for release 2.065 to ensure better coverage of the chosen region. The gdc and ldc compilers have yet to catch up to this change, though code compiled with these is significantly faster. These issues mean that the code will fail unittests when using these compilers.
