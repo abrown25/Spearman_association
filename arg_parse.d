@@ -26,7 +26,7 @@ class Opts{
   //number of genotype columns to skip, and phenotype column
   int skip = 0;
   int phenC = 0;
-  //permutation numerbs and seeds
+  //permutation numbers and seeds
   int number = 0;
   int seed = 0;
   //file names
@@ -51,7 +51,9 @@ class Opts{
 	     "fwer", &min,
 	     "pval", &pval,
 	     "fdr", &fdr,
-	     "nocheck", &nocheck
+	     "nocheck", &nocheck,
+	     "help", &help,
+	     "version", &version_
 	     );
     } catch (Exception e){
       writeln(e.msg);

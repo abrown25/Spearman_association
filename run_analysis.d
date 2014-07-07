@@ -276,17 +276,17 @@ void writeFWER(T)(in Opts opts, ref T[] maxCor){
   //     }
   //   }
   // else
-    {
-      try{
-	if (opts.output != "")
-	  newFile = File(opts.output, "w");
-	else
-	  newFile = stdout;
-      } catch(Exception e){
-	stderr.writeln(e.msg);
-	exit(0);
-      }
+  {
+    try{
+      if (opts.output != "")
+	newFile = File(opts.output, "w");
+      else
+	newFile = stdout;
+    } catch(Exception e){
+      stderr.writeln(e.msg);
+      exit(0);
     }
+  }
     //sort stored maximum statistics
   auto sortMax = sort!()(maxCor);
   T len = sortMax.length;
@@ -294,20 +294,20 @@ void writeFWER(T)(in Opts opts, ref T[] maxCor){
   auto headerLine = oldFile.readln();
   newFile.write(headerLine);
 
-  auto pvalCol = split(headerLine).length - 5;
+  auto corCol = split(headerLine).length - 5;
   T corStat;
   T adjusted;
   foreach(line; oldFile.byLine())
     {
       auto splitLine = split(line);
-      auto tString = splitLine[pvalCol];
+      auto corString = splitLine[corCol];
       if (splitLine.length > 4)
 	newFile.write(join(splitLine[0..$-4], "\t"), "\t");
-      if (tString == "NaN" || tString == "NA" || tString == "Idiot")
-	newFile.writeln(join(tString.repeat(5), "\t"));
+      if (corString == "NaN" || corString == "NA")
+	newFile.writeln(join(corString.repeat(5), "\t"));
       else
 	{
-	  corStat = to!T(tString);
+	  corStat = to!T(corString);
 	  //this counts number of maxCor which are greater than current correlation
 	  adjusted = sortMax.upperBound!(SearchPolicy.gallop)(fabs(corStat) - EPSILON).length / len;
 	  newFile.writefln("%g\t%s\t%g", corStat, join(splitLine[$-3..$], "\t"), adjusted);
@@ -423,8 +423,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
        adjusted[orderIndex[e]] = sortPerm[0 .. (sortPerm.length - cast(size_t)adjusted[orderIndex[e - 1]])]
                                         .upperBound(fabs(realCor[orderIndex[e]]) - EPSILON)
                                         .length
-                                        .to!T
-                                        + adjusted[orderIndex[e - 1]];
+                                        .to!T + adjusted[orderIndex[e - 1]];
 
 
      size_t dupcount = 0;
@@ -458,7 +457,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
      foreach(ref line; oldFile.byLine())
        {
 	 auto lastString = split(line)[$-1];
-	 if (lastString == "NaN" || lastString == "NA" || lastString == "Idiot")
+	 if (lastString == "NaN" || lastString == "NA")
 	   newFile.writeln(line, "\t", lastString);
 	 else
 	   {
