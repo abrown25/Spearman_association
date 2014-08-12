@@ -29,7 +29,8 @@ import calculation : rank, transform, VarianceException, covariates;
 import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, writeFWER, fdrCalc;
 import setup_all : fileSetup, setup, F;
 
-extern (C) {
+extern (C)
+{
   void del_temp(int value);
 }
 
@@ -47,10 +48,11 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
 
    File[3] fileArray;
    //delete temp file when program finishes
-   scope(exit){
-     if ((opts.min || opts.fdr) && (opts.output ~ "temp").exists)
-       remove((opts.output ~ "temp"));
-   }
+   scope(exit)
+     {
+       if ((opts.min || opts.fdr) && (opts.output ~ "temp").exists)
+	 remove((opts.output ~ "temp"));
+     }
 
    fileSetup(fileArray, opts);
    //delete temp file if pipe ends process

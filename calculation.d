@@ -6,28 +6,34 @@ import arg_parse : Opts;
 
 enum double EPSILON = 0.00000001;
 
-version(unittest){
+version(unittest)
+{
   import std.math : approxEqual;
 }
 
-class VarianceException : Exception {
+class VarianceException : Exception
+{
   pure nothrow this(string s) {super(s);}
 }
 
-pure nothrow extern(C) {
+pure nothrow extern(C)
+{
   double gsl_cdf_tdist_P(double x, double nu);
 }
 
-unittest{
+unittest
+{
   // Checks GSL gives right p value for t statistic
   assert(approxEqual(gsl_cdf_tdist_P(-1.6, 7), 0.07681585));
 }
 //C code to regress y on x
-pure nothrow extern(C) {
+pure nothrow extern(C)
+{
   void regress(size_t nInd, size_t nCov, double *x, double *y, double *rOut);
 }
 
-unittest{
+unittest
+{
   //Runs a sample linear regression and checks values against R residuals
   double [] residualsFromR = [-1.00027816411683, -1.72461752433936, -0.275938803894297, 1.51766342141864, 1.48317107093185];
 
@@ -43,7 +49,8 @@ unittest{
     assert(approxEqual(e, residualsFromR[i]));
 }
 //given name of covariate file, and phenotype, produces residuals
-void covariates(string covF, ref double[] phen){
+void covariates(string covF, ref double[] phen)
+{
   import std.array : split;
   import std.conv : to, ConvException;
   import std.stdio : File;
@@ -72,7 +79,8 @@ void covariates(string covF, ref double[] phen){
   regress(nInd, nCov + 1, covOut.ptr, phen.dup.ptr, phen.ptr);
 }
 
-unittest{
+unittest
+{
   //Checks residuals from sample files against residuals calculated by R
   double[] residualsFromR = [-0.0988744898987968, 0.32101118013441, 0.598800504240901, 0.798569051911944, 0.00240916094127165, -0.512816562906186, -0.586676086840575, -0.690613979610441, -0.801131138946856, 0.969322360974328];
 
@@ -84,7 +92,8 @@ unittest{
     assert(approxEqual(e, residualsFromR[i]));
 }
 //ranks array, giving ties mean rank
-pure ref T[] rank(T)(ref T[] rankArray){
+pure ref T[] rank(T)(ref T[] rankArray)
+{
   import std.algorithm : makeIndex;
 
   immutable size_t len = rankArray.length;
@@ -111,7 +120,8 @@ pure ref T[] rank(T)(ref T[] rankArray){
   return rankArray;
 }
 
-unittest{
+unittest
+{
   //Simple test of ranking with ties
   double[] vector = [10, 9, 2, 9, 3];
 
@@ -119,7 +129,8 @@ unittest{
 }
 
 //transforms array so mean =0 sum of squares = 1
-pure void transform(T)(ref T[] vector){
+pure void transform(T)(ref T[] vector)
+{
   int n = 0;
   T mean = 0;
   T M2 = 0;
@@ -141,7 +152,8 @@ pure void transform(T)(ref T[] vector){
     e = (e - mean) / M2;
 }
 
-unittest{
+unittest
+{
   //Checks that transform works on randomly generated vector
   import std.algorithm : reduce;
   import std.random : uniform;
@@ -157,7 +169,8 @@ unittest{
   assert(approxEqual(0.0.reduce!((a, b) => a + (b - mean) * (b - mean))(x), 1));
 }
 //calculates correlation, t stat and p value for two arrays
-pure nothrow T[3] correlation(T)(in T[] vector1, immutable(T[]) vector2){
+pure nothrow T[3] correlation(T)(in T[] vector1, immutable(T[]) vector2)
+{
   import std.numeric: dotProduct;
 
   T[3] results;
@@ -167,7 +180,8 @@ pure nothrow T[3] correlation(T)(in T[] vector1, immutable(T[]) vector2){
   return results;
 }
 
-unittest{
+unittest
+{
   //Check correlation of phenotype with 3rd row genotype against estimates from R
   double[2] corFromR = [-0.2863051, 0.4225695];
 
@@ -183,13 +197,15 @@ unittest{
   assert(approxEqual(cor[2], corFromR[1]));
 }
 //just returns p value for 2 arrays (only used on permutations
-pure nothrow ref T corPvalue(T)(ref T results, in size_t len){
+pure nothrow ref T corPvalue(T)(ref T results, in size_t len)
+{
   results = results * sqrt((len - 2) / (1 - results * results));
   results = gsl_cdf_tdist_P(-fabs(results), len - 2) * 2;
   return results;
 }
 //takes array and generates a continuous array of permuted versions of this array
-T[] getPerm(T)(in Opts permOpts, immutable(T[]) vector){
+T[] getPerm(T)(in Opts permOpts, immutable(T[]) vector)
+{
   import std.random : rndGen, randomShuffle;
   import std.range : chunks, cycle, take;
   import std.array : array;
@@ -208,7 +224,8 @@ T[] getPerm(T)(in Opts permOpts, immutable(T[]) vector){
   return outPerm;
 }
 
-unittest{
+unittest
+{
   //Checks permutation p values (option 4,12) for 3rd phenotype against 5th genotype row against values calculated in R based on those permutations
   //Permutations = matrix(c(2, 9, 5, 3, 1, 8, 6, 7, 10, 4, 2, 7, 5, 6, 9, 10, 4, 1, 3, 8, 7, 10, 8, 3, 1, 5, 2, 6, 9, 4, 3, 5, 7, 9, 10, 2, 8, 4, 1, 6), 10, 4)
   import std.numeric: dotProduct;

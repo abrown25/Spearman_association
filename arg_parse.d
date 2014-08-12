@@ -55,7 +55,7 @@ class Opts{
 	     "help", &help,
 	     "version", &version_
 	     );
-    } catch (Exception e){
+    } catch(Exception e){
       writeln(e.msg);
       exit(0);
     }
@@ -96,7 +96,7 @@ class Opts{
     private void getPhenColumn(string opt, string val){
       try{
 	phenC = to!int(val) - 1;
-	  } catch (ConvException e){
+	  } catch(ConvException e){
 	stderr.writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
 	exit(0);
       }
@@ -107,7 +107,7 @@ class Opts{
       string[] value = split(val, ",");
       try{
 	number = to!int(value[0]);
-      } catch (ConvException e){
+      } catch(ConvException e){
 	stderr.writeln("Failed to run analysis: Non-integer argument to -perm");
 	exit(0);
       }
@@ -117,7 +117,7 @@ class Opts{
 	  give_seed = true;
 	  try{
 	    seed = to!int(value[1]);
-	  } catch (ConvException e){
+	  } catch(ConvException e){
 	    stderr.writeln("Failed to run analysis: Non-integer argument to seed");
 	    exit(0);
 	  }

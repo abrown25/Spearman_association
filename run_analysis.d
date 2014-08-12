@@ -2,6 +2,7 @@ module run_analysis;
 
 import std.array : split;
 import std.conv : to, ConvException;
+import std.file : exists, remove;
 import std.numeric: dotProduct;
 import std.range : repeat;
 import std.stdio : File, stderr, stdout, writeln;
@@ -12,15 +13,16 @@ import std.range : chunks;
 import calculation;
 import setup_all : F;
 
-version(unittest){
+version(unittest)
+{
   import setup_all;
   import std.digest.sha;
-  import std.file : remove;
   import std.range : put;
 }
 
 
-class InputException : Exception {
+class InputException : Exception
+{
   pure this(string s) {super(s);}
 }
 
@@ -53,7 +55,8 @@ string genErrorMsg(int x)
 }
 
 //simple analysis, gives corr, t stat and p value
-void noPerm(T)(ref File[3] fileArray, in size_t skip, immutable(T[]) rankPhenotype){
+void noPerm(T)(ref File[3] fileArray, in size_t skip, immutable(T[]) rankPhenotype)
+{
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
 
@@ -62,7 +65,7 @@ void noPerm(T)(ref File[3] fileArray, in size_t skip, immutable(T[]) rankPhenoty
    */
   foreach(line; fileArray[F.gen].byLine())
     {
-      try {
+      try{
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	fileArray[F.out_].writeln(join(to!(string[])(cor), "\t"));
@@ -76,17 +79,19 @@ void noPerm(T)(ref File[3] fileArray, in size_t skip, immutable(T[]) rankPhenoty
     }
 }
 
-unittest{
+unittest
+{
   string[] options = ["dummy", "--p", "phenotype.txt", "--g",  "genotype.txt",
 			    "--o", "testtemp", "--pid",
 			    "--gid", "--pc", "3", "--gs", "2"];
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit){
-    if ("testtemp".exists)
-      "testtemp".remove;
-  }
+  scope(exit)
+    {
+      if ("testtemp".exists)
+	"testtemp".remove;
+    }
 
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
   noPerm!(double)(fileArray, opts.skip, rankPhenotype);
@@ -99,12 +104,13 @@ unittest{
 }
 
 //writes out statistics as above, then p values from analysis of opts.number permuted datasets
-void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
+void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+{
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  const T[] perms = getPerm!(T)(opts, rankPhenotype);
+  immutable T[] perms = cast(immutable)getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   string varErr = join("NaN".repeat(3 + nPerm), "\t");
@@ -113,7 +119,7 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPheno
 
   foreach(line; fileArray[F.gen].byLine())
     {
-      try {
+      try{
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	fileArray[F.out_].write(join(to!(string[])(cor), "\t"), "\t");
@@ -134,17 +140,19 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPheno
     }
 }
 
-unittest{
+unittest
+{
   string[] options = ["dummy", "--p", "phenotype.txt", "--g", "genotype.txt",
 			    "-otesttemp", "--pid", "--perm", "4,12",
 			    "--gid", "--pc", "3", "--gs", "2"];
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit){
-    if ("testtemp".exists)
-      "testtemp".remove;
-  }
+  scope(exit)
+    {
+      if ("testtemp".exists)
+	"testtemp".remove;
+    }
 
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
   simplePerm!(double)(fileArray, opts, rankPhenotype);
@@ -157,19 +165,20 @@ unittest{
 }
 
 //calculates permutation p values
-void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
+void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+{
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  const T[] perms = getPerm!(T)(opts, rankPhenotype);
+  immutable T[] perms = cast(immutable)getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   mixin(genErrorMsg(4));
 
   foreach(line; fileArray[F.gen].byLine())
     {
-      try {
+      try{
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
@@ -193,17 +202,19 @@ void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenoty
     }
 }
 
-unittest{
+unittest
+{
   string[] options = ["dummy", "--p", "phenotype.txt", "--g", "genotype.txt",
 			    "--o", "testtemp", "--pid", "--perm", "1000000,12",
 			    "--geno-id", "--pc", "3", "--gs", "2", "--pval" ];
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit){
-    if ("testtemp".exists)
-      "testtemp".remove;
-  }
+  scope(exit)
+    {
+      if ("testtemp".exists)
+	"testtemp".remove;
+    }
 
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
   pvalPerm!(double)(fileArray, opts, rankPhenotype);
@@ -216,11 +227,12 @@ unittest{
 }
 
 //calculates family wise error rate
-T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
+T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+{
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-  const T[] perms = getPerm!(T)(opts, rankPhenotype);
+  immutable T[] perms = cast(immutable)getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
   T[] maxCor = new T[opts.number];
   mixin(genErrorMsg(4));
@@ -228,7 +240,7 @@ T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
   maxCor[] = 0.0;
   foreach(line; fileArray[F.gen].byLine())
     {
-      try {
+      try{
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
@@ -258,7 +270,8 @@ T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
   return maxCor;
 }
 
-void writeFWER(T)(in Opts opts, ref T[] maxCor){
+void writeFWER(T)(in Opts opts, ref T[] maxCor)
+{
   import std.algorithm : sort;
   import std.c.stdlib : exit;
   import std.range : SearchPolicy;
@@ -315,19 +328,21 @@ void writeFWER(T)(in Opts opts, ref T[] maxCor){
     }
 }
 
-unittest{
+unittest
+{
   string[] options = ["dummy", "--p", "phenotype.txt", "--g", "genotype.txt",
 			    "--o", "testtemp", "--pid", "--perm", "100000,12",
 			    "--gid", "--pc", "3", "--gs", "2", "--fwer"];
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit){
-    if ("testtemp".exists)
-      "testtemp".remove;
-    if ("testtemptemp".exists)
-      "testtemptemp".remove;
-  }
+  scope(exit)
+    {
+      if ("testtemp".exists)
+	"testtemp".remove;
+      if ("testtemptemp".exists)
+	"testtemptemp".remove;
+    }
 
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
   double[] minPvalues = minPerm!(double)(fileArray, opts, rankPhenotype);
@@ -344,14 +359,16 @@ unittest{
   assert(toHexString(hash.finish) == "0F4312B15A9C7903817CBB74CF8BA0BD29E07B68");
 }
 
-void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype){
-  import std.algorithm : makeIndex, sort;
+void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+{
+  import std.algorithm : makeIndex, min, reverse, sort;
   import std.c.stdlib : exit;
+  import std.range : zip;
 
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-  const T[] perms = getPerm!(T)(opts, rankPhenotype);
+  immutable T[] perms = cast(immutable)getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   T[] permCor;
@@ -360,7 +377,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 
   foreach(line; fileArray[F.gen].byLine())
     {
-      try {
+      try{
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
@@ -406,10 +423,20 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 	  newFile = stdout;
       } catch(Exception e){
 	stderr.writeln(e.msg);
+	if (opts.output ~ "temp".exists)
+	  (opts.output ~ "temp").remove;
 	exit(0);
       }
      }
-     import std.array;
+
+     if (realCor.length == 0)
+       {
+	 stderr.writeln("No P values to analyse.");
+	 if (opts.output ~ "temp".exists)
+	   (opts.output ~ "temp").remove;
+	 exit(0);
+       }
+
      auto sortPerm = sort!()(permCor);
 
      T[] adjusted = new T[realCor.length];
@@ -439,16 +466,13 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 	   }
        }
 
-     adjusted[orderIndex[0]] = adjusted[orderIndex[0]] > 1 ? 1
-                                                           : adjusted[orderIndex[0]];
+     reverse(orderIndex);
 
-     foreach(i, ref e; orderIndex[1 .. $])
-       {
-	 if (adjusted[e] < adjusted[orderIndex[i]])
-	   adjusted[e] = adjusted[orderIndex[i]];
-	 if (adjusted[e] > 1)
-	   adjusted[e] = 1;
-       }
+     if (adjusted[orderIndex[0]] > 1)
+       adjusted[orderIndex[0]] = 1;
+
+     foreach(ref e; zip(orderIndex[0 .. ($ - 1)], orderIndex[1 .. $]))
+       adjusted[e[1]] = min(adjusted[e[1]], adjusted[e[0]], 1);
 
      auto headerLine = oldFile.readln();
      newFile.write(headerLine);
@@ -467,19 +491,21 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
        }
 }
 
-unittest{
+unittest
+{
   string[] options = ["dummy", "--p", "phenotype.txt", "--g", "genotype.txt",
 		      "--o", "testtemp", "--pid", "--perm", "100000,12",
 			    "--gid", "--pc", "5", "--gs", "2", "--fdr"];
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit){
-    if ("testtemp".exists)
-      "testtemp".remove;
-    if ("testtemptemp".exists)
-      "testtemptemp".remove;
-  }
+  scope(exit)
+    {
+      if ("testtemp".exists)
+	"testtemp".remove;
+      if ("testtemptemp".exists)
+	"testtemptemp".remove;
+    }
 
 
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
