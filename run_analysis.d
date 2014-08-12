@@ -297,6 +297,8 @@ void writeFWER(T)(in Opts opts, ref T[] maxCor)
 	newFile = stdout;
     } catch(Exception e){
       stderr.writeln(e.msg);
+      if ((opts.output ~ "temp").exists)
+	(opts.output ~ "temp").remove;
       exit(0);
     }
   }
@@ -423,7 +425,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 	  newFile = stdout;
       } catch(Exception e){
 	stderr.writeln(e.msg);
-	if (opts.output ~ "temp".exists)
+	if ((opts.output ~ "temp").exists)
 	  (opts.output ~ "temp").remove;
 	exit(0);
       }
@@ -432,7 +434,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
      if (realCor.length == 0)
        {
 	 stderr.writeln("No P values to analyse.");
-	 if (opts.output ~ "temp".exists)
+	 if ((opts.output ~ "temp").exists)
 	   (opts.output ~ "temp").remove;
 	 exit(0);
        }

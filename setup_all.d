@@ -100,6 +100,7 @@ Please choose a different name for output file or delete temp file."));
 
 T[] setup(T)(ref File[3] fileArray, Opts opts)
 {
+  import std.file : remove;
   T[] phenotype;
   string[] phenId;
   //reading in phenotype from column opts.phenC, if --pid specified, get IDs
@@ -111,9 +112,13 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
 	phenotype ~= to!T(phenLine[opts.phenC]);
       } catch(ConvException e){
 	stderr.writeln("Failed to run analysis: Non-numeric data in phenotype");
+	if ((opts.min || opts.fdr) && opts.output ~ "temp".exists)
+	  (opts.output ~ "temp").remove;
 	exit(0);
       } catch(InputException e){
 	stderr.writeln("Failed to run analysis: column ", opts.phenC + 1, " in phenotype file doesn't exist");
+	if ((opts.min || opts.fdr) && opts.output ~ "temp".exists)
+	  (opts.output ~ "temp").remove;
 	exit(0);
       }
       if (opts.pid)
@@ -148,6 +153,8 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
   if (!opts.nocheck && opts.pid && opts.gid && genId != phenId)
     {
       stderr.writeln("Failed to run analysis: Mismatched IDs");
+      if ((opts.min || opts.fdr) && opts.output ~ "temp".exists)
+	(opts.output ~ "temp").remove;
       exit(0);
     }
   //if a covariates file is specified, regress covariates out of phenotype
@@ -166,12 +173,18 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
 	  }
       } catch(InputException e){
 	stderr.writeln(e.msg);
+	if ((opts.min || opts.fdr) && opts.output ~ "temp".exists)
+	  (opts.output ~ "temp").remove;
 	exit(0);
       } catch(ConvException){
 	stderr.writeln("Failed to run analysis, non-numeric data in covariates file");
+	if ((opts.min || opts.fdr) && opts.output ~ "temp".exists)
+	  (opts.output ~ "temp").remove;
 	exit(0);
       } catch(Exception e){
 	stderr.writeln(e.msg);
+	if ((opts.min || opts.fdr) && opts.output ~ "temp".exists)
+	  (opts.output ~ "temp").remove;
 	exit(0);
       }
     }
@@ -180,6 +193,8 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
     transform(rank(phenotype));
   } catch(VarianceException e){
     stderr.writeln("Failed to run analysis: Phenotype is constant");
+    if ((opts.min || opts.fdr) && opts.output ~ "temp".exists)
+      (opts.output ~ "temp").remove;
     exit(0);
   }
 
