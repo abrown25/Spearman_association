@@ -11,6 +11,7 @@ class Opts{
   //write appropriate string and quit
   bool help = false;
   bool version_ = false;
+  bool ttest = false;
   //run true means run permutations
   bool run = false;
   bool give_seed = false;
@@ -51,6 +52,7 @@ class Opts{
 	     "fwer", &min,
 	     "pval", &pval,
 	     "fdr", &fdr,
+	     "ttest", &ttest,
 	     "nocheck", &nocheck,
 	     "help", &help,
 	     "version", &version_
@@ -127,11 +129,13 @@ class Opts{
 
 static immutable string helpString = "Usage: spearman [options]:
 Options:
-    --help             : display help file
+    --help             : display help information
+    --version          : display version information
     --pheno, --p       : phenotype file [default: last argument]
     --geno, --g        : genotype file [default stdin]
     --out, --o         : output file [default stdout]
     --cov, --c         : optional covariates file, if specified analysis will be performed on the residuals, after controlling for covariates with least squares regression
+    --ttest            : runs a test of standard parametric correlation between genotype and phenotype
     --pheno-id, --pid  : phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
     --geno-id, --gid   : genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
     --pheno-col, --pc  : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise

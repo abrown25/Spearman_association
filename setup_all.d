@@ -190,7 +190,10 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
     }
   //return ranked phenotype, normalised to mean 0, sum of squares 1
   try{
-    transform(rank(phenotype));
+    if (opts.ttest)
+      transform(phenotype);
+    else
+      transform(rank(phenotype));
   } catch(VarianceException e){
     stderr.writeln("Failed to run analysis: Phenotype is constant");
     if ((opts.min || opts.fdr) && (opts.output ~ "temp").exists)

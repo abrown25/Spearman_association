@@ -39,7 +39,10 @@ template readGenotype()
   enforce(splitLine.length == nInd + skip, new InputException(\"\"));
 
   auto rankGenotype = to!(T[])(splitLine[skip..$]);
-  transform(rank(rankGenotype));
+  if (opts.ttest)
+    transform(rankGenotype);
+  else
+    transform(rank(rankGenotype));
 ";
 }
 
@@ -55,10 +58,11 @@ string genErrorMsg(int x)
 }
 
 //simple analysis, gives corr, t stat and p value
-void noPerm(T)(ref File[3] fileArray, in size_t skip, immutable(T[]) rankPhenotype)
+void noPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
 {
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
+  immutable size_t skip = opts.skip;
 
   mixin(genErrorMsg(3));
   /*variance error if SNP is monomorphic (write NA), non numeric data give NaN
@@ -94,7 +98,7 @@ unittest
     }
 
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
-  noPerm!(double)(fileArray, opts.skip, rankPhenotype);
+  noPerm!(double)(fileArray, opts, rankPhenotype);
   foreach(ref e; fileArray)
     e.close;
   SHA1 hash;

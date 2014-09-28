@@ -63,7 +63,7 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
 
    if (!opts.run)
      //simple analysis with no permutations
-     noPerm(fileArray, opts.skip, rankPhenotype);
+     noPerm(fileArray, opts, rankPhenotype);
    else if (!opts.pval && !opts.min && !opts.fdr)
      //print analysis and p values for permuted datasets
      simplePerm(fileArray, opts, rankPhenotype);

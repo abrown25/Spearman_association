@@ -14,6 +14,7 @@ The purpose of this program is to allow genome wide analyses of non normally dis
         --geno, --g        : genotype file [default stdin]
         --out, --o         : output file [default stdout]
         --cov, --c         : optional covariates file, if specified analysis will be performed on the residuals, after controlling for covariates with least squares regression
+        --ttest            : runs a test of standard parametric correlation between genotype and phenotype
         --pheno-id, --pid  : phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
         --geno-id, --gid   : genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
         --pheno-col, --pc  : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
@@ -40,8 +41,4 @@ https://www.dropbox.com/s/mzpcoumgdeg8mnq/spearman_gdc (gdc version)
 
 https://www.dropbox.com/s/44j60a70kqvgj88/spearman_ldc (ldc version)
 
-Binaries compiled with ldc or gdc are faster than those compiled with the reference implementation (dmd). Binaries compiled with ldc are based on an older version of D (2.064) which may have slightly biased permutations.
-
-###Issues:
-
-The D language changed its random number algorithms for release 2.065 to ensure better coverage of the chosen region. The ldc compiler have yet to catch up to this change, though code compiled with this compiler can be significantly faster. These issues mean that the code will fail unittests when using this compiler.
+Binaries compiled with ldc or gdc are faster than those compiled with the reference implementation (dmd).
