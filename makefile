@@ -13,7 +13,7 @@ ldc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
 	ldc2 main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o ${GSL} -O3 -of="spearman_ldc"
 	rm *.o
 
-unittest : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
+unittest : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c unittest
 	gcc -c regress.c -o regress.o
 	dmd -unittest -L-lgsl -L-lgslcblas calculation.d setup_all.d run_analysis.d arg_parse.d main.d regress.o -ofunittest
 	./unittest

@@ -145,12 +145,12 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
   if (opts.run)
     {
       headerLine ~= opts.pval ? "\tPermP"
-	: opts.min ? "\tPermP\tFWER"
-	: opts.fdr ? "\tPermP\tFDR"
-	: "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
+	                      : opts.min ? "\tPermP\tFWER"
+	                      : opts.fdr ? "\tPermP\tFDR"
+	                      : "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
     }
   //check IDs match
-  if (!opts.nocheck && opts.pid && opts.gid && genId != phenId)
+  if (!opts.nocheck && !opts.match && opts.pid && opts.gid && genId != phenId)
     {
       stderr.writeln("Failed to run analysis: Mismatched IDs");
       if ((opts.min || opts.fdr) && (opts.output ~ "temp").exists)
@@ -187,6 +187,21 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
 	  (opts.output ~ "temp").remove;
 	exit(0);
       }
+    }
+  if (opts.match)
+    {
+      //write routine to check no phenotype ids not in genotype
+      import std.range : indexed;
+      import std.algorithm : map, find, array;
+      foreach(x; genId)
+	if (!find(phenId, x).length)
+	  {
+	    stderr.writeln("Failed to run analysis: Individuals present in genotype file which are not present in phenotype file.");
+	    exit(0);
+	  }
+      auto orderPhen = genId.map!(x => phenId.length - phenId.find(x).length);
+      assert(phenId.indexed(orderPhen).array == genId);
+      phenotype = phenotype.indexed(orderPhen).array;
     }
   //return ranked phenotype, normalised to mean 0, sum of squares 1
   try{

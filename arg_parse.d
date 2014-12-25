@@ -24,6 +24,8 @@ class Opts{
   bool gid = false;
   //don't check ids
   bool nocheck = false;
+  //rearrange to match phenotype and genotype ids;
+  bool match = false;
   //number of genotype columns to skip, and phenotype column
   int skip = 0;
   int phenC = 0;
@@ -54,6 +56,7 @@ class Opts{
 	     "fdr", &fdr,
 	     "ttest", &ttest,
 	     "nocheck", &nocheck,
+	     "match", &match,
 	     "help", &help,
 	     "version", &version_
 	     );
@@ -93,6 +96,17 @@ class Opts{
 	  stderr.writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
 	  exit(0);
 	}
+      //check ID options are consistent
+      if (match && !(pid && gid))
+	{
+	  stderr.writeln("Failed to run analysis: --match specified but missing genotype or phenotype IDs");
+	  exit(0);
+	}
+      if (nocheck && match)
+	{
+	  stderr.writeln("Failed to run analysis: Both --nocheck and --match specified");
+	  exit(0);
+	}
     }
     //phenotype column is column - 1
     private void getPhenColumn(string opt, string val){
@@ -127,34 +141,35 @@ class Opts{
     }
 }
 
-static immutable string helpString = "Usage: spearman [options]:
+static immutable string helpString = "Usage: NP-GWAS [options]:
 Options:
-    --help             : display help information
-    --version          : display version information
-    --pheno, --p       : phenotype file [default: last argument]
-    --geno, --g        : genotype file [default stdin]
-    --out, --o         : output file [default stdout]
-    --cov, --c         : optional covariates file, if specified analysis will be performed on the residuals, after controlling for covariates with least squares regression
-    --ttest            : runs a test of standard parametric correlation between genotype and phenotype
-    --pheno-id, --pid  : phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches
-    --geno-id, --gid   : genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches
-    --pheno-col, --pc  : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise
-    --geno-skip, --gs  : column at which genotype values start, preceding columns are printed
-    --perm             : calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed
-    --pval             : report permutation p values for each test (needs perm options to be specified)
-    --fwer             : calculates the Family Wise Error Rate (FWER) based on permutations, corrected P values in the last column
-    --fdr              : calculates the False Discovery Rate (FDR) based on permutations, corrected P values in the last column
-    --nocheck          : skip check of IDs when both genotype and phenotype IDs are present
+    --help             : display help information.
+    --version          : display version information.
+    --pheno, --p       : phenotype file [default: last argument].
+    --geno, --g        : genotype file [default stdin].
+    --out, --o         : output file [default stdout].
+    --cov, --c         : optional covariates file, if specified analysis will be performed on the residuals, after controlling for covariates with least squares regression.
+    --ttest            : runs a test of standard parametric correlation between genotype and phenotype.
+    --pheno-id, --pid  : phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches.
+    --geno-id, --gid   : genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches.
+    --pheno-col, --pc  : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise.
+    --geno-skip, --gs  : column at which genotype values start, preceding columns are printed.
+    --perm             : calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed.
+    --pval             : report permutation p values for each test (needs perm options to be specified).
+    --fwer             : calculates the Family Wise Error Rate (FWER) based on permutations, corrected P values in the last column.
+    --fdr              : calculates the False Discovery Rate (FDR) based on permutations, corrected P values in the last column.
+    --nocheck          : skip check of IDs when both genotype and phenotype IDs are present.
+    --match            : the program will rearrange the phenotype data so that the genotype and phenotype IDs match. If individuals are present in the genotype file only, the analysis will be halted.
 
 Input file formats:
-    phenotype          : Tab or whitespace separated file with phenotype values in column specified by --pc, and optional subject IDs in column 1
-    genotype           : Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by --gs are copied to results file
+    phenotype          : Tab or whitespace separated file with phenotype values in column specified by --pc, and optional subject IDs in column 1.
+    genotype           : Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by --gs are copied to results file.
 
 Output:
     Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are present, then p values for calculated on permuted datasets are reported next.
 ";
 
-static immutable string versionString = "NP-GWAS, version 0.1.5";
+static immutable string versionString = "NP-GWAS, version 0.9";
 
 void giveHelp(immutable string quitString){
   writeln(quitString);
