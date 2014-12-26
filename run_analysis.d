@@ -52,7 +52,7 @@ string genErrorMsg(int x)
   string y = to!string(x);
   string results = "string varErr = join(\"NaN\".repeat(" ~ y ~ "), \"\t\");
   string inputErr = join(\"NA\".repeat(" ~ y ~ "), \"\t\");
-  string convErr = join(\"NaN\".repeat(" ~ y ~ "), \"\t\");
+  string convErr = join(\"NA\".repeat(" ~ y ~ "), \"\t\");
 ";
  return results;
 }
@@ -104,7 +104,7 @@ unittest
   SHA1 hash;
   hash.start();
   put(hash, File("testtemp").byChunk(1024));
-  assert(toHexString(hash.finish) == "C8DF91C2B6FBD3F5D9303AE9759E8737A5FFE248");
+  assert(toHexString(hash.finish) == "5BFF0DFB3357B92BD9A2C32FB200D5D2D0F3898F");
 }
 
 //writes out statistics as above, then p values from analysis of opts.number permuted datasets
@@ -119,7 +119,7 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPheno
 
   string varErr = join("NaN".repeat(3 + nPerm), "\t");
   string inputErr = join("NA".repeat(3 + nPerm), "\t");
-  string convErr = join("NaN".repeat(3 + nPerm), "\t");
+  string convErr = join("NA".repeat(3 + nPerm), "\t");
 
   foreach(line; fileArray[F.gen].byLine())
     {
@@ -165,7 +165,7 @@ unittest
   SHA1 hash;
   hash.start();
   put(hash, File("testtemp").byChunk(1024));
-  assert(toHexString(hash.finish) == "DDF70C1EC8A7B9680EA039E701D7F5C07DC0EA82");
+  assert(toHexString(hash.finish) == "FDDF58950BE4E5A45778BBDF6ED6776812F034DD");
 }
 
 //calculates permutation p values
@@ -227,7 +227,7 @@ unittest
   SHA1 hash;
   hash.start();
   put(hash, File("testtemp").byChunk(1024));
-  assert(toHexString(hash.finish) == "AF535B844750CA413255FC2FDAD6C938521BEC66");
+  assert(toHexString(hash.finish) == "E7E61B089FA5E0C24700108D10DE5CEF69CE1CCC");
 }
 
 //calculates family wise error rate
@@ -362,7 +362,7 @@ unittest
   SHA1 hash;
   hash.start();
   put(hash, File("testtemp").byChunk(1024));
-  assert(toHexString(hash.finish) == "0F4312B15A9C7903817CBB74CF8BA0BD29E07B68");
+  assert(toHexString(hash.finish) == "AF331E54550D37EFB955D9E8B19B2ABCA74EFB2E");
 }
 
 void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
@@ -522,5 +522,5 @@ unittest
   SHA1 hash;
   hash.start();
   put(hash, File("testtemp").byChunk(1024));
-  assert(toHexString(hash.finish)=="E2CFD6561E8A6DCC890F017561D23956EAB5A50E");
+  assert(toHexString(hash.finish)=="02BE6651EEE53D7AA40A1E71B451B5E3F563D23D");
 }

@@ -150,12 +150,20 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
 	                      : "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
     }
   //check IDs match
-  if (!opts.nocheck && !opts.match && opts.pid && opts.gid && genId != phenId)
+  if (!opts.nocheck && !opts.match && opts.pid && opts.gid)
     {
-      stderr.writeln("Failed to run analysis: Mismatched IDs");
-      if ((opts.min || opts.fdr) && (opts.output ~ "temp").exists)
-	(opts.output ~ "temp").remove;
-      exit(0);
+      if (genId != phenId)
+	{
+	  stderr.writeln("Failed to run analysis: Mismatched IDs");
+	  if ((opts.min || opts.fdr) && (opts.output ~ "temp").exists)
+	    (opts.output ~ "temp").remove;
+	  exit(0);
+	}
+      import std.algorithm : count, map, max, reduce;
+      if (phenId.map!(x => phenId.count(x)).reduce!(max) > 1)
+	stderr.writeln("Warning, duplicate phenotype IDs.");
+      if (genId.map!(x => genId.count(x)).reduce!(max) > 1)
+	stderr.writeln("Warning, duplicate genotype IDs.");
     }
   //if a covariates file is specified, regress covariates out of phenotype
   if (opts.cov != "")
@@ -190,18 +198,30 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
     }
   if (opts.match)
     {
-      //write routine to check no phenotype ids not in genotype
-      import std.range : indexed;
-      import std.algorithm : map, find, array;
-      foreach(x; genId)
-	if (!find(phenId, x).length)
-	  {
-	    stderr.writeln("Failed to run analysis: Individuals present in genotype file which are not present in phenotype file.");
-	    exit(0);
-	  }
-      auto orderPhen = genId.map!(x => phenId.length - phenId.find(x).length);
-      assert(phenId.indexed(orderPhen).array == genId);
+      //Check no individuals only in genotype file, if so, stop, otherwise rearrange phenotype so sample IDs match
+      import std.array : join;
+      import std.range : indexed, zip;
+      import std.algorithm : array, count, countUntil, filter, map, max;
+      auto orderPhen = genId.map!(x => phenId.countUntil(x));
+      if (orderPhen.countUntil(-1)!=-1)
+	{
+	  auto genIndNotPhen = zip(orderPhen, genId).filter!(a => a[0]==-1)
+	                                            .map!(a => a[1])
+	                                            .array;
+	  if (genIndNotPhen.length==1)
+	    stderr.writeln("Failed to run analysis: individual ", genIndNotPhen[0], " present in genotype file but not phenotype. Please remove this individual from genotype file.");
+	  else
+	    stderr.writeln("Failed to run analysis: individuals ", genIndNotPhen[0 .. ($-1)].join(", "), " and ", genIndNotPhen[$ - 1], " present in genotype file but not phenotype. Please remove these individuals from genotype file.");
+	  exit(0);
+	}
+
+      enforce(phenId.indexed(orderPhen).array == genId);
       phenotype = phenotype.indexed(orderPhen).array;
+
+      if (phenId.map!(x => phenId.count(x)).reduce!(max) > 1)
+	stderr.writeln("Warning, duplicate phenotype IDs.");
+      if (genId.map!(x => genId.count(x)).reduce!(max) > 1)
+	stderr.writeln("Warning, duplicate genotype IDs.");
     }
   //return ranked phenotype, normalised to mean 0, sum of squares 1
   try{

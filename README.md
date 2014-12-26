@@ -5,7 +5,7 @@
 The purpose of this program is to allow genome wide analyses of non normally distributed data to be performed quickly and easily. Fast routines to calculate permutations are included, with options to calculate p values adjusted for multiple testing, either the family wise error rate (FWER) or the typically less conservative false discovery rate (FDR). The program is designed to be flexible with the data formats it will accept: genotype data should come with individuals are columns and SNPs in rows, with an optional header line and number of preceding columns giving SNP information. The program has been designed to work with linux pipes, allowing it to be seamlessly chained with programs to manipulate SNP data such as tabix and vcf-tools. Phenotype information should be given in a specified column of a text file: if there are known confounders, these can be passed as a matrix and controlled out using linear regression.
 ###Usage:
 
-    Usage: NP_GWAS [options]:
+    Usage: NP-GWAS [options]:
 
     Options:
         --help             : display help information.
