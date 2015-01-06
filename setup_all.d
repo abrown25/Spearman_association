@@ -199,7 +199,6 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
   if (opts.match)
     {
       //Check no individuals only in genotype file, if so, stop, otherwise rearrange phenotype so sample IDs match
-      import std.array : join;
       import std.range : indexed, zip;
       import std.algorithm : array, count, countUntil, filter, map, max;
       auto orderPhen = genId.map!(x => phenId.countUntil(x));

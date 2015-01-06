@@ -66,6 +66,8 @@ class Opts{
     }
 
       checkOptions();
+      if (pid && phenC == 0)
+	phenC = 1;
       if (phenotype=="" && args.length > 0)
 	phenotype = args[$ - 1];
  }

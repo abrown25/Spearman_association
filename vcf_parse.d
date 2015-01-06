@@ -55,15 +55,6 @@ pure nothrow auto convDouble(const char[] x){
   return value;
 }
 
-unittest{
-  assert(convDouble("0.542653")==0.542653);
-  assert(convDouble("40.542653")==-1);
-  assert(convDouble("0l542353")==-1);
-  assert(convDouble("")==-1);
-  assert(convDouble("4")==4);
-  assert(convDouble("0.")==0);
-}
-
 pure nothrow double GT(const char[] x)
 {
   auto y = cast(ubyte[])x;
@@ -87,13 +78,30 @@ pure nothrow auto DS(const char[] x)
   return convDouble(x);
 }
 
+unittest{
+  assert(DS("0.542653")==0.542653);
+  assert(DS("40.542653")==-1);
+  assert(DS("0l542353")==-1);
+  assert(DS("")==-1);
+  assert(DS("4")==4);
+  assert(DS("0.")==0);
+}
+
 pure auto PP(const char[] x)
 {
-  auto  y = x.split(',');
-  if (y.length != 3)
+  if (x.count(",")!=2)
     return -1;
-  auto  z = y[1..$].map!convDouble();
+  auto  y = x.splitter(',');
+  auto  z = y.drop(1).map!convDouble().array;
   return z[0] == -1 || z[1] == -1 ? -1 : z[0] + 2 * z[1];
+}
+
+unittest{
+  assert(PP("1,3,2")==7);
+  assert(PP("1,2.4,3.6")==9.6);
+  assert(PP("1,2,A")==-1);
+  assert(PP("1,A,3")==-1);
+  assert(PP("1")==-1);
 }
 
 void main(string[] args)
@@ -126,7 +134,6 @@ void main(string[] args)
     exit(0);
   }
 
-  char[][] splitLine;
   char[][] infoFields;
   char[][] indVCF;
   long[] mapping;
@@ -138,16 +145,16 @@ void main(string[] args)
 	continue;
       else if (line[0..2] =="#C")
 	{
-	  splitLine = line.strip.split("\t");
-	  stdout.writeln(join(splitLine[0..5], "\t"), "\t", join(splitLine[9..$], "\t"));
+	  auto splitLine = line.strip.splitter("\t");
+	  stdout.writeln(join(splitLine.take(5), "\t"), "\t", join(splitLine.drop(9), "\t"));
 	}
       else
 	{
-	  splitLine = line.strip.split("\t");
-	  stdout.write(join(splitLine[0..5], "\t"));
-	  infoFields = splitLine[8].split(":");
+	  auto splitLine = line.strip.split("\t");
+	  stdout.write(join(splitLine.take(5), "\t"));
+	  infoFields = splitLine.drop(8).front.split(":");
 	  mapping = options.map!(x => infoFields.countUntil(x)).array;
-	  foreach(ref e; splitLine[9..$])
+	  foreach(ref e; splitLine.drop(9))
 	    {
 	      indVCF = e.split(":");
 	      bool done = false;
