@@ -4,7 +4,7 @@ import std.exception : enforce;
 import std.math : fabs, sqrt;
 import arg_parse : Opts;
 
-enum double EPSILON = 0.00000001;
+enum double EPSILON = 0.00000001; //comparison for X>=Y is done X > Y - epsilon 
 
 version(unittest)
 {
@@ -13,11 +13,13 @@ version(unittest)
 
 class VarianceException : Exception
 {
+  //thrown if variable is constant
   pure nothrow this(string s) {super(s);}
 }
 
 pure nothrow extern(C)
 {
+  //call GSL to calculate P values from T statistics
   double gsl_cdf_tdist_P(double x, double nu);
 }
 
@@ -26,9 +28,10 @@ unittest
   // Checks GSL gives right p value for t statistic
   assert(approxEqual(gsl_cdf_tdist_P(-1.6, 7), 0.07681585));
 }
-//C code to regress y on x
+
 pure nothrow extern(C)
 {
+  //performs regression and returns residuals in rOut 
   void regress(size_t nInd, size_t nCov, double *x, double *y, double *rOut);
 }
 
@@ -48,9 +51,10 @@ unittest
   foreach(i, ref e; residuals)
     assert(approxEqual(e, residualsFromR[i]));
 }
-//given name of covariate file, and phenotype, produces residuals
+
 void covariates(string covF, ref double[] phen)
 {
+  //given name of covariate file, and phenotype, produces residuals
   import std.array : split;
   import std.conv : to, ConvException;
   import std.stdio : File;
@@ -61,11 +65,11 @@ void covariates(string covF, ref double[] phen)
   covOut ~= 1;
 
   auto covFile = File(covF);
-  auto firstLine = split(covFile.readln());
+  auto firstLine = split(covFile.readln);
   size_t nCov = firstLine.length;
   covOut ~= to!(double[])(firstLine);
 
-  foreach(line; covFile.byLine())
+  foreach(line; covFile.byLine)
     {
       covOut ~= 1;
       auto splitLine = split(line);
@@ -91,9 +95,10 @@ unittest
   foreach(i, ref e; phen)
     assert(approxEqual(e, residualsFromR[i]));
 }
-//ranks array, giving ties mean rank
+
 pure ref T[] rank(T)(ref T[] rankArray)
 {
+  //ranks array, giving ties mean rank
   import std.algorithm : makeIndex;
 
   immutable size_t len = rankArray.length;
@@ -128,9 +133,9 @@ unittest
   assert(rank!(double)(vector) == [5, 3.5, 1, 3.5, 2]);
 }
 
-//transforms array so mean =0 sum of squares = 1
 pure void transform(T)(ref T[] vector)
 {
+  //transforms array so mean =0 sum of squares = 1
   int n = 0;
   T mean = 0;
   T M2 = 0;
@@ -168,9 +173,10 @@ unittest
   assert(approxEqual(mean, 0.0));
   assert(approxEqual(0.0.reduce!((a, b) => a + (b - mean) * (b - mean))(x), 1));
 }
-//calculates correlation, t stat and p value for two arrays
+
 pure nothrow T[3] correlation(T)(in T[] vector1, immutable(T[]) vector2)
 {
+  //calculates correlation, t stat and p value for two arrays
   import std.numeric: dotProduct;
 
   T[3] results;
@@ -196,16 +202,18 @@ unittest
   assert(approxEqual(cor[0], corFromR[0]));
   assert(approxEqual(cor[2], corFromR[1]));
 }
-//just returns p value for 2 arrays (only used on permutations
+
 pure nothrow ref T corPvalue(T)(ref T results, in size_t len)
 {
+  //just returns p value for 2 arrays (only used on permutations)
   results = results * sqrt((len - 2) / (1 - results * results));
   results = gsl_cdf_tdist_P(-fabs(results), len - 2) * 2;
   return results;
 }
-//takes array and generates a continuous array of permuted versions of this array
+
 T[] getPerm(T)(in Opts permOpts, immutable(T[]) vector)
 {
+  //takes array and generates a continuous array of permuted versions of this array
   import std.random : rndGen, randomShuffle;
   import std.range : chunks, cycle, take;
   import std.array : array;

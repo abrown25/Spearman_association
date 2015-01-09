@@ -1,14 +1,13 @@
 module run_analysis;
 
-import std.array : split;
+import std.algorithm : map;
+import std.array : array, split, splitter;
 import std.conv : to, ConvException;
 import std.file : exists, remove;
 import std.numeric: dotProduct;
-import std.range : repeat;
+import std.range : repeat, retro, chunks, take, drop;
 import std.stdio : File, stderr, stdout, writeln;
 import std.string : join;
-import std.array : appender;
-import std.range : chunks;
 
 import calculation;
 import setup_all : F;
@@ -31,14 +30,15 @@ this throws errors if array too short
 */
 template readGenotype()
 {
-  const char[] readGenotype = "auto splitLine = split(line);
+  const auto readGenotype = "auto splitLine = splitter(line);
 
   if (skip > 0)
-    fileArray[F.out_].write(join(splitLine[0..skip], \"\t\"), \"\t\");
+    fileArray[F.out_].write(join(splitLine.take(skip), \"\t\"), \"\t\");
 
-  enforce(splitLine.length == nInd + skip, new InputException(\"\"));
+  auto rankGenotype = splitLine.drop(skip).map!(to!T).array;
 
-  auto rankGenotype = to!(T[])(splitLine[skip..$]);
+  enforce(rankGenotype.length == nInd, new InputException(\"\"));
+
   if (opts.ttest)
     transform(rankGenotype);
   else
@@ -67,7 +67,7 @@ void noPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
   mixin(genErrorMsg(3));
   /*variance error if SNP is monomorphic (write NA), non numeric data give NaN
    */
-  foreach(line; fileArray[F.gen].byLine())
+  foreach(line; fileArray[F.gen].byLine)
     {
       try{
 	mixin(readGenotype!());
@@ -102,7 +102,7 @@ unittest
   foreach(ref e; fileArray)
     e.close;
   SHA1 hash;
-  hash.start();
+  hash.start;
   put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "5BFF0DFB3357B92BD9A2C32FB200D5D2D0F3898F");
 }
@@ -121,7 +121,7 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPheno
   string inputErr = join("NA".repeat(3 + nPerm), "\t");
   string convErr = join("NA".repeat(3 + nPerm), "\t");
 
-  foreach(line; fileArray[F.gen].byLine())
+  foreach(line; fileArray[F.gen].byLine)
     {
       try{
 	mixin(readGenotype!());
@@ -163,7 +163,7 @@ unittest
   foreach(ref e; fileArray)
     e.close;
   SHA1 hash;
-  hash.start();
+  hash.start;
   put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "FDDF58950BE4E5A45778BBDF6ED6776812F034DD");
 }
@@ -180,7 +180,7 @@ void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenoty
 
   mixin(genErrorMsg(4));
 
-  foreach(line; fileArray[F.gen].byLine())
+  foreach(line; fileArray[F.gen].byLine)
     {
       try{
 	mixin(readGenotype!());
@@ -225,7 +225,7 @@ unittest
   foreach(ref e; fileArray)
     e.close;
   SHA1 hash;
-  hash.start();
+  hash.start;
   put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "E7E61B089FA5E0C24700108D10DE5CEF69CE1CCC");
 }
@@ -242,7 +242,7 @@ T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
   mixin(genErrorMsg(4));
   //we need to store greatest statistic across all SNPs in maxCor
   maxCor[] = 0.0;
-  foreach(line; fileArray[F.gen].byLine())
+  foreach(line; fileArray[F.gen].byLine)
     {
       try{
 	mixin(readGenotype!());
@@ -310,26 +310,25 @@ void writeFWER(T)(in Opts opts, ref T[] maxCor)
   auto sortMax = sort!()(maxCor);
   T len = sortMax.length;
   //read through old file and compare correlations to maxCor to calculate FWER
-  auto headerLine = oldFile.readln();
+  auto headerLine = oldFile.readln;
   newFile.write(headerLine);
 
   auto corCol = split(headerLine).length - 5;
   T corStat;
   T adjusted;
-  foreach(line; oldFile.byLine())
+  foreach(line; oldFile.byLine)
     {
-      auto splitLine = split(line);
-      auto corString = splitLine[corCol];
-      if (splitLine.length > 4)
-	newFile.write(join(splitLine[0..$-4], "\t"), "\t");
+      auto splitLine = splitter(line);
+      auto corString = splitLine.drop(corCol).front;
+      if (corCol > 0)
+	newFile.write(join(splitLine.take(corCol), "\t"), "\t");
       if (corString == "NaN" || corString == "NA")
-	newFile.writeln(join(corString.repeat(5), "\t"));
+      	newFile.writeln(join(corString.repeat(5), "\t"));
       else
 	{
 	  corStat = to!T(corString);
-	  //this counts number of maxCor which are greater than current correlation
 	  adjusted = sortMax.upperBound!(SearchPolicy.gallop)(fabs(corStat) - EPSILON).length / len;
-	  newFile.writefln("%g\t%s\t%g", corStat, join(splitLine[$-3..$], "\t"), adjusted);
+	  newFile.writefln("%g\t%s\t%g", corStat, join(splitLine.drop(corCol + 1), "\t"), adjusted);
 	}
     }
 }
@@ -353,14 +352,14 @@ unittest
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
   double[] minPvalues = minPerm!(double)(fileArray, opts, rankPhenotype);
 
-  fileArray[F.out_].close();
+  fileArray[F.out_].close;
 
   writeFWER!(double)(opts, minPvalues);
 
   foreach(ref e; fileArray)
     e.close;
   SHA1 hash;
-  hash.start();
+  hash.start;
   put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish) == "AF331E54550D37EFB955D9E8B19B2ABCA74EFB2E");
 }
@@ -381,7 +380,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   T[] realCor;
   mixin(genErrorMsg(4));
 
-  foreach(line; fileArray[F.gen].byLine())
+  foreach(line; fileArray[F.gen].byLine)
     {
       try{
 	mixin(readGenotype!());
@@ -407,7 +406,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
       }
     }
 
-  fileArray[F.out_].close();
+  fileArray[F.out_].close;
 
   File oldFile = File(opts.output ~ "temp", "r");
   File newFile;
@@ -480,13 +479,13 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
      foreach(ref e; zip(orderIndex[0 .. ($ - 1)], orderIndex[1 .. $]))
        adjusted[e[1]] = min(adjusted[e[1]], adjusted[e[0]], 1);
 
-     auto headerLine = oldFile.readln();
+     auto headerLine = oldFile.readln;
      newFile.write(headerLine);
 
      size_t i = 0;
-     foreach(ref line; oldFile.byLine())
+     foreach(ref line; oldFile.byLine)
        {
-	 auto lastString = split(line)[$-1];
+	 auto lastString = line.split.retro.front;
 	 if (lastString == "NaN" || lastString == "NA")
 	   newFile.writeln(line, "\t", lastString);
 	 else
@@ -520,7 +519,7 @@ unittest
   foreach(ref e; fileArray)
     e.close;
   SHA1 hash;
-  hash.start();
+  hash.start;
   put(hash, File("testtemp").byChunk(1024));
   assert(toHexString(hash.finish)=="02BE6651EEE53D7AA40A1E71B451B5E3F563D23D");
 }

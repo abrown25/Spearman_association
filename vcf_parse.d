@@ -92,7 +92,7 @@ pure auto PP(const char[] x)
   if (x.count(",")!=2)
     return -1;
   auto  y = x.splitter(',');
-  auto  z = y.drop(1).map!convDouble().array;
+  auto  z = y.drop(1).map!convDouble.array;
   return z[0] == -1 || z[1] == -1 ? -1 : z[0] + 2 * z[1];
 }
 
@@ -150,7 +150,7 @@ void main(string[] args)
 	}
       else
 	{
-	  auto splitLine = line.strip.split("\t");
+	  auto splitLine = line.strip.splitter("\t");
 	  stdout.write(join(splitLine.take(5), "\t"));
 	  infoFields = splitLine.drop(8).front.split(":");
 	  mapping = options.map!(x => infoFields.countUntil(x)).array;

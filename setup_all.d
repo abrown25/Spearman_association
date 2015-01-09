@@ -104,7 +104,7 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
   T[] phenotype;
   string[] phenId;
   //reading in phenotype from column opts.phenC, if --pid specified, get IDs
-  foreach(line; fileArray[F.phen].byLine())
+  foreach(line; fileArray[F.phen].byLine)
     {
       auto phenLine = split(line);
       try{
@@ -131,7 +131,7 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
   //--gid means get the genotype IDs, we're building the header line
   if (opts.gid)
     {
-      splitLine = split(fileArray[F.gen].readln());
+      splitLine = split(fileArray[F.gen].readln);
       genId = splitLine[opts.skip..$];
       headerLine ~= join(splitLine[0..opts.skip], "\t");
       headerLine ~= "\t";

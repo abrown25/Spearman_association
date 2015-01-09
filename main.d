@@ -74,7 +74,7 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
      {
        //calculates family wise error rate
        precision[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
-       fileArray[F.out_].close();
+       fileArray[F.out_].close;
        writeFWER(opts, minPvalues);
      }
    else
