@@ -1,4 +1,4 @@
-GSL = /usr/lib/libgsl.a /usr/lib/libgslcblas.a
+GSL = /usr/lib/libgsl.so /usr/lib/libgslcblas.so
 
 spearman : main.d arg_parse.d calculation.d run_analysis.d regress.c setup_all.d
 	gcc -c regress.c -o regress.o
@@ -10,7 +10,7 @@ gdc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
 
 ldc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
 	gcc -c regress.c -o regress.o
-	ldc2 main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o ${GSL} -O3 -of="spearman_ldc"
+	ldc main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o -L-lgsl -L-lgslcblas -O3 -of="spearman_ldc"
 	rm *.o
 
 unittest : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c

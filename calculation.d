@@ -203,7 +203,7 @@ unittest
   assert(approxEqual(cor[2], corFromR[1]));
 }
 
-pure nothrow ref T corPvalue(T)(ref T results, in size_t len)
+pure nothrow corPvalue(T)(T results, immutable size_t len)
 {
   //just returns p value for 2 arrays (only used on permutations)
   results = results * sqrt((len - 2) / (1 - results * results));
@@ -253,7 +253,6 @@ unittest
   for (auto i = 0; i < 4; i++)
     {
       auto singlePerm = dotProduct(genotype, perms[i * 10 .. (i + 1) * 10]);
-      corPvalue!(double)(singlePerm, 10);
-      assert(approxEqual(singlePerm, permPvalsR[i]));
+      assert(approxEqual(corPvalue!(double)(singlePerm, 10), permPvalsR[i]));
     }
 }

@@ -1,6 +1,6 @@
 module run_analysis;
 
-import std.algorithm : map;
+import std.algorithm : count, map;
 import std.array : array, split, splitter;
 import std.conv : to, ConvException;
 import std.file : exists, remove;
@@ -127,13 +127,9 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPheno
 	mixin(readGenotype!());
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	fileArray[F.out_].write(join(to!(string[])(cor), "\t"), "\t");
-	foreach(ref perm; chunks(perms, nInd))
-	  {
-	    auto singlePerm = dotProduct(rankGenotype, perm);
-	    corPvalue!(T)(singlePerm, nInd);
-	    fileArray[F.out_].write(singlePerm, "\t");
-	  }
-	fileArray[F.out_].write("\n");
+	fileArray[F.out_].writeln(
+				  chunks(perms, nInd).map!(a => to!string(corPvalue!(T)(dotProduct(rankGenotype, a), nInd)))
+				                     .join("\t"));
       } catch(VarianceException e){
 	fileArray[F.out_].writeln(varErr);
       } catch(InputException e){
@@ -165,7 +161,7 @@ unittest
   SHA1 hash;
   hash.start;
   put(hash, File("testtemp").byChunk(1024));
-  assert(toHexString(hash.finish) == "FDDF58950BE4E5A45778BBDF6ED6776812F034DD");
+  assert(toHexString(hash.finish) == "6EFF35B593B0FB4E62ECC2582E4817F601326675");
 }
 
 //calculates permutation p values
@@ -187,15 +183,12 @@ void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenoty
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
 	fileArray[F.out_].write(join(to!(string[])(cor), "\t"));
-	/*countBetter stores number of times permuted datasets produced more significant statistic
-	 perm p value = countBetter / number of perms*/
-	T countBetter = 0.0;
-	foreach(ref perm; chunks(perms, nInd))
-	  {
-	    if (fabs(dotProduct(rankGenotype, perm)) > corReal)
-	      ++countBetter;
-	  }
-	fileArray[F.out_].writeln("\t", countBetter / nPerm);
+	
+	//writes the perm p value = number of times permuted datasets produced more significant statistic / number of perms
+	fileArray[F.out_].writeln("\t",
+				  1.0 * chunks(perms, nInd).map!(a => fabs(dotProduct(rankGenotype, a)))
+				                           .count!(a => a > corReal) / nPerm
+				  );
       } catch(VarianceException e){
 	fileArray[F.out_].writeln(varErr);
       } catch(InputException e){
@@ -233,6 +226,8 @@ unittest
 //calculates family wise error rate
 T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
 {
+  import std.algorithm : max, zip;
+  import std.range : iota;
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
@@ -249,20 +244,29 @@ T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
 	fileArray[F.out_].writef("%a\t%g\t%g", cor[0], cor[1], cor[2]);
-	//perm P value as before
-	T countBetter = 0.0;
-	size_t i = 0;
-	foreach(ref perm; chunks(perms, nInd))
-	  {
-	    auto singlePerm = fabs(dotProduct(rankGenotype, perm));
-	    if (singlePerm > corReal)
-	      ++countBetter;
-	    //if p value is greater than previous, store it
-	    if (singlePerm > maxCor[i])
-	      maxCor[i] = singlePerm;
-	    i++;
-	  }
-	fileArray[F.out_].writeln("\t", countBetter/ nPerm);
+
+	      //  T countBetter = 0.0;
+	      //  size_t i = 0;
+	      //  foreach(ref perm; chunks(perms, nInd))
+	      //      {
+	      //          auto singlePerm = fabs(dotProduct(rankGenotype, perm));
+	      //          if (singlePerm > corReal)
+	      //              ++countBetter;
+	      //          //if p value is greater than previous, store it
+	      //            if (singlePerm > maxCor[i])
+	      //              maxCor[i] = singlePerm;
+	      //          i++;
+	      //        }
+	      // fileArray[F.out_].writeln("\t", countBetter/ nPerm);
+	
+	//	perm P value as before,and store maximum correlation for each permutation
+	auto simplePerm = map!(a => to!T(fabs(dotProduct(rankGenotype, a))))(chunks(perms, nInd)).array;
+	fileArray[F.out_].writeln("\t",
+				  1.0 * simplePerm.count!(a => a > corReal) / nPerm);
+
+	foreach(e; zip(iota(nPerm), simplePerm))
+	  maxCor[e[0]] = max(maxCor[e[0]], e[1]);
+
       } catch(VarianceException e){
 	fileArray[F.out_].writeln(varErr);
       } catch(InputException e){
@@ -387,16 +391,12 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
 	realCor ~= cor[0];
-	fileArray[F.out_].writef(join(to!(string[])(cor), "\t"));
-	T countBetter = 0.0;
-	foreach(ref perm; chunks(perms, nInd))
-	  {
-	    auto singlePerm = fabs(dotProduct(rankGenotype, perm));
-	    if (singlePerm > corReal)
-	      ++countBetter;
-	    permCor ~= singlePerm;
-	  }
-	fileArray[F.out_].writeln("\t", countBetter/ nPerm);
+	fileArray[F.out_].write(join(to!(string[])(cor), "\t"));
+
+	auto simplePerm = map!(a => to!T(fabs(dotProduct(rankGenotype, a))))(chunks(perms, nInd)).array;
+	permCor ~= simplePerm;
+	fileArray[F.out_].writeln("\t",
+				  1.0 * simplePerm.count!(a => a > corReal) / nPerm);
       } catch(VarianceException e){
 	fileArray[F.out_].writeln(varErr);
       } catch(InputException e){
