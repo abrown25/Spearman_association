@@ -85,7 +85,7 @@ void noPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
 
 unittest
 {
-  string[] options = ["dummy", "--p", "phenotype.txt", "--g",  "genotype.txt",
+  string[] options = ["dummy", "--p", "data/phenotype.txt", "--g",  "data/genotype.txt",
 			    "--o", "testtemp", "--pid",
 			    "--gid", "--pc", "3", "--gs", "2"];
   Opts opts = new Opts(options);
@@ -142,7 +142,7 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPheno
 
 unittest
 {
-  string[] options = ["dummy", "--p", "phenotype.txt", "--g", "genotype.txt",
+  string[] options = ["dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt",
 			    "-otesttemp", "--pid", "--perm", "4,12",
 			    "--gid", "--pc", "3", "--gs", "2"];
   Opts opts = new Opts(options);
@@ -201,7 +201,7 @@ void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenoty
 
 unittest
 {
-  string[] options = ["dummy", "--p", "phenotype.txt", "--g", "genotype.txt",
+  string[] options = ["dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt",
 			    "--o", "testtemp", "--pid", "--perm", "1000000,12",
 			    "--geno-id", "--pc", "3", "--gs", "2", "--pval" ];
   Opts opts = new Opts(options);
@@ -339,7 +339,7 @@ void writeFWER(T)(in Opts opts, ref T[] maxCor)
 
 unittest
 {
-  string[] options = ["dummy", "--p", "phenotype.txt", "--g", "genotype.txt",
+  string[] options = ["dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt",
 			    "--o", "testtemp", "--pid", "--perm", "100000,12",
 			    "--gid", "--pc", "3", "--gs", "2", "--fwer"];
   Opts opts = new Opts(options);
@@ -498,7 +498,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 
 unittest
 {
-  string[] options = ["dummy", "--p", "phenotype.txt", "--g", "genotype.txt",
+  string[] options = ["dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt",
 		      "--o", "testtemp", "--pid", "--perm", "100000,12",
 			    "--gid", "--pc", "5", "--gs", "2", "--fdr"];
   Opts opts = new Opts(options);

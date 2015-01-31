@@ -90,7 +90,7 @@ unittest
 
   double[] phen = [-1.3853088072, -0.785797093643, 1.14540423638, -0.785797093643, 1.03820492508, -1.25652676836, -0.787662180447, -2.05355237841, -0.245457234103, 1.14277217712];
 
-  covariates("cov.txt", phen);
+  covariates("data/cov.txt", phen);
 
   foreach(i, ref e; phen)
     assert(approxEqual(e, residualsFromR[i]));

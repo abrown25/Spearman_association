@@ -1,21 +1,21 @@
 GSL = /usr/lib/libgsl.so /usr/lib/libgslcblas.so
 
-spearman : main.d arg_parse.d calculation.d run_analysis.d regress.c setup_all.d
-	gcc -c regress.c -o regress.o
-	dmd -O -release -noboundscheck -inline ${GSL} calculation.d run_analysis.d arg_parse.d main.d setup_all.d regress.o -ofspearman
+spearman : src/main.d src/arg_parse.d src/calculation.d src/run_analysis.d src/regress.c src/setup_all.d
+	gcc -c src/regress.c -o regress.o
+	dmd -O -release -noboundscheck -inline ${GSL} src/calculation.d src/run_analysis.d src/arg_parse.d src/main.d src/setup_all.d regress.o -ofspearman
 
-gdc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
-	gcc -c regress.c -o regress.o
-	gdc main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o ${GSL} -O3 -o spearman_gdc
+gdc : src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d src/regress.c
+	gcc -c src/regress.c -o regress.o
+	gdc src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d regress.o ${GSL} -O3 -o spearman_gdc
 
-ldc : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
-	gcc -c regress.c -o regress.o
-	ldc main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.o -L-lgsl -L-lgslcblas -O3 -of="spearman_ldc"
+ldc : src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d src/regress.c
+	gcc -c src/regress.c -o regress.o
+	ldc src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d regress.o -L-lgsl -L-lgslcblas -O3 -of="spearman_ldc"
 	rm *.o
 
-unittest : main.d arg_parse.d calculation.d setup_all.d run_analysis.d regress.c
-	gcc -c regress.c -o regress.o
-	dmd -unittest -L-lgsl -L-lgslcblas calculation.d setup_all.d run_analysis.d arg_parse.d main.d regress.o -ofunittest
+unittest : src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d src/regress.c
+	gcc -c src/regress.c -o regress.o
+	dmd -unittest -L-lgsl -L-lgslcblas src/calculation.d src/setup_all.d src/run_analysis.d src/arg_parse.d src/main.d regress.o -ofunittest
 	./unittest
 	rm -f unittest
 
