@@ -28,12 +28,14 @@ class InputException : Exception
 /*mixin code which reads one line of genotype file, writes out first few columns and stores genotypes
 this throws errors if array too short
 */
-template readGenotype()
+string readGenotype(string x)
 {
-  const auto readGenotype = "auto splitLine = splitter(line);
+  const string readGenotype1 = "auto splitLine = splitter(line);
 
   if (skip > 0)
-    fileArray[F.out_].write(join(splitLine.take(skip), \"\t\"), \"\t\");
+    ";
+
+  const string readGenotype2 = ".write(join(splitLine.take(skip), \"\t\"), \"\t\");
 
   auto rankGenotype = splitLine.drop(skip).map!(to!T).array;
 
@@ -44,6 +46,7 @@ template readGenotype()
   else
     transform(rank(rankGenotype));
 ";
+  return readGenotype1 ~ x ~ readGenotype2;
 }
 
 //generates error messages during compilation
@@ -70,7 +73,7 @@ void noPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
   foreach(line; fileArray[F.gen].byLine)
     {
       try{
-	mixin(readGenotype!());
+	mixin(readGenotype("fileArray[F.out_]"));
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	fileArray[F.out_].writeln(join(to!(string[])(cor), "\t"));
       } catch(VarianceException e){
@@ -124,7 +127,7 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPheno
   foreach(line; fileArray[F.gen].byLine)
     {
       try{
-	mixin(readGenotype!());
+	mixin(readGenotype("fileArray[F.out_]"));
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	fileArray[F.out_].write(join(to!(string[])(cor), "\t"), "\t");
 	fileArray[F.out_].writeln(
@@ -179,7 +182,7 @@ void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenoty
   foreach(line; fileArray[F.gen].byLine)
     {
       try{
-	mixin(readGenotype!());
+	mixin(readGenotype("fileArray[F.out_]"));
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
 	fileArray[F.out_].write(join(to!(string[])(cor), "\t"));
@@ -228,6 +231,8 @@ T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
 {
   import std.algorithm : max, zip;
   import std.range : iota;
+
+  auto tmpFile = File("AndrewWantsATempFile", "w");
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
@@ -240,99 +245,59 @@ T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
   foreach(line; fileArray[F.gen].byLine)
     {
       try{
-	mixin(readGenotype!());
+	mixin(readGenotype("tmpFile"));
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
-	fileArray[F.out_].writef("%a\t%g\t%g", cor[0], cor[1], cor[2]);
+	tmpFile.writef("%a\t%g\t%g", cor[0], cor[1], cor[2]);
 
-	      //  T countBetter = 0.0;
-	      //  size_t i = 0;
-	      //  foreach(ref perm; chunks(perms, nInd))
-	      //      {
-	      //          auto singlePerm = fabs(dotProduct(rankGenotype, perm));
-	      //          if (singlePerm > corReal)
-	      //              ++countBetter;
-	      //          //if p value is greater than previous, store it
-	      //            if (singlePerm > maxCor[i])
-	      //              maxCor[i] = singlePerm;
-	      //          i++;
-	      //        }
-	      // fileArray[F.out_].writeln("\t", countBetter/ nPerm);
-	
 	//	perm P value as before,and store maximum correlation for each permutation
 	auto simplePerm = map!(a => to!T(fabs(dotProduct(rankGenotype, a))))(chunks(perms, nInd)).array;
-	fileArray[F.out_].writeln("\t",
+	tmpFile.writeln("\t",
 				  1.0 * simplePerm.count!(a => a > corReal) / nPerm);
 
 	foreach(e; zip(iota(nPerm), simplePerm))
 	  maxCor[e[0]] = max(maxCor[e[0]], e[1]);
 
       } catch(VarianceException e){
-	fileArray[F.out_].writeln(varErr);
+	tmpFile.writeln(varErr);
       } catch(InputException e){
-	fileArray[F.out_].writeln(inputErr);
+	tmpFile.writeln(inputErr);
       } catch(ConvException e){
-	fileArray[F.out_].writeln(convErr);
+	tmpFile.writeln(convErr);
       }
     }
+  tmpFile.close;
   return maxCor;
 }
 
-void writeFWER(T)(in Opts opts, ref T[] maxCor)
+void writeFWER(T)(ref File[3] fileArray, in Opts opts, ref T[] maxCor)
 {
   import std.algorithm : sort;
   import std.c.stdlib : exit;
   import std.range : SearchPolicy;
 
-  File oldFile = File(opts.output ~ "temp", "r");
-  File newFile;
-
-  // version(WINDOWS)
-  //   {
-  //     try{
-  // 	newFile = File(opts.output, "w");
-  //     } catch(Exception e){
-  // 	stderr.writeln(e.msg);
-  // 	exit(0);
-  //     }
-  //   }
-  // else
-  {
-    try{
-      if (opts.output != "")
-	newFile = File(opts.output, "w");
-      else
-	newFile = stdout;
-    } catch(Exception e){
-      stderr.writeln(e.msg);
-      if ((opts.output ~ "temp").exists)
-	(opts.output ~ "temp").remove;
-      exit(0);
-    }
-  }
-    //sort stored maximum statistics
+  auto newFile = File("AndrewWantsATempFile", "r");
+  //sort stored maximum statistics
   auto sortMax = sort!()(maxCor);
   T len = sortMax.length;
   //read through old file and compare correlations to maxCor to calculate FWER
-  auto headerLine = oldFile.readln;
-  newFile.write(headerLine);
+  auto corCol = opts.skip;
 
-  auto corCol = split(headerLine).length - 5;
   T corStat;
   T adjusted;
-  foreach(line; oldFile.byLine)
+  foreach(line; newFile.byLine)
     {
       auto splitLine = splitter(line);
       auto corString = splitLine.drop(corCol).front;
       if (corCol > 0)
-	newFile.write(join(splitLine.take(corCol), "\t"), "\t");
+	fileArray[F.out_].write(join(splitLine.take(corCol), "\t"), "\t");
       if (corString == "NaN" || corString == "NA")
-      	newFile.writeln(join(corString.repeat(5), "\t"));
+	fileArray[F.out_].writeln(join(corString.repeat(5), "\t"));
       else
 	{
 	  corStat = to!T(corString);
 	  adjusted = sortMax.upperBound!(SearchPolicy.gallop)(fabs(corStat) - EPSILON).length / len;
-	  newFile.writefln("%g\t%s\t%g", corStat, join(splitLine.drop(corCol + 1), "\t"), adjusted);
+	  fileArray[F.out_].writefln("%g\t%s\t%g", corStat, join(splitLine.drop(corCol + 1), "\t"), adjusted);
 	}
     }
 }
@@ -349,16 +314,14 @@ unittest
     {
       if ("testtemp".exists)
 	"testtemp".remove;
-      if ("testtemptemp".exists)
-	"testtemptemp".remove;
+      if ("AndrewWantsATempFile".exists)
+	"AndrewWantsATempFile".remove;
     }
 
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
   double[] minPvalues = minPerm!(double)(fileArray, opts, rankPhenotype);
 
-  fileArray[F.out_].close;
-
-  writeFWER!(double)(opts, minPvalues);
+  writeFWER!(double)(fileArray, opts, minPvalues);
 
   foreach(ref e; fileArray)
     e.close;
@@ -374,6 +337,8 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   import std.c.stdlib : exit;
   import std.range : zip;
 
+  auto tmpFile = File("AndrewWantsATempFile", "w");
+
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
@@ -387,113 +352,84 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   foreach(line; fileArray[F.gen].byLine)
     {
       try{
-	mixin(readGenotype!());
+	mixin(readGenotype("tmpFile"));
 	cor = correlation!(T)(rankGenotype, rankPhenotype);
 	T corReal = fabs(cor[0]) - EPSILON;
 	realCor ~= cor[0];
-	fileArray[F.out_].write(join(to!(string[])(cor), "\t"));
+	tmpFile.write(join(to!(string[])(cor), "\t"));
 
 	auto simplePerm = map!(a => to!T(fabs(dotProduct(rankGenotype, a))))(chunks(perms, nInd)).array;
 	permCor ~= simplePerm;
-	fileArray[F.out_].writeln("\t",
+	tmpFile.writeln("\t",
 				  1.0 * simplePerm.count!(a => a > corReal) / nPerm);
       } catch(VarianceException e){
-	fileArray[F.out_].writeln(varErr);
+	tmpFile.writeln(varErr);
       } catch(InputException e){
-	fileArray[F.out_].writeln(inputErr);
+	tmpFile.writeln(inputErr);
       } catch(ConvException e){
-	fileArray[F.out_].writeln(convErr);
+	tmpFile.writeln(convErr);
       }
     }
 
-  fileArray[F.out_].close;
+  tmpFile.close;
 
-  File oldFile = File(opts.output ~ "temp", "r");
-  File newFile;
-  // version(WINDOWS)
-  //   {
-  //     try{
-  // 	newFile = File(opts.output, "w");
-  //     } catch(Exception e){
-  // 	stderr.writeln(e.msg);
-  // 	exit(0);
-  //     }
-  //   }
-  // else
-     {
-      try{
-	if (opts.output != "")
-	  newFile = File(opts.output, "w");
-	else
-	  newFile = stdout;
-      } catch(Exception e){
-	stderr.writeln(e.msg);
-	if ((opts.output ~ "temp").exists)
-	  (opts.output ~ "temp").remove;
-	exit(0);
-      }
-     }
+  auto newFile = File("AndrewWantsATempFile");
 
-     if (realCor.length == 0)
-       {
-	 stderr.writeln("No P values to analyse.");
-	 if ((opts.output ~ "temp").exists)
-	   (opts.output ~ "temp").remove;
-	 exit(0);
-       }
+  if (realCor.length == 0)
+    {
+      stderr.writeln("No P values to analyse.");
+      exit(0);
+    }
 
-     auto sortPerm = sort!()(permCor);
+  auto sortPerm = sort!()(permCor);
 
-     T[] adjusted = new T[realCor.length];
-     auto orderIndex = new size_t[adjusted.length];
-     makeIndex!("fabs(a) > fabs(b)")(realCor, orderIndex);
-     adjusted[orderIndex[0]] = sortPerm.upperBound(fabs(realCor[orderIndex[0]]) - EPSILON)
-                                       .length
-                                       .to!T;
+  T[] adjusted = new T[realCor.length];
+  auto orderIndex = new size_t[adjusted.length];
+  makeIndex!("fabs(a) > fabs(b)")(realCor, orderIndex);
+  adjusted[orderIndex[0]] = sortPerm.upperBound(fabs(realCor[orderIndex[0]]) - EPSILON)
+                                    .length
+                                    .to!T;
 
-     foreach(e; 1..orderIndex.length)
-       adjusted[orderIndex[e]] = sortPerm[0 .. (sortPerm.length - cast(size_t)adjusted[orderIndex[e - 1]])]
+  foreach(e; 1..orderIndex.length)
+    adjusted[orderIndex[e]] = sortPerm[0 .. (sortPerm.length - cast(size_t)adjusted[orderIndex[e - 1]])]
                                         .upperBound(fabs(realCor[orderIndex[e]]) - EPSILON)
                                         .length
                                         .to!T + adjusted[orderIndex[e - 1]];
 
 
-     size_t dupcount = 0;
+  size_t dupcount = 0;
 
-     foreach(i, ref e; orderIndex)
-       {
-	 dupcount++;
-	 if (i == orderIndex.length - 1 || fabs(realCor[e]) - EPSILON > fabs(realCor[orderIndex[i + 1]]))
-	   {
-	     foreach(ref j; orderIndex[(i - dupcount + 1) .. (i + 1)])
-	       adjusted[j] = adjusted[j] / nPerm / (i+1);
-	     dupcount = 0;
-	   }
-       }
+  foreach(i, ref e; orderIndex)
+    {
+      dupcount++;
+      if (i == orderIndex.length - 1 || fabs(realCor[e]) - EPSILON > fabs(realCor[orderIndex[i + 1]]))
+	{
+	  foreach(ref j; orderIndex[(i - dupcount + 1) .. (i + 1)])
+	    adjusted[j] = adjusted[j] / nPerm / (i+1);
+	  dupcount = 0;
+	}
+    }
 
-     reverse(orderIndex);
+  reverse(orderIndex);
 
-     if (adjusted[orderIndex[0]] > 1)
-       adjusted[orderIndex[0]] = 1;
+  if (adjusted[orderIndex[0]] > 1)
+    adjusted[orderIndex[0]] = 1;
 
-     foreach(ref e; zip(orderIndex[0 .. ($ - 1)], orderIndex[1 .. $]))
-       adjusted[e[1]] = min(adjusted[e[1]], adjusted[e[0]], 1);
+  foreach(ref e; zip(orderIndex[0 .. ($ - 1)], orderIndex[1 .. $]))
+    adjusted[e[1]] = min(adjusted[e[1]], adjusted[e[0]], 1);
 
-     auto headerLine = oldFile.readln;
-     newFile.write(headerLine);
-
-     size_t i = 0;
-     foreach(ref line; oldFile.byLine)
-       {
-	 auto lastString = line.split.retro.front;
-	 if (lastString == "NaN" || lastString == "NA")
-	   newFile.writeln(line, "\t", lastString);
-	 else
-	   {
-	     newFile.writeln(line, "\t", adjusted[i]);
-	     i++;
-	   }
-       }
+  size_t i = 0;
+  foreach(ref line; newFile.byLine)
+    {
+      auto lastString = line.split.retro.front;
+      if (lastString == "NaN" || lastString == "NA")
+	fileArray[F.out_].writeln(line, "\t", lastString);
+      else
+	{
+	  fileArray[F.out_].writeln(line, "\t", adjusted[i]);
+	  i++;
+	}
+    }
 }
 
 unittest
@@ -508,8 +444,8 @@ unittest
     {
       if ("testtemp".exists)
 	"testtemp".remove;
-      if ("testtemptemp".exists)
-	"testtemptemp".remove;
+      if ("AndrewWantsATempFile".exists)
+	"AndrewWantsATempFile".remove;
     }
 
 

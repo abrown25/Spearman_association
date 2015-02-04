@@ -47,17 +47,8 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
    auto opts = new Opts(cast(string[]) args);
 
    File[3] fileArray;
-   //delete temp file when program finishes
-   scope(exit)
-     {
-       if ((opts.min || opts.fdr) && (opts.output ~ "temp").exists)
-	 remove((opts.output ~ "temp"));
-     }
 
    fileSetup(fileArray, opts);
-   //delete temp file if pipe ends process
-   if ((opts.min || opts.fdr) && opts.output == "")
-     sigset(SIGPIPE, &del_temp);
 
    immutable(precision[]) rankPhenotype = cast(immutable)setup!(precision)(fileArray, opts);
 
@@ -70,14 +61,25 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
    else if (!opts.min && !opts.fdr)
      //calculates permutation p values
      pvalPerm(fileArray, opts, rankPhenotype);
-   else if (!opts.fdr)
-     {
-       //calculates family wise error rate
-       precision[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
-       fileArray[F.out_].close;
-       writeFWER(opts, minPvalues);
-     }
    else
-     //calculates FDR
-     fdrCalc(fileArray, opts, rankPhenotype);
+     {
+       //delete temp file when program finishes
+       scope(exit)
+	 {
+	   if (("AndrewWantsATempFile").exists)
+	     remove("AndrewWantsATempFile");
+	 }
+       //delete temp file if pipe closes or on ctrl c signal
+       sigset(SIGPIPE, &del_temp);
+       sigset(SIGINT, &del_temp);
+       if (!opts.fdr)
+	 {
+	   //calculates family wise error rate
+	   precision[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
+	   writeFWER(fileArray, opts, minPvalues);
+	 }
+       else
+	 //calculates FDR
+	 fdrCalc(fileArray, opts, rankPhenotype);
+     }
  }

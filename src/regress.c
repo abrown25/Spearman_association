@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 void del_temp(int value){
-  unlink("temp");
+  unlink("AndrewWantsATempFile");
   exit(0);
 }
 

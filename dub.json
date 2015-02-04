@@ -8,5 +8,6 @@
     "sourceFiles": ["regress.o"],
     "excludedSourceFiles": ["src/vcf_parse.d"],
     "libs": ["gsl", "gslcblas"],
-    "preBuildCommands": ["gcc -c src/regress.c -o regress.o"]
+    "preGenerateCommands": ["gcc -c src/regress.c -o regress.o"],
+    "postBuildCommands": ["rm *.o"]
 }
