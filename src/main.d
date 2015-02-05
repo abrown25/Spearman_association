@@ -26,7 +26,7 @@ import core.sys.posix.signal;
 
 import arg_parse : Opts, giveHelp, helpString;
 import calculation : rank, transform, VarianceException, covariates;
-import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, writeFWER, fdrCalc;
+import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, fdrCalc;
 import setup_all : fileSetup, setup, F;
 
 extern (C)
@@ -73,11 +73,8 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
        sigset(SIGPIPE, &del_temp);
        sigset(SIGINT, &del_temp);
        if (!opts.fdr)
-	 {
 	   //calculates family wise error rate
-	   precision[] minPvalues = minPerm(fileArray, opts, rankPhenotype);
-	   writeFWER(fileArray, opts, minPvalues);
-	 }
+	   minPerm(fileArray, opts, rankPhenotype);
        else
 	 //calculates FDR
 	 fdrCalc(fileArray, opts, rankPhenotype);

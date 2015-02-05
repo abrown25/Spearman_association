@@ -227,12 +227,14 @@ unittest
 }
 
 //calculates family wise error rate
-T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+void minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
 {
-  import std.algorithm : max, zip;
-  import std.range : iota;
+  import std.algorithm : max, sort, zip;
+  import std.range : iota, SearchPolicy;
+  import std.c.stdlib : exit;
 
   auto tmpFile = File("AndrewWantsATempFile", "w");
+
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
@@ -266,17 +268,12 @@ T[] minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype
 	tmpFile.writeln(convErr);
       }
     }
+
   tmpFile.close;
-  return maxCor;
-}
-
-void writeFWER(T)(ref File[3] fileArray, in Opts opts, ref T[] maxCor)
-{
-  import std.algorithm : sort;
-  import std.c.stdlib : exit;
-  import std.range : SearchPolicy;
-
   auto newFile = File("AndrewWantsATempFile", "r");
+  scope (exit)
+    newFile.close;
+
   //sort stored maximum statistics
   auto sortMax = sort!()(maxCor);
   T len = sortMax.length;
@@ -319,9 +316,8 @@ unittest
     }
 
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
-  double[] minPvalues = minPerm!(double)(fileArray, opts, rankPhenotype);
 
-  writeFWER!(double)(fileArray, opts, minPvalues);
+  minPerm!(double)(fileArray, opts, rankPhenotype);
 
   foreach(ref e; fileArray)
     e.close;

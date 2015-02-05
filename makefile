@@ -25,42 +25,42 @@ clean :
 	rm -f *.o np_gwas np_gwas_gdc np_gwas_dmd
 
 simple :
-	cat data/genotype.txt | ./spearman -pdata/phenotype.txt --pid --gid --pc 3 --gs 2
+	cat data/genotype.txt | np_gwas -pdata/phenotype.txt --pid --gid --pc 3 --gs 2
 
 perm :
-	cat data/genotype.txt | ./spearman --pheno data/phenotype.txt --pid --gid --pc=3 --gs 2 --perm 4,12
+	cat data/genotype.txt | np_gwas --pheno data/phenotype.txt --pid --gid --pc=3 --gs 2 --perm 4,12
 
 perm.p.calc :
-	cat data/genotype.txt | ./spearman -pdata/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 1000000,12 --pval
+	cat data/genotype.txt | np_gwas -pdata/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 1000000,12 --pval
 
 fwer :
-	cat data/genotype.txt | ./spearman --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --fwer
+	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --fwer
 
 fdr :
-	cat data/genotype.txt | ./spearman --p data/phenotype.txt --pid --gid --pc 5 --gs 2 --perm 100000,12 --fdr
+	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 5 --gs 2 --perm 100000,12 --fdr
 
 cov :
-	cat data/genotype.txt | ./spearman -p data/phenotype.txt --pid --gid nonsense --pc 3 --gs 2 --perm 100000,12 --pval --cov cov.txt
+	cat data/genotype.txt | np_gwas -p data/phenotype.txt --pid --gid nonsense --pc 3 --gs 2 --perm 100000,12 --pval --cov cov.txt
 
 tabix.perm :
-	tabix genotype.txt.gz chr1:1-2000 | ./spearman --p data/phenotype.txt --pid --pc 3 --gs 2 --perm 4,12
+	tabix genotype.txt.gz chr1:1-2000 | np_gwas --p data/phenotype.txt --pid --pc 3 --gs 2 --perm 4,12
 
 time :
-	time -f "Real : %E, User : %U, System : %S\n" ./spearman_gdc -gdata/large_genotype.txt --perm 1000,4 -oout --fwer data/large_phenotype.txt
+	time -f "Real : %E, User : %U, System : %S\n" np_gwas -gdata/large_genotype.txt --perm 1000,4 -oout --fwer data/large_phenotype.txt
 
 all.tests :
-	cat data/genotype.txt | ./spearman --p data/phenotype.txt --pid --gid --pc 3 --gs 2 -ooutput/simple
+	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 -ooutput/simple
 	diff output/simple.txt output/simple
-	cat data/genotype.txt | ./spearman -pdata/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 1000000,12 --pval --o output/perm.p.calc
+	cat data/genotype.txt | np_gwas -pdata/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 1000000,12 --pval --o output/perm.p.calc
 	diff output/perm.p.calc.txt output/perm.p.calc
-	cat data/genotype.txt | ./spearman --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 4,12 --o output/perm
+	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 4,12 --o output/perm
 	diff output/perm.txt output/perm
-	tabix data/genotype.txt.gz chr1:1-2000 | ./spearman --p data/phenotype.txt --pid --pc 3 --gs 2 --perm 4,12 --o output/tabix
+	tabix data/genotype.txt.gz chr1:1-2000 | np_gwas --p data/phenotype.txt --pid --pc 3 --gs 2 --perm 4,12 --o output/tabix
 	diff output/tabix.txt output/tabix
-	cat data/genotype.txt | ./spearman --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --fwer --o output/fwer
+	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --fwer --o output/fwer
 	diff output/fwer.txt output/fwer
-	cat data/genotype.txt | ./spearman --p data/phenotype.txt --pid --gid --pc 5 --gs 2 --perm 100000,12 --fdr --o output/fdr
+	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 5 --gs 2 --perm 100000,12 --fdr --o output/fdr
 	diff output/fdr.txt output/fdr
-	cat data/genotype.txt | ./spearman --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --pval --cov cov.txt --o output/cov
+	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --pval --cov cov.txt --o output/cov
 	diff output/cov.txt output/cov
 	rm output/cov output/fwer output/tabix output/perm output/perm.p.calc output/simple output/fdr
