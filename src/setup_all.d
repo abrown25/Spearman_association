@@ -58,7 +58,6 @@ void fileSetup(ref File[3] fileArray, Opts opts)
 
 T[] setup(T)(ref File[3] fileArray, Opts opts)
 {
-  import std.file : remove;
   T[] phenotype;
   string[] phenId;
   //reading in phenotype from column opts.phenC, if --pid specified, get IDs
@@ -97,13 +96,14 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
   headerLine ~= "Cor\tT_stat\tP";
 
   if (opts.run)
-    {
       headerLine ~= opts.pval ? "\tPermP"
 	                      : opts.min ? "\tPermP\tFWER"
 	                      : opts.fdr ? "\tPermP\tFDR"
 	                      : "".reduce!((a, b) => a ~ "\tP" ~ to!string(b + 1))(iota(0, opts.number));
-    }
+
   //check IDs match
+  import std.algorithm : count, countUntil, filter, map, max;
+  import std.array : array;
   if (!opts.nocheck && !opts.match && opts.pid && opts.gid)
     {
       if (genId != phenId)
@@ -111,7 +111,6 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
 	  stderr.writeln("Failed to run analysis: Mismatched IDs");
 	  exit(0);
 	}
-      import std.algorithm : count, map, max, reduce;
       if (phenId.map!(x => phenId.count(x)).reduce!(max) > 1)
 	stderr.writeln("Warning, duplicate phenotype IDs.");
       if (genId.map!(x => genId.count(x)).reduce!(max) > 1)
@@ -125,8 +124,6 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
 	  covariates(opts.cov, phenotype);
 	else
 	  {
-	    import std.algorithm : map;
-	    import std.array : array;
 	    double[] tempPhen = phenotype.map!(a => to!double(a)).array;
 	    covariates(opts.cov, tempPhen);
 	    phenotype = tempPhen.map!(a => to!T(a)).array;
@@ -146,7 +143,6 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
     {
       //Check no individuals only in genotype file, if so, stop, otherwise rearrange phenotype so sample IDs match
       import std.range : indexed, zip;
-      import std.algorithm : array, count, countUntil, filter, map, max;
       auto orderPhen = genId.map!(x => phenId.countUntil(x));
       if (orderPhen.countUntil(-1)!=-1)
 	{

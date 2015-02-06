@@ -68,7 +68,7 @@ class Opts{
       checkOptions();
       if (pid && phenC == 0)
 	phenC = 1;
-      if (phenotype=="" && args.length > 0)
+      if (phenotype=="" && args.length > 1)
 	phenotype = args[$ - 1];
  }
     private void checkOptions(){
@@ -171,7 +171,7 @@ Output:
     Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are present, then p values for calculated on permuted datasets are reported next.
 ";
 
-static immutable string versionString = "NP-GWAS, version 0.9";
+static immutable string versionString = "NP-GWAS, version 1.0.0";
 
 void giveHelp(immutable string quitString){
   writeln(quitString);

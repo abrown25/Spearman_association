@@ -20,8 +20,6 @@
 */
 
 import std.file : exists, File, remove;
-import std.stdio : stdin, writeln;
-import std.c.stdlib : exit;
 import core.sys.posix.signal;
 
 import arg_parse : Opts, giveHelp, helpString;
@@ -35,7 +33,7 @@ extern (C)
 }
 
 
-version(unittest) void main() {writeln("All unit tests completed successfully.");}
+version(unittest) void main() {import std.stdio; writeln("All unit tests completed successfully.");}
  else void main(string[] args)
  {
    //set precision to either double or real (very costly in time and memory)
@@ -72,7 +70,7 @@ version(unittest) void main() {writeln("All unit tests completed successfully.")
        //delete temp file if pipe closes or on ctrl c signal
        sigset(SIGPIPE, &del_temp);
        sigset(SIGINT, &del_temp);
-       if (!opts.fdr)
+       if (opts.min)
 	   //calculates family wise error rate
 	   minPerm(fileArray, opts, rankPhenotype);
        else

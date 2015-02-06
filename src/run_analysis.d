@@ -232,8 +232,9 @@ void minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   import std.algorithm : max, sort, zip;
   import std.range : iota, SearchPolicy;
   import std.c.stdlib : exit;
-
-  auto tmpFile = File("AndrewWantsATempFile", "w");
+  import std.stdio : tmpfile;
+  
+  auto tmpFile = File.tmpfile();
 
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
@@ -269,10 +270,7 @@ void minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
       }
     }
 
-  tmpFile.close;
-  auto newFile = File("AndrewWantsATempFile", "r");
-  scope (exit)
-    newFile.close;
+  tmpFile.seek(0);
 
   //sort stored maximum statistics
   auto sortMax = sort!()(maxCor);
@@ -282,7 +280,7 @@ void minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 
   T corStat;
   T adjusted;
-  foreach(line; newFile.byLine)
+  foreach(line; tmpFile.byLine)
     {
       auto splitLine = splitter(line);
       auto corString = splitLine.drop(corCol).front;
@@ -311,8 +309,6 @@ unittest
     {
       if ("testtemp".exists)
 	"testtemp".remove;
-      if ("AndrewWantsATempFile".exists)
-	"AndrewWantsATempFile".remove;
     }
 
   immutable(double[]) rankPhenotype = cast(immutable)setup!(double)(fileArray, opts);
@@ -332,8 +328,9 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   import std.algorithm : makeIndex, min, reverse, sort;
   import std.c.stdlib : exit;
   import std.range : zip;
+  import std.stdio : tmpfile;
 
-  auto tmpFile = File("AndrewWantsATempFile", "w");
+  auto tmpFile = File.tmpfile();
 
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
@@ -366,10 +363,6 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 	tmpFile.writeln(convErr);
       }
     }
-
-  tmpFile.close;
-
-  auto newFile = File("AndrewWantsATempFile");
 
   if (realCor.length == 0)
     {
@@ -414,8 +407,10 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   foreach(ref e; zip(orderIndex[0 .. ($ - 1)], orderIndex[1 .. $]))
     adjusted[e[1]] = min(adjusted[e[1]], adjusted[e[0]], 1);
 
+  tmpFile.seek(0);
+
   size_t i = 0;
-  foreach(ref line; newFile.byLine)
+  foreach(ref line; tmpFile.byLine)
     {
       auto lastString = line.split.retro.front;
       if (lastString == "NaN" || lastString == "NA")
