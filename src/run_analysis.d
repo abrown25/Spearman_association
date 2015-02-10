@@ -253,10 +253,10 @@ void minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 	T corReal = fabs(cor[0]) - EPSILON;
 	tmpFile.writef("%a\t%g\t%g", cor[0], cor[1], cor[2]);
 
-	//	perm P value as before,and store maximum correlation for each permutation
+	// perm P value as before,and store maximum correlation for each permutation
 	auto simplePerm = map!(a => to!T(fabs(dotProduct(rankGenotype, a))))(chunks(perms, nInd)).array;
 	tmpFile.writeln("\t",
-				  1.0 * simplePerm.count!(a => a > corReal) / nPerm);
+			1.0 * simplePerm.count!(a => a > corReal) / nPerm);
 
 	foreach(e; zip(iota(nPerm), simplePerm))
 	  maxCor[e[0]] = max(maxCor[e[0]], e[1]);

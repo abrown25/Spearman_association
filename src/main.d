@@ -19,19 +19,11 @@
 
 */
 
-import std.file : exists, File, remove;
-import core.sys.posix.signal;
+import std.file : File;
 
 import arg_parse : Opts, giveHelp, helpString;
-import calculation : rank, transform, VarianceException, covariates;
 import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, fdrCalc;
 import setup_all : fileSetup, setup, F;
-
-extern (C)
-{
-  void del_temp(int value);
-}
-
 
 version(unittest) void main() {import std.stdio; writeln("All unit tests completed successfully.");}
  else void main(string[] args)
@@ -61,18 +53,9 @@ version(unittest) void main() {import std.stdio; writeln("All unit tests complet
      pvalPerm(fileArray, opts, rankPhenotype);
    else
      {
-       //delete temp file when program finishes
-       scope(exit)
-	 {
-	   if (("AndrewWantsATempFile").exists)
-	     remove("AndrewWantsATempFile");
-	 }
-       //delete temp file if pipe closes or on ctrl c signal
-       sigset(SIGPIPE, &del_temp);
-       sigset(SIGINT, &del_temp);
        if (opts.min)
-	   //calculates family wise error rate
-	   minPerm(fileArray, opts, rankPhenotype);
+	 //calculates family wise error rate
+	 minPerm(fileArray, opts, rankPhenotype);
        else
 	 //calculates FDR
 	 fdrCalc(fileArray, opts, rankPhenotype);

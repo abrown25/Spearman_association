@@ -1,10 +1,4 @@
 #include <gsl/gsl_multifit.h>
-#include <unistd.h>
-
-void del_temp(int value){
-  unlink("AndrewWantsATempFile");
-  exit(0);
-}
 
 void regress(size_t nInd, size_t nCov, double *x, double *y, double *rOut){
   int i, j;

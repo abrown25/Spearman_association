@@ -106,13 +106,23 @@ unittest{
 
 void main(string[] args)
 {
-  if (args.length != 3)
+  if (args[1]=="--vcf")
+    vcfFile(args[2..$]);
+  else if (args[1]=="--match")
+    matchIds(args[2..$]);
+  else
+    snpTest(args[2..$]);
+}
+
+void vcfFile(string[] args)
+{
+  if (args.length != 2)
     {
       writeln("Need parsing options and input file.");
       exit(0);
     }
 
-  immutable auto options = cast(immutable string[])args[1].split(":")
+  immutable auto options = cast(immutable string[])args[0].split(":")
 					        	  .filter!(x => functions.countUntil(x) != -1)
 							  .array;
 
@@ -128,7 +138,7 @@ void main(string[] args)
 
   File inFile;
   try{
-    inFile = File(args[2]);
+    inFile = File(args[1]);
   }catch (Exception e){
     stdout.write(e.msg);
     exit(0);
@@ -178,5 +188,77 @@ void main(string[] args)
 	    }
 	  stdout.write("\n");
 	}
+    }
+}
+
+void matchIds(string[] args)
+{
+  File idFile, inFile;
+  auto outFile = stdout;
+  long skip;
+
+  try{
+    idFile = File(args[0]);
+    inFile = File(args[1]);
+  }catch (Exception e){
+    stdout.write(e.msg);
+    exit(0);
+  }
+
+  try{
+    skip = to!int(args[2]);
+  }catch (Exception e){
+    stdout.write(e.msg);
+    exit(0);
+  }
+
+  auto ids = idFile.byLine
+		   .map!(to!string)
+		   .array;
+
+  auto line = inFile.readln
+		    .split;
+
+  auto places = ids.map!(a => line.countUntil(a))
+		   .filter!(a => a != -1)
+		   .array;
+  places = iota(skip).array ~ places;
+
+  line.indexed(places).join("\t").writeln;
+
+  inFile.byLine.map!(a => a.split.indexed(places).join("\t")).join("\n").writeln;
+}
+
+void snpTest(string[] args)
+{
+  File sampleFile, inFile;
+
+  auto outFile = stdout;
+
+  try{
+    sampleFile = File(args[0]);
+    inFile = File(args[1]);
+  }catch (Exception e){
+    stdout.write(e.msg);
+    exit(0);
+  }
+
+  auto ids = sampleFile.byLine
+		       .drop(2)
+		       .map!(a => a.split.front)
+		       .to!string
+		       .array;
+
+  stdout.writeln("#CHR\tLOC\tREF\tALT\t", ids.to!(string[]).join("\t"));
+
+  foreach(ref line; inFile.byLine)
+    {
+      auto splitLine = line.split;
+      write(splitLine[1].split("-").join("\t"), "\t", splitLine[3], "\t", splitLine[4], "\t");
+      iota(6, splitLine.length, 3).map!(a => convDouble(splitLine[a]) + 2* convDouble(splitLine[a + 1]))
+    		                  .array
+		                  .to!(string[])
+		                  .join("\t")
+		                  .writeln;
     }
 }
