@@ -19,6 +19,7 @@
 
 */
 
+import std.conv : to;
 import std.file : File;
 
 import arg_parse : Opts, giveHelp, helpString;
@@ -34,7 +35,7 @@ version(unittest) void main() {import std.stdio; writeln("All unit tests complet
    if (args.length == 1)
      giveHelp(helpString);
 
-   auto opts = new Opts(cast(string[]) args);
+   auto opts = new Opts(args.to!(string[]));
 
    File[3] fileArray;
 
@@ -51,13 +52,11 @@ version(unittest) void main() {import std.stdio; writeln("All unit tests complet
    else if (!opts.min && !opts.fdr)
      //calculates permutation p values
      pvalPerm(fileArray, opts, rankPhenotype);
+   else if (opts.min)
+     //calculates family wise error rate
+     minPerm(fileArray, opts, rankPhenotype);
    else
-     {
-       if (opts.min)
-	 //calculates family wise error rate
-	 minPerm(fileArray, opts, rankPhenotype);
-       else
-	 //calculates FDR
-	 fdrCalc(fileArray, opts, rankPhenotype);
-     }
+     //calculates FDR
+     fdrCalc(fileArray, opts, rankPhenotype);
  }
+

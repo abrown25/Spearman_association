@@ -8,7 +8,10 @@ import std.string;
 import std.range;
 // Usage is vcf_parse DS:PP:GT vcfFile.vcf, options can be altered to change preferential order for extracting fields.
 // If you write a new function for a field, add it to the vector below
-immutable auto functions = ["PP", "DS", "GT"];
+
+immutable auto functions = ["PP", "GP", "DS", "GT"];
+
+alias GP = PP;
 
 pure nothrow string genFunctionPointer(immutable string[] x){
   string y = "size_t ind;
