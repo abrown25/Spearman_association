@@ -13,7 +13,7 @@ immutable auto functions = ["PP", "GP", "DS", "GT"];
 
 alias GP = PP;
 
-pure nothrow string genFunctionPointer(immutable string[] x){
+pure nothrow string genFunctionPointer(const string[] x){
   string y = "size_t ind;
 ";
   foreach(ref e; x)
@@ -22,6 +22,33 @@ pure nothrow string genFunctionPointer(immutable string[] x){
 ";
   return y;
 }
+
+static const string helpString = "
+genotype_utilities: utilities for processing genotype data files. Contains routines to:
+
+Convert VCF and SNPTEST format data to dosage files.
+To reorder and match genotype IDs to a given sample ID file.
+
+Output is sent to stdout.
+
+Usage: genotype_utilities <command> <options>:
+
+Commands:
+
+     --vcf:             Reports dosage from vcf files, takes two options by place.
+
+       First option:    FORMAT FIELD, possible values of FORMAT column, separated by :, in order of preference. Available values are currently: GT (genotype threshold), PP (or equivalently GP, posterior probability), and DS (dosage). For example, GT:PP:DS means calculate dosage on GT if available and well-formed, then PP, then DS (reporting NA if none succeed).
+       Second option:   VCF FILE NAME. Name of vcf file.
+       
+     --snptest:         Converts SNPTEST genotype file to dosage file for use with np_gwas. Requires two options, first specify the name of the file with sample IDS, then name of the .gen file.
+
+     --match:           Rearranges genotype file to match file with sample (usually phenotype) IDS. Any individuals only present in phenotype file are ignored. Requires 3 options:
+
+       First option:    ID file containing phenotype IDs.
+       Second option:   File containing genotype data.
+       Third option:    Number of columns containing SNP identification information (e.g. 9 for vcf files). These columns will be written to stdout without parsing.
+       
+";
 
 pure nothrow int convInt(const ubyte x)
 {
@@ -109,29 +136,44 @@ unittest{
 
 void main(string[] args)
 {
-  if (args[1]=="--vcf")
+  if (args.length < 2)
+    {
+      writeln(helpString);
+      exit(0);
+    }
+  else if (args[1]=="--help")
+    {
+      writeln(helpString);
+      exit(0);
+    }
+  else if (args[1]=="--vcf")
     vcfFile(args[2..$]);
+  else if (args[1]=="snptest")
+    snpTest(args[2..$]);
   else if (args[1]=="--match")
     matchIds(args[2..$]);
   else
-    snpTest(args[2..$]);
+    {
+      writeln(helpString);
+      exit(0);
+    }
 }
 
 void vcfFile(string[] args)
 {
   if (args.length != 2)
     {
-      writeln("Need parsing options and input file.");
+      writeln("Need parsing options and input file. Run genotype_utilities --help for help file.");
       exit(0);
     }
 
-  immutable auto options = cast(immutable string[])args[0].split(":")
-					        	  .filter!(x => functions.countUntil(x) != -1)
-							  .array;
+  const auto options = args[0].split(":")
+			      .filter!(x => functions.countUntil(x) != -1)
+			      .array;
 
   if (options.length == 0)
     {
-      writeln("No suitable options to run.");
+      writeln("No suitable options to run. Run genotype_utilities --help for help file.");
       exit(0);
     }
 
@@ -143,7 +185,7 @@ void vcfFile(string[] args)
   try{
     inFile = File(args[1]);
   }catch (Exception e){
-    stdout.write(e.msg);
+    writeln(e.msg);
     exit(0);
   }
 
@@ -194,44 +236,6 @@ void vcfFile(string[] args)
     }
 }
 
-void matchIds(string[] args)
-{
-  File idFile, inFile;
-  auto outFile = stdout;
-  long skip;
-
-  try{
-    idFile = File(args[0]);
-    inFile = File(args[1]);
-  }catch (Exception e){
-    stdout.write(e.msg);
-    exit(0);
-  }
-
-  try{
-    skip = to!int(args[2]);
-  }catch (Exception e){
-    stdout.write(e.msg);
-    exit(0);
-  }
-
-  auto ids = idFile.byLine
-		   .map!(to!string)
-		   .array;
-
-  auto line = inFile.readln
-		    .split;
-
-  auto places = ids.map!(a => line.countUntil(a))
-		   .filter!(a => a != -1)
-		   .array;
-  places = iota(skip).array ~ places;
-
-  line.indexed(places).join("\t").writeln;
-
-  inFile.byLine.map!(a => a.split.indexed(places).join("\t")).join("\n").writeln;
-}
-
 void snpTest(string[] args)
 {
   File sampleFile, inFile;
@@ -242,7 +246,7 @@ void snpTest(string[] args)
     sampleFile = File(args[0]);
     inFile = File(args[1]);
   }catch (Exception e){
-    stdout.write(e.msg);
+    writeln(e.msg);
     exit(0);
   }
 
@@ -264,4 +268,42 @@ void snpTest(string[] args)
 		                  .join("\t")
 		                  .writeln;
     }
+}
+
+void matchIds(string[] args)
+{
+  File idFile, inFile;
+  auto outFile = stdout;
+  long skip;
+
+  try{
+    idFile = File(args[0]);
+    inFile = File(args[1]);
+  }catch (Exception e){
+    stdout.write(e.msg);
+    exit(0);
+  }
+
+  try{
+    skip = to!int(args[2]);
+  }catch (Exception e){
+    stdout.write(e.msg);
+    exit(0)s;
+  }
+
+  auto ids = idFile.byLine
+		   .map!(to!string)
+		   .array;
+
+  auto line = inFile.readln
+		    .split;
+
+  auto places = ids.map!(a => line.countUntil(a))
+		   .filter!(a => a != -1)
+		   .array;
+  places = iota(skip).array ~ places;
+
+  line.indexed(places).join("\t").writeln;
+
+  inFile.byLine.map!(a => a.split.indexed(places).join("\t")).join("\n").writeln;
 }
