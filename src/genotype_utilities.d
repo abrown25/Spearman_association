@@ -282,10 +282,15 @@ void matchIds(string[] args)
 	idFile = File(args[0]);
 	inFile = File(args[1]);
       }
-    else
+    else if (args.length==2)
       {
 	idFile = stdin;
 	inFile = File(args[0]);
+      }
+    else
+      {
+	writeln("Either pass 2 or three arguments to --match");
+	exit(0);
       }
   } catch (Exception e){
     stdout.write(e.msg);

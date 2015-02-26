@@ -19,6 +19,10 @@ unittest : src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_
 	./unittest
 	rm -f unittest *.o
 
+genotype_utilities : src/genotype_utilities.d
+	ldc -release -enable-inlining -O -w -oq src/genotype_utilities.d -of="genotype_utilities"
+	rm -f *.o
+
 .PHONY : perm.p.calc perm tabix.perm fwer clean release gdc time cov all.tests fdr
 
 clean :
