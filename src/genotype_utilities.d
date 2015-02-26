@@ -42,11 +42,11 @@ Commands:
        
      --snptest:         Converts SNPTEST genotype file to dosage file for use with np_gwas. Requires two options, first specify the name of the file with sample IDS, then name of the .gen file.
 
-     --match:           Rearranges genotype file to match file with sample (usually phenotype) IDS. Any individuals only present in phenotype file are ignored. Requires 3 options:
+     --match:           Rearranges genotype file to match file with sample (usually phenotype) IDS. Any individuals only present in phenotype file are ignored. Requires either 2 options, depending on whether IDs are given from the stdin. For example, if IDs are the second column of PHEN_FILE, genotypes are in GEN_FILE, and 3 columns are used for identifying SNPS, then the following command would work: cut -f2 PHEN_FILE | ./genotype_utilities --match GEN_FILE 3.
 
-       First option:    ID file containing phenotype IDs.
-       Second option:   File containing genotype data.
-       Third option:    Number of columns containing SNP identification information (e.g. 9 for vcf files). These columns will be written to stdout without parsing.
+       First option:    ID file containing phenotype IDs. Can be taken from the stdin.
+       Second option:   File containing genotype data (First option if IDs are given by stdin).
+       Third option:    Number of columns containing SNP identification information (Second option if IDs are given by stdin). For example, this is 9 for vcf files. These columns will be written to stdout without parsing.
        
 ";
 
@@ -277,15 +277,23 @@ void matchIds(string[] args)
   long skip;
 
   try{
-    idFile = File(args[0]);
-    inFile = File(args[1]);
-  }catch (Exception e){
+    if (args.length == 3)
+      {
+	idFile = File(args[0]);
+	inFile = File(args[1]);
+      }
+    else
+      {
+	idFile = stdin;
+	inFile = File(args[0]);
+      }
+  } catch (Exception e){
     stdout.write(e.msg);
     exit(0);
   }
 
   try{
-    skip = to!int(args[2]);
+    skip = to!int(args[args.length - 1]);
   }catch (Exception e){
     stdout.write(e.msg);
     exit(0);
