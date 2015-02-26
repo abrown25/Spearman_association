@@ -288,7 +288,7 @@ void matchIds(string[] args)
     skip = to!int(args[2]);
   }catch (Exception e){
     stdout.write(e.msg);
-    exit(0)s;
+    exit(0);
   }
 
   auto ids = idFile.byLine
