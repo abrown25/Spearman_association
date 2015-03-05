@@ -6,6 +6,7 @@
     "license": "GPL-3.0",
     "copyright": "2014 Genome Research Ltd.",
     "sourceFiles": ["regress.o"],
+    "targetPath": "bin/",
     "excludedSourceFiles": ["src/genotype_utilities.d"],
     "libs": ["gsl", "gslcblas"],
     "preGenerateCommands": ["gcc -c src/regress.c -o regress.o"],
