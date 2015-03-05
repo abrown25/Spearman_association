@@ -1,5 +1,3 @@
 .dub/
-/genotype_utilities
-/np_gwas
 temp
 /dub.selections.json
