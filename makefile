@@ -1,17 +1,20 @@
 GSL = /usr/lib/libgsl.so /usr/lib/libgslcblas.so
 
 np_gwas : src/main.d src/arg_parse.d src/calculation.d src/run_analysis.d src/regress.c src/setup_all.d
-	gcc -c src/regress.c -o regress.o
-	ldc -release -enable-inlining -O -w -oq src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d regress.o -L-lgsl -L-lgslcblas -of="bin/np_gwas"
-	rm *.o
+	gcc -c src/regress.c -o bin/regress.o
+	ldc -release -enable-inlining -O -w -oq src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d bin/regress.o -L-lgsl -L-lgslcblas -of="bin/np_gwas"
+	rm -f *.o
+	rm -f bin/*.o
 
 gdc : src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d src/regress.c
-	gcc -c src/regress.c -o regress.o
-	gdc src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d regress.o ${GSL} -O3 -o bin/np_gwas_gdc
+	gcc -c src/regress.c -o bin/regress.o
+	gdc src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d bin/regress.o ${GSL} -O3 -o bin/np_gwas_gdc
+	rm -f bin/*.o
 
 dmd : src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d src/regress.c
-	gcc -c src/regress.c -o regress.o
-	dmd -O -release -noboundscheck -inline ${GSL} src/calculation.d src/run_analysis.d src/arg_parse.d src/main.d src/setup_all.d regress.o -ofbin/np_gwas_dmd
+	gcc -c src/regress.c -o bin/regress.o
+	dmd -O -release -noboundscheck -inline ${GSL} src/calculation.d src/run_analysis.d src/arg_parse.d src/main.d src/setup_all.d bin/regress.o -ofbin/np_gwas_dmd
+	rm bin/*.o
 
 unittest : src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d src/regress.c
 	gcc -c src/regress.c -o regress.o
