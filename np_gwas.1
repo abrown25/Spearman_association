@@ -1,0 +1,97 @@
+.TH np_gwas 1 "8th March 2015" "np_gwas-1.0.0" "Statistical genetics"
+.SH NAME
+.PP
+np_gwas \- Genetic association software for quantitative traits, implementing non-parametric tests and multiple comparison corrections.
+.\"The GPL v3 License
+.\"
+.\"   Copyright (C) 2014 Genome Research Ltd.
+.\"
+.\"   Author: Andrew Brown <ab25@sanger.ac.uk>
+.\"
+.\"   This program is free software: you can redistribute it and/or modify
+.\"   it under the terms of the GNU General Public License as published by
+.\"   the Free Software Foundation, either version 3 of the License, or
+.\"   (at your option) any later version.
+.\"
+.\"   This program is distributed in the hope that it will be useful,
+.\"   but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\"   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\"   GNU General Public License for more details.
+.\"
+.\"   You should have received a copy of the GNU General Public License
+.\"   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+.\"
+.SH SYNOPSIS
+.PP
+.B np_gwas
+.RB [options]
+
+.SH DESCRIPTION
+.PP
+This software will perform genome-wide assocaition tests of quantitative phenotypes. The test of association can either be non-parametric (based on Spearman correlation test), or parametric (t-test). Permutation P values can be calculated, which can optionally account for multiple testing (either familywise-error rate or false discovery rate).
+
+.SH OPTIONS
+.TP 10
+.B --help
+Display help information.
+.TP
+.B --version
+Display version information.
+.TP
+.BI "--pheno, --p " CHAR
+Phenotype file [last argument].
+.TP
+.BI "--geno, --g " CHAR
+Genotype file [stdin].
+.TP
+.BI "--out, --o " CHAR
+Output file [stdout].
+.TP
+.BI "--cov, --c " CHAR
+Optional covariates file, if specified analysis will be performed on the residuals, after controlling for covariates with least squares regression.
+.TP
+.B --ttest
+Runs a test of standard parametric correlation between genotype and phenotype.
+.TP
+.B --pheno-id, --pid
+Phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches.
+.TP
+.B --geno-id, --gid
+genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches.
+.TP
+.BI "--pheno-col, --pc " INT
+column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise.
+.TP
+.BI "--geno-skip, --gs " INT
+column at which genotype values start, preceding columns are printed.
+.TP
+.BI "--perm " INT(,INT)
+calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed.
+.TP
+.B --pval
+report permutation p values for each test (needs perm options to be specified).
+.TP
+.B --fwer
+calculates the Family Wise Error Rate (FWER) based on permutations, corrected P values in the last column.
+.TP
+.B --fdr
+calculates the False Discovery Rate (FDR) based on permutations, corrected P values in the last column.
+.TP
+.B --nocheck
+skip check of IDs when both genotype and phenotype IDs are present.
+.TP
+.B --match
+the program will rearrange the phenotype data so that the genotype and phenotype IDs match. If individuals are present in the genotype file only, the analysis will be halted.
+
+.SH FILE FORMATS
+.SS INPUT FILE FORMATS
+.TP
+.B Phenotype
+Tab or whitespace separated file with phenotype values in column specified by --pc, and optional subject IDs in column 1.
+.TP
+.B Genotype
+Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by --gs are copied to results file.
+
+.SS OUTPUT FILE FORMAT
+.TP
+Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are present, then p values for calculated on permuted datasets are reported next.
