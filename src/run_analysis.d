@@ -388,13 +388,16 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
 
   size_t dupcount = 0;
 
+
+  T pi = opts.pi.to!T;
+  
   foreach(i, ref e; orderIndex)
     {
       dupcount++;
       if (i == orderIndex.length - 1 || fabs(realCor[e]) - EPSILON > fabs(realCor[orderIndex[i + 1]]))
 	{
 	  foreach(ref j; orderIndex[(i - dupcount + 1) .. (i + 1)])
-	    adjusted[j] = adjusted[j] / nPerm / (i+1);
+	    adjusted[j] = pi * adjusted[j] / nPerm / (i+1);
 	  dupcount = 0;
 	}
     }

@@ -2,3 +2,4 @@
 temp
 /dub.selections.json
 bin/regress.o
+bin/__test__library__

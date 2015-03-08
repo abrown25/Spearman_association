@@ -3,8 +3,11 @@ module arg_parse;
 import std.array : split;
 import std.c.stdlib : exit;
 import std.conv : to, ConvException;
+import std.exception : enforce;
 import std.stdio : writeln, stderr;
 import std.string : chompPrefix, startsWith;
+
+import run_analysis : InputException;
 
 class Opts{
   import std.getopt;
@@ -19,6 +22,7 @@ class Opts{
   bool min = false;
   bool pval = false;
   bool fdr = false;
+  string pi = "1";
   //phenotype and genotype ids are given
   bool pid = false;
   bool gid = false;
@@ -54,6 +58,7 @@ class Opts{
 	     "fwer", &min,
 	     "pval", &pval,
 	     "fdr", &fdr,
+	     "pi", &getPi,
 	     "ttest", &ttest,
 	     "nocheck", &nocheck,
 	     "match", &match,
@@ -71,76 +76,89 @@ class Opts{
       if (phenotype=="" && args.length > 1)
 	phenotype = args[$ - 1];
  }
-    private void checkOptions(){
-      //write help or version string and quit
-      if (help)
-	giveHelp(helpString);
-      if (version_)
-	giveHelp(versionString);
-      //check permutation strings are consistent
-      if (min && pval)
-	{
-	  stderr.writeln("Failed to run analysis: Both -fwer and -pval flag specified");
-	  exit(0);
-	}
-      if (min && fdr)
-	{
-	  stderr.writeln("Failed to run analysis: Both -fwer and -fdr flag specified");
-	  exit(0);
-	}
-      if (fdr && pval)
-	{
-	  stderr.writeln("Failed to run analysis: Both -fdr and -pval flag specified");
-	  exit(0);
-	}
-      if ((min || pval || fdr) && !run)
-	{
-	  stderr.writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
-	  exit(0);
-	}
-      //check ID options are consistent
-      if (match && !(pid && gid))
-	{
-	  stderr.writeln("Failed to run analysis: --match specified but missing genotype or phenotype IDs");
-	  exit(0);
-	}
-      if (nocheck && match)
-	{
-	  stderr.writeln("Failed to run analysis: Both --nocheck and --match specified");
-	  exit(0);
-	}
-    }
+  private void checkOptions(){
+    //write help or version string and quit
+    if (help)
+      giveHelp(helpString);
+    if (version_)
+      giveHelp(versionString);
+    //check permutation strings are consistent
+    if (min && pval)
+      {
+	stderr.writeln("Failed to run analysis: Both -fwer and -pval flag specified");
+	exit(0);
+      }
+    if (min && fdr)
+      {
+	stderr.writeln("Failed to run analysis: Both -fwer and -fdr flag specified");
+	exit(0);
+      }
+    if (fdr && pval)
+      {
+	stderr.writeln("Failed to run analysis: Both -fdr and -pval flag specified");
+	exit(0);
+      }
+    if ((min || pval || fdr) && !run)
+      {
+	stderr.writeln("Failed to run analysis: Permutations must be specified with the -perm flag");
+	exit(0);
+      }
+    //check ID options are consistent
+    if (match && !(pid && gid))
+      {
+	stderr.writeln("Failed to run analysis: --match specified but missing genotype or phenotype IDs");
+	exit(0);
+      }
+    if (nocheck && match)
+      {
+	stderr.writeln("Failed to run analysis: Both --nocheck and --match specified");
+	exit(0);
+      }
+  }
     //phenotype column is column - 1
-    private void getPhenColumn(string opt, string val){
-      try{
-	phenC = to!int(val) - 1;
-	  } catch(ConvException e){
-	stderr.writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
-	exit(0);
-      }
+  private void getPhenColumn(string opt, string val){
+    try{
+      phenC = to!int(val) - 1;
+    } catch(ConvException e){
+      stderr.writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
+      exit(0);
     }
-    //with perms flag, either number of perms is given (single number) or seed as well (a,b)
-    private void getPerms(string opt, string val){
-      run = true;
-      string[] value = split(val, ",");
-      try{
-	number = to!int(value[0]);
-      } catch(ConvException e){
-	stderr.writeln("Failed to run analysis: Non-integer argument to -perm");
-	exit(0);
-      }
-      //get seed
-      if (value.length == 2)
-	{
-	  give_seed = true;
-	  try{
-	    seed = to!int(value[1]);
-	  } catch(ConvException e){
-	    stderr.writeln("Failed to run analysis: Non-integer argument to seed");
-	    exit(0);
-	  }
+  }
+  private void getPi(string opt, string val){
+    try{
+      auto num = to!double(val);
+      enforce(num <=1 && num > 0, new InputException("pi0 value must lie in (0, 1]"));
+    } catch(ConvException e){
+      stderr.writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
+      exit(0);
+    } catch(InputException e){
+      stderr.writeln(e);
+      exit(0);
+    }
+    pi = val;
+  }
+  //with perms flag, either number of perms is given (single number) or seed as well (a,b)
+  private void getPerms(string opt, string val){
+    run = true;
+    string[] value = split(val, ",");
+    try{
+      number = to!int(value[0]);
+    } catch(ConvException e){
+      stderr.writeln("Failed to run analysis: Non-integer argument to -perm");
+      exit(0);
+    }
+    //get seed
+    if (value.length == 2)
+      {
+	give_seed = true;
+	try{
+	  seed = to!int(value[1]);
+	} catch(ConvException e){
+	  stderr.writeln("Failed to run analysis: Non-integer argument to seed");
+	  exit(0);
 	}
-    }
+      }
+  }
 }
 
 static immutable string helpString = "Usage: NP-GWAS [options]:
@@ -168,7 +186,7 @@ Input file formats:
     genotype           : Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by --gs are copied to results file.
 
 Output:
-    Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are present, then p values for calculated on permuted datasets are reported next.
+    Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are present, then p values calculated on permuted datasets are reported next.
 ";
 
 static immutable string versionString = "NP-GWAS, version 1.0.0";

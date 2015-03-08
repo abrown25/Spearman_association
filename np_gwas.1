@@ -84,6 +84,7 @@ skip check of IDs when both genotype and phenotype IDs are present.
 the program will rearrange the phenotype data so that the genotype and phenotype IDs match. If individuals are present in the genotype file only, the analysis will be halted.
 
 .SH FILE FORMATS
+.HP
 .SS INPUT FILE FORMATS
 .TP
 .B Phenotype
@@ -91,7 +92,7 @@ Tab or whitespace separated file with phenotype values in column specified by --
 .TP
 .B Genotype
 Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by --gs are copied to results file.
-
+.HP
 .SS OUTPUT FILE FORMAT
 .TP
-Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are present, then p values for calculated on permuted datasets are reported next.
+Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are present, then p values calculated on permuted datasets are reported next.
