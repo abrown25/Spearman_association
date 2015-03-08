@@ -127,12 +127,12 @@ class Opts{
   private void getPi(string opt, string val){
     try{
       auto num = to!double(val);
-      enforce(num <=1 && num > 0, new InputException("pi0 value must lie in (0, 1]"));
+      enforce(num <=1 && num > 0, new InputException("Failed to run analysis: π₀ value must lie in (0, 1]"));
     } catch(ConvException e){
       stderr.writeln("Failed to run analysis: Non-numeric argument to -pheno-col");
       exit(0);
     } catch(InputException e){
-      stderr.writeln(e);
+      stderr.writeln(e.msg);
       exit(0);
     }
     pi = val;
@@ -178,6 +178,7 @@ Options:
     --pval             : report permutation p values for each test (needs perm options to be specified).
     --fwer             : calculates the Family Wise Error Rate (FWER) based on permutations, corrected P values in the last column.
     --fdr              : calculates the False Discovery Rate (FDR) based on permutations, corrected P values in the last column.
+    --pi               : specify π₀, proportion of null hypotheses, to more accurately estimate False Discovery Rate.
     --nocheck          : skip check of IDs when both genotype and phenotype IDs are present.
     --match            : the program will rearrange the phenotype data so that the genotype and phenotype IDs match. If individuals are present in the genotype file only, the analysis will be halted.
 

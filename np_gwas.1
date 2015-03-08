@@ -57,31 +57,34 @@ Runs a test of standard parametric correlation between genotype and phenotype.
 Phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches.
 .TP
 .B --geno-id, --gid
-genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches.
+Genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches.
 .TP
 .BI "--pheno-col, --pc " INT
-column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise.
+Column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise.
 .TP
 .BI "--geno-skip, --gs " INT
-column at which genotype values start, preceding columns are printed.
+Column at which genotype values start, preceding columns are printed.
 .TP
 .BI "--perm " INT(,INT)
-calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed.
+Calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed.
 .TP
 .B --pval
-report permutation p values for each test (needs perm options to be specified).
+Report permutation p values for each test (needs perm options to be specified).
 .TP
 .B --fwer
-calculates the Family Wise Error Rate (FWER) based on permutations, corrected P values in the last column.
+Calculates the Family Wise Error Rate (FWER) based on permutations, corrected P values in the last column.
 .TP
 .B --fdr
-calculates the False Discovery Rate (FDR) based on permutations, corrected P values in the last column.
+Calculates the False Discovery Rate (FDR) based on permutations, corrected P values in the last column.
+.TP
+.BI "--pi " DOUBLE
+Specify π₀, proportion of null hypotheses, to more accurately estimate False Discovery Rate.
 .TP
 .B --nocheck
-skip check of IDs when both genotype and phenotype IDs are present.
+Skip check of IDs when both genotype and phenotype IDs are present.
 .TP
 .B --match
-the program will rearrange the phenotype data so that the genotype and phenotype IDs match. If individuals are present in the genotype file only, the analysis will be halted.
+The program will rearrange the phenotype data so that the genotype and phenotype IDs match. If individuals are present in the genotype file only, the analysis will be halted.
 
 .SH FILE FORMATS
 .HP
