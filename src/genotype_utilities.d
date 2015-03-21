@@ -42,8 +42,6 @@ Commands:
        First option:    FORMAT FIELD, possible values of FORMAT column, separated by :, in order of preference. Available values are currently: GT (genotype threshold), PP (or equivalently GP, posterior probability), and DS (dosage). For example, GT:PP:DS means calculate dosage on GT if available and well-formed, then PP, then DS (reporting NA if none succeed).
        Second option:   VCF FILE NAME. Name of vcf file.
        
-     --snptest:         Converts SNPTEST genotype file to dosage file for use with np_gwas. Requires two options, first specify the name of the file with sample IDS, then name of the .gen file.
-
      --match:           Rearranges genotype file to match file with sample (usually phenotype) IDS. Any individuals only present in phenotype file are ignored. Requires either 2 options, depending on whether IDs are given from the stdin. For example, if IDs are the second column of PHEN_FILE, genotypes are in GEN_FILE, and 3 columns are used for identifying SNPS, then the following command would work: cut -f2 PHEN_FILE | ./genotype_utilities --match GEN_FILE 3.
 
        First option:    ID file containing phenotype IDs. Can be taken from the stdin.
@@ -154,8 +152,8 @@ void main(string[] args)
     }
     else if (args[1] == "--vcf")
         vcfFile(args[2 .. $]);
-    else if (args[1] == "snptest")
-        snpTest(args[2 .. $]);
+    // else if (args[1] == "snptest")
+    //     snpTest(args[2 .. $]);
     else if (args[1] == "--match")
         matchIds(args[2 .. $]);
     else
@@ -244,38 +242,38 @@ void vcfFile(string[] args)
     }
 }
 
-void snpTest(string[] args)
-{
-    File sampleFile, inFile;
+// void snpTest(string[] args)
+// {
+//     File sampleFile, inFile;
 
-    auto outFile = stdout;
+//     auto outFile = stdout;
 
-    try
-    {
-        sampleFile = File(args[0]);
-        inFile = File(args[1]);
-    }
-    catch (Exception e)
-    {
-        writeln(e.msg);
-        exit(0);
-    }
+//     try
+//     {
+//         sampleFile = File(args[0]);
+//         inFile = File(args[1]);
+//     }
+//     catch (Exception e)
+//     {
+//         writeln(e.msg);
+//         exit(0);
+//     }
 
-    auto ids = sampleFile.byLine.drop(2).map!(a => a.split.front).to!string.array;
+//     auto ids = sampleFile.byLine.drop(2).map!(a => a.split.front).to!string.array;
 
-    stdout.writeln("#CHR\tLOC\tREF\tALT\t", ids.to!(string[]).join("\t"));
+//     stdout.writeln("#CHR\tLOC\tREF\tALT\t", ids.to!(string[]).join("\t"));
 
-    foreach (ref line; inFile.byLine)
-    {
-        auto splitLine = line.split;
-        write(splitLine[1].split("-").join("\t"), "\t", splitLine[3], "\t", splitLine[
-            4
-        ], "\t");
-        iota(6, splitLine.length, 3).map!(a => convDouble(
-            splitLine[a]) + 2 * convDouble(splitLine[a + 1])).array.to!(string[]).join(
-            "\t").writeln;
-    }
-}
+//     foreach (ref line; inFile.byLine)
+//     {
+//         auto splitLine = line.split;
+//         write(splitLine[1].split("-").join("\t"), "\t", splitLine[3], "\t", splitLine[
+//             4
+//         ], "\t");
+//         iota(6, splitLine.length, 3).map!(a => convDouble(
+//             splitLine[a]) + 2 * convDouble(splitLine[a + 1])).array.to!(string[]).join(
+//             "\t").writeln;
+//     }
+// }
 
 void matchIds(string[] args)
 {

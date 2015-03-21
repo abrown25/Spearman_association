@@ -10,5 +10,5 @@
     "excludedSourceFiles": ["src/genotype_utilities.d"],
     "libs": ["gsl", "gslcblas"],
     "preGenerateCommands": ["gcc -c src/regress.c -o bin/regress.o"],
-    "postBuildCommands": ["rm bin/*.o"]
+    "postBuildCommands": ["rm bin/*.o", "strip bin/np_gwas"]
 }
