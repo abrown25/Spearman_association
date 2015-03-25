@@ -47,19 +47,24 @@ The purpose of this program is to allow genome wide analyses of non normally dis
         match. If individuals are present in the genotype file only, the analysis will be
         halted.
 
-  FILE FORMATS
+    FILE FORMATS
 
-  INPUT FILE FORMATS
-    Phenotype
-        Tab or whitespace separated file with phenotype values in column specified by --pc, and optional subject IDs in column 1.
+    INPUT FILE FORMATS
+      Phenotype
+        Tab or whitespace separated file with phenotype values in column specified by --pc, and
+	    optional subject IDs in column 1.
 
-    Genotype
-        Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by --gs are copied to results file.
+      Genotype
+        Tab or whitespace separated file where each row corresponds to single SNP, optional header
+	    line can contain subject IDs, number of columns specified by --gs are copied to results file.
 
-  OUTPUT FILE FORMAT
-    Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by  permutations
-    is  printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are
-    present, then p values calculated on permuted datasets are reported next.
+    OUTPUT FILE FORMAT
+      Output contains the SNP information columns from the genotype file, followed by spearman
+	  correlation, t statistic, p value columns. When permutations are analysed, the p value
+	  calculated by permutations is printed if the --pval flag is used. The p value calculated
+	  by permutations and then the p value adjusted for multiple testing is shown if --fwer or
+	  --fdr flag is used. If none of these flags are present, then p values calculated on
+	  permuted datasets are reported next.
 
 ###Binaries:
 
