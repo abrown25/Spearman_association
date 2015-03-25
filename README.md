@@ -1,11 +1,11 @@
-##NP-GWAS : Fast, non parametric tests for genetic associations with permutations
+##np_gwas : Fast, non parametric tests for genetic associations with permutations
 
 ###Introduction:
 
 The purpose of this program is to allow genome wide analyses of non normally distributed data to be performed quickly and easily. Fast routines to calculate permutations are included, with options to calculate p values adjusted for multiple testing, either the family wise error rate (FWER) or the typically less conservative false discovery rate (FDR). The program is designed to be flexible with the data formats it will accept: genotype data should come with individuals are columns and SNPs in rows, with an optional header line and number of preceding columns giving SNP information. The program has been designed to work with linux pipes, allowing it to be seamlessly chained with programs to manipulate SNP data such as tabix and vcf-tools. Phenotype information should be given in a specified column of a text file: if there are known confounders, these can be passed as a matrix and controlled out using linear regression.
 ###Usage:
 
-    Usage: NP-GWAS [options]:
+    Usage: no_gwas [options]:
 
     Options:
     --help    Display help information.
@@ -40,7 +40,7 @@ The purpose of this program is to allow genome wide analyses of non normally dis
     --fdr     Calculates the False Discovery Rate (FDR) based on permutations, corrected P values
         in the last column.
     --pi DOUBLE
-        Specify n, proportion of null hypotheses, to more accurately estimate False Discov-
+        Specify π₀, proportion of null hypotheses, to more accurately estimate False Discov-
         ery Rate.
     --nocheck Skip check of IDs when both genotype and phenotype IDs are present.
     --match   The program will rearrange the phenotype data so that the genotype and phenotype IDs
@@ -59,12 +59,11 @@ The purpose of this program is to allow genome wide analyses of non normally dis
 	    line can contain subject IDs, number of columns specified by --gs are copied to results file.
 
     OUTPUT FILE FORMAT
-      Output contains the SNP information columns from the genotype file, followed by spearman
-	  correlation, t statistic, p value columns. When permutations are analysed, the p value
-	  calculated by permutations is printed if the --pval flag is used. The p value calculated
-	  by permutations and then the p value adjusted for multiple testing is shown if --fwer or
-	  --fdr flag is used. If none of these flags are present, then p values calculated on
-	  permuted datasets are reported next.
+      Output contains the SNP information columns from the genotype file, followed by spearman correlation,
+	  t statistic, p value columns. If permutations are analysed, then without the --pval, --fwer, --fdr
+	  flags p values calculated on permuted datasets are reported next. Otherwise, the p value calculated
+	  by permutations is printed followed by the p value adjusted for multiple testing is shown if --fwer
+	  or --fdr flag is used.
 
 ###Binaries:
 

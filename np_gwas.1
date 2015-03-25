@@ -78,7 +78,7 @@ Calculates the Family Wise Error Rate (FWER) based on permutations, corrected P 
 Calculates the False Discovery Rate (FDR) based on permutations, corrected P values in the last column.
 .TP
 .BI "--pi " DOUBLE
-Specify π₀, proportion of null hypotheses, to more accurately estimate False Discovery Rate.
+Specify pi0, proportion of null hypotheses, to more accurately estimate False Discovery Rate.
 .TP
 .B --nocheck
 Skip check of IDs when both genotype and phenotype IDs are present.
@@ -98,4 +98,4 @@ Tab or whitespace separated file where each row corresponds to single SNP, optio
 .HP
 .SS OUTPUT FILE FORMAT
 .TP
-Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are present, then p values calculated on permuted datasets are reported next.
+Output contains the SNP information columns from the genotype file, followed by spearman correlation, t statistic, p value columns. If permutations are analysed, then without the --pval, --fwer, --fdr flags p values calculated on permuted datasets are reported next. Otherwise, the p value calculated by permutations is printed followed by the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used.
