@@ -47,7 +47,7 @@ The purpose of this program is to allow genome wide analyses of non normally dis
         match. If individuals are present in the genotype file only, the analysis will be
         halted.
 
-FILE FORMATS
+  FILE FORMATS
 
   INPUT FILE FORMATS
     Phenotype
