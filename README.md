@@ -8,30 +8,58 @@ The purpose of this program is to allow genome wide analyses of non normally dis
     Usage: NP-GWAS [options]:
 
     Options:
-        --help             : display help information.
-        --version          : display version information.
-        --pheno, --p       : phenotype file [default: last argument].
-        --geno, --g        : genotype file [default stdin].
-        --out, --o         : output file [default stdout].
-        --cov, --c         : optional covariates file, if specified analysis will be performed on the residuals, after controlling for covariates with least squares regression.
-        --ttest            : runs a test of standard parametric correlation between genotype and phenotype.
-        --pheno-id, --pid  : phenotype IDs are in the first column, if genotype IDs are also present then we check for mismatches.
-        --geno-id, --gid   : genotype IDs are in the first row, if phenotype IDs are also present then we check for mismatches.
-        --pheno-col, --pc  : column for phenotype values, default is 1 if phenotype IDs are not present, 2 otherwise.
-        --geno-skip, --gs  : column at which genotype values start, preceding columns are printed.
-        --perm             : calculated permuted p values, one following number indicates the number of permutations, two comma separated numbers gives the number of permutations and the seed.
-        --pval             : report permutation p values for each test (needs perm options to be specified).
-        --fwer             : calculates the Family Wise Error Rate (FWER) based on permutations, corrected P values in the last column.
-        --fdr              : calculates the False Discovery Rate (FDR) based on permutations, corrected P values in the last column.
-        --nocheck          : skip check of IDs when both genotype and phenotype IDs are present.
-        --match            : the program will rearrange the phenotype data so that the genotype and phenotype IDs match. If individuals are present in the genotype file only, the analysis will be halted.
+    --help    Display help information.
+    --version Display version information.
+    --pheno, --p CHAR
+        Phenotype file [last argument].
+    --geno, --g CHAR
+        Genotype file [stdin].
+    --out, --o CHAR
+        Output file [stdout].
+    --cov, --c CHAR
+        Optional covariates file, if specified analysis will be performed on the residuals,
+        after controlling for covariates with least squares regression.
+    --ttest   Runs a test of standard parametric correlation between genotype and phenotype.
+    --pheno-id, --pid
+        Phenotype IDs are in the first column, if genotype IDs are also present then we
+        check for mismatches.
+    --geno-id, --gid
+        Genotype IDs are in the first row, if phenotype IDs are also present then we check
+        for mismatches.
+    --pheno-col, --pc INT
+        Column for phenotype values, default is 1 if phenotype IDs are not present, 2 other-
+        wise.
+    --geno-skip, --gs INT
+        Column at which genotype values start, preceding columns are printed.
+    --perm INT(,INT)
+        Calculated permuted p values, one following number indicates the number of permuta-
+        tions, two comma separated numbers gives the number of permutations and the seed.
+    --pval    Report permutation p values for each test (needs perm options to be specified).
+    --fwer    Calculates the Family Wise Error Rate (FWER) based on permutations, corrected P val-
+        ues in the last column.
+    --fdr     Calculates the False Discovery Rate (FDR) based on permutations, corrected P values
+        in the last column.
+    --pi DOUBLE
+        Specify n, proportion of null hypotheses, to more accurately estimate False Discov-
+        ery Rate.
+    --nocheck Skip check of IDs when both genotype and phenotype IDs are present.
+    --match   The program will rearrange the phenotype data so that the genotype and phenotype IDs
+        match. If individuals are present in the genotype file only, the analysis will be
+        halted.
 
-    Input file formats:
-        phenotype          : Tab or whitespace separated file with phenotype values in column specified by --pc, and optional subject IDs in column 1.
-        genotype           : Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by --gs are copied to results file.
+FILE FORMATS
 
-    Output:
-        Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by permutations is printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are present, then p values for calculated on permuted datasets are reported next.
+  INPUT FILE FORMATS
+    Phenotype
+        Tab or whitespace separated file with phenotype values in column specified by --pc, and optional subject IDs in column 1.
+
+    Genotype
+        Tab or whitespace separated file where each row corresponds to single SNP, optional header line can contain subject IDs, number of columns specified by --gs are copied to results file.
+
+  OUTPUT FILE FORMAT
+    Output contains the first info columns from the genotype file, followed by spearman correlation, t statistic, p value columns. When permutations are analysed, the p value calculated by  permutations
+    is  printed if the --pval flag is used. The p value calculated by permutations and then the p value adjusted for multiple testing is shown if --fwer or --fdr flag is used. If none of these flags are
+    present, then p values calculated on permuted datasets are reported next.
 
 ###Binaries:
 
