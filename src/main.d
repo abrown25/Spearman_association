@@ -19,8 +19,8 @@
 
 */
 
-import std.conv : to;
-import std.file : File;
+import std.conv  : to;
+import std.stdio : File;
 
 import arg_parse : Opts, giveHelp, helpString;
 import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, fdrCalc;

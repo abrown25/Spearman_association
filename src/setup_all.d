@@ -5,9 +5,9 @@ import std.array : split;
 import std.c.stdlib : exit;
 import std.conv : to, ConvException;
 import std.exception : enforce;
-import std.file : File, exists;
+import std.file : exists;
 import std.range : iota;
-import std.stdio : stdin, stderr, writeln, stdout;
+import std.stdio : File, stdin, stderr, writeln, stdout;
 import std.string : join;
 
 import arg_parse : Opts;

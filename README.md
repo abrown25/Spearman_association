@@ -59,11 +59,11 @@ The purpose of this program is to allow genome wide analyses of non normally dis
 	    line can contain subject IDs, number of columns specified by --gs are copied to results file.
 
     OUTPUT FILE FORMAT
-      Output contains the SNP information columns from the genotype file, followed by spearman correlation,
-	  t statistic, p value columns. If permutations are analysed, then without the --pval, --fwer, --fdr
-	  flags p values calculated on permuted datasets are reported next. Otherwise, the p value calculated
-	  by permutations is printed followed by the p value adjusted for multiple testing is shown if --fwer
-	  or --fdr flag is used.
+      Output contains the SNP information columns from the genotype file, followed by correlation
+	  (Pearson or Spearman), t statistic and p value columns. If permutations are analysed, then
+	  without the --pval, --fwer, --fdr flags p values calculated on permuted datasets are reported
+	  next. Otherwise, the p value calculated by permutations is printed followed by the p value
+	  adjusted for multiple testing is shown if --fwer or --fdr flag is used.
 
 ###Binaries:
 

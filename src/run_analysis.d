@@ -1,7 +1,7 @@
 module run_analysis;
 
-import std.algorithm : count, map;
-import std.array : array, split, splitter;
+import std.algorithm : count, map, splitter;
+import std.array : array, split;
 import std.conv : to, ConvException;
 import std.file : exists, remove;
 import std.numeric : dotProduct;
@@ -255,8 +255,8 @@ unittest
 //calculates family wise error rate
 void minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
 {
-    import std.algorithm : max, sort, zip;
-    import std.range : iota, SearchPolicy;
+    import std.algorithm : max, sort;
+    import std.range : iota, SearchPolicy, zip;
     import std.c.stdlib : exit;
     import std.stdio : tmpfile;
 
