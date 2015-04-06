@@ -55,35 +55,46 @@ pure nothrow int convInt(const ubyte x)
     return x > 57 || x < 48 ? -1 : x - 48;
 }
 
-pure nothrow auto convDouble(const char[] x)
+// pure nothrow auto convDouble(const char[] x)
+// {
+//     auto y = cast(ubyte[]) x;
+//     if (y.length == 0)
+//         return -1;
+
+//     double value = 0;
+//     auto z = convInt(y[0]);
+//     if (z == -1)
+//         return -1;
+
+//     value += z;
+//     if (y.length == 1)
+//         return value;
+//     if (y[1] != cast(ubyte) '.')
+//         return -1;
+//     if (y.length > 2)
+//     {
+//         double offset = 0.1;
+//         foreach (ref e; y[2 .. $])
+//         {
+//             z = convInt(e);
+//             if (z == -1)
+//                 return -1;
+//             value += z * offset;
+//             offset = offset / 10;
+//         }
+//     }
+//     return value;
+// }
+pure auto convDouble(const char[] x)
 {
-    auto y = cast(ubyte[]) x;
-    if (y.length == 0)
-        return -1;
-
-    double value = 0;
-    auto z = convInt(y[0]);
-    if (z == -1)
-        return -1;
-
-    value += z;
-    if (y.length == 1)
-        return value;
-    if (y[1] != cast(ubyte) '.')
-        return -1;
-    if (y.length > 2)
+  try
     {
-        double offset = 0.1;
-        foreach (ref e; y[2 .. $])
-        {
-            z = convInt(e);
-            if (z == -1)
-                return -1;
-            value += z * offset;
-            offset = offset / 10;
-        }
+      return to!double(x);
     }
-    return value;
+  catch (ConvException e)
+    {
+      return -1.0;
+    }
 }
 
 pure nothrow double GT(const char[] x)
@@ -105,7 +116,7 @@ unittest
     assert(GT("3/4") == 2);
 }
 
-pure nothrow auto DS(const char[] x)
+pure auto DS(const char[] x)
 {
     return convDouble(x);
 }
