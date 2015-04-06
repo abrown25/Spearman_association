@@ -176,9 +176,9 @@ void main(string[] args)
 
 void vcfFile(string[] args)
 {
-    if (args.length != 2)
+    if (args.length == 0 || args.length > 2)
     {
-        writeln("Need parsing options and input file. Run genotype_utilities --help for help file.");
+        writeln("Need parsing options and (optional) input file. Run genotype_utilities --help for help file.");
         exit(0);
     }
 
@@ -197,7 +197,10 @@ void vcfFile(string[] args)
     File inFile;
     try
     {
+      if (args.length == 2)
         inFile = File(args[1]);
+      else
+	inFile = stdin;
     }
     catch (Exception e)
     {
