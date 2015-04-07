@@ -55,46 +55,44 @@ pure nothrow int convInt(const ubyte x)
     return x > 57 || x < 48 ? -1 : x - 48;
 }
 
-// pure nothrow auto convDouble(const char[] x)
-// {
-//     auto y = cast(ubyte[]) x;
-//     if (y.length == 0)
-//         return -1;
-
-//     double value = 0;
-//     auto z = convInt(y[0]);
-//     if (z == -1)
-//         return -1;
-
-//     value += z;
-//     if (y.length == 1)
-//         return value;
-//     if (y[1] != cast(ubyte) '.')
-//         return -1;
-//     if (y.length > 2)
-//     {
-//         double offset = 0.1;
-//         foreach (ref e; y[2 .. $])
-//         {
-//             z = convInt(e);
-//             if (z == -1)
-//                 return -1;
-//             value += z * offset;
-//             offset = offset / 10;
-//         }
-//     }
-//     return value;
-// }
 pure auto convDouble(const char[] x)
 {
-  try
+    try
     {
-      return to!double(x);
+        return to!double(x);
     }
-  catch (ConvException e)
+    catch (ConvException e)
     {
-      return -1.0;
+        return -1.0;
     }
+    //     auto y = cast(ubyte[]) x;
+    //     if (y.length == 0)
+    //         return -1;
+
+    //     double value = 0;
+    //     auto z = convInt(y[0]);
+    //     if (z == -1)
+    //         return -1;
+
+    //     value += z;
+    //     if (y.length == 1)
+    //         return value;
+    //     if (y[1] != cast(ubyte) '.')
+    //         return -1;
+    //     if (y.length > 2)
+    //     {
+    //         double offset = 0.1;
+    //         foreach (ref e; y[2 .. $])
+    //         {
+    //             z = convInt(e);
+    //             if (z == -1)
+    //                 return -1;
+    //             value += z * offset;
+    //             offset = offset / 10;
+    //         }
+    //     }
+    //     return value;
+    // }
 }
 
 pure nothrow double GT(const char[] x)
@@ -178,7 +176,8 @@ void vcfFile(string[] args)
 {
     if (args.length == 0 || args.length > 2)
     {
-        writeln("Need parsing options and (optional) input file. Run genotype_utilities --help for help file.");
+        writeln(
+            "Need parsing options and (optional) input file. Run genotype_utilities --help for help file.");
         exit(0);
     }
 
@@ -197,10 +196,10 @@ void vcfFile(string[] args)
     File inFile;
     try
     {
-      if (args.length == 2)
-        inFile = File(args[1]);
-      else
-	inFile = stdin;
+        if (args.length == 2)
+            inFile = File(args[1]);
+        else
+            inFile = stdin;
     }
     catch (Exception e)
     {
@@ -220,8 +219,8 @@ void vcfFile(string[] args)
         else if (line[0 .. 2] == "#C")
         {
             auto splitLine = line.strip.splitter("\t");
-            stdout.writeln(join(splitLine.take(5), "\t"), "\t", join(splitLine.drop(
-                9), "\t"));
+            stdout.writeln(join(splitLine.take(5), "\t"), "\t", join(splitLine.drop(9),
+                "\t"));
         }
         else
         {
