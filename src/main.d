@@ -24,7 +24,7 @@ import std.stdio : File;
 
 import arg_parse : Opts, giveHelp, helpString;
 import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, fdrCalc;
-import setup_all : fileSetup, setup, F;
+import setup_all : fileSetup, setup;
 
 version (unittest)
     void main()

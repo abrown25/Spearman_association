@@ -16,13 +16,13 @@ alias GP = PP;
 
 pure nothrow string genFunctionPointer(const string[] x)
 {
-    string y = "size_t ind;
+  string y = "size_t ind;
 ";
-    foreach (ref e; x)
-        y ~= "if ((ind = options.countUntil(\"" ~ e ~ "\")) != -1)
+  foreach (ref e; x)
+    y ~= "if ((ind = options.countUntil(\"" ~ e ~ "\")) != -1)
     functionArray[ind] = &" ~ e ~ ";
 ";
-    return y;
+  return y;
 }
 
 static const string helpString = "
@@ -52,207 +52,206 @@ Commands:
 
 pure nothrow int convInt(const ubyte x)
 {
-    return x > 57 || x < 48 ? -1 : x - 48;
+  return x > 57 || x < 48 ? -1 : x - 48;
 }
 
 pure auto convDouble(const char[] x)
 {
-    try
-    {
-        return to!double(x);
-    }
-    catch (ConvException e)
-    {
-        return -1.0;
-    }
-    //     auto y = cast(ubyte[]) x;
-    //     if (y.length == 0)
-    //         return -1;
+  try
+  {
+    return to!double(x);
+  }
+  catch (ConvException e)
+  {
+    return -1.0;
+  }
+  //     auto y = cast(ubyte[]) x;
+  //     if (y.length == 0)
+  //         return -1;
 
-    //     double value = 0;
-    //     auto z = convInt(y[0]);
-    //     if (z == -1)
-    //         return -1;
+  //     double value = 0;
+  //     auto z = convInt(y[0]);
+  //     if (z == -1)
+  //         return -1;
 
-    //     value += z;
-    //     if (y.length == 1)
-    //         return value;
-    //     if (y[1] != cast(ubyte) '.')
-    //         return -1;
-    //     if (y.length > 2)
-    //     {
-    //         double offset = 0.1;
-    //         foreach (ref e; y[2 .. $])
-    //         {
-    //             z = convInt(e);
-    //             if (z == -1)
-    //                 return -1;
-    //             value += z * offset;
-    //             offset = offset / 10;
-    //         }
-    //     }
-    //     return value;
-    // }
+  //     value += z;
+  //     if (y.length == 1)
+  //         return value;
+  //     if (y[1] != cast(ubyte) '.')
+  //         return -1;
+  //     if (y.length > 2)
+  //     {
+  //         double offset = 0.1;
+  //         foreach (ref e; y[2 .. $])
+  //         {
+  //             z = convInt(e);
+  //             if (z == -1)
+  //                 return -1;
+  //             value += z * offset;
+  //             offset = offset / 10;
+  //         }
+  //     }
+  //     return value;
+  // }
 }
 
 pure nothrow double GT(const char[] x)
 {
-    auto y = cast(ubyte[]) x;
-    if (y.length != 3 || (y[1] != cast(ubyte) '|' && y[1] != cast(ubyte) '/'))
-        return -1.0;
-    int[2] z = [convInt(y[0]), convInt(y[2])];
-    return z[0] == -1 || z[1] == -1 ? -1 : (z[0] != 0) + (z[1] != 0);
+  auto y = cast(ubyte[]) x;
+  if (y.length != 3 || (y[1] != cast(ubyte) '|' && y[1] != cast(ubyte) '/'))
+    return -1.0;
+  int[2] z = [convInt(y[0]), convInt(y[2])];
+  return z[0] == -1 || z[1] == -1 ? -1 : (z[0] != 0) + (z[1] != 0);
 }
 
 unittest
 {
-    assert(GT("|||") == -1);
-    assert(GT("3\4") == -1);
-    assert(GT("0|0") == 0);
-    assert(GT("3333|4") == -1);
-    assert(GT("3|0") == 1);
-    assert(GT("3/4") == 2);
+  assert(GT("|||") == -1);
+  assert(GT("3\4") == -1);
+  assert(GT("0|0") == 0);
+  assert(GT("3333|4") == -1);
+  assert(GT("3|0") == 1);
+  assert(GT("3/4") == 2);
 }
 
 pure auto DS(const char[] x)
 {
-    return convDouble(x);
+  return convDouble(x);
 }
 
 unittest
 {
-    assert(DS("0.542653") == 0.542653);
-    assert(DS("40.542653") == -1);
-    assert(DS("0l542353") == -1);
-    assert(DS("") == -1);
-    assert(DS("4") == 4);
-    assert(DS("0.") == 0);
+  assert(DS("0.542653") == 0.542653);
+  assert(DS("40.542653") == -1);
+  assert(DS("0l542353") == -1);
+  assert(DS("") == -1);
+  assert(DS("4") == 4);
+  assert(DS("0.") == 0);
 }
 
 pure auto PP(const char[] x)
 {
-    if (x.count(",") != 2)
-        return -1;
-    auto y = x.splitter(',');
-    auto z = y.drop(1).map!convDouble.array;
-    return z[0] == -1 || z[1] == -1 ? -1 : z[0] + 2 * z[1];
+  if (x.count(",") != 2)
+    return -1;
+  auto y = x.splitter(',');
+  auto z = y.drop(1).map!convDouble.array;
+  return z[0] == -1 || z[1] == -1 ? -1 : z[0] + 2 * z[1];
 }
 
 unittest
 {
-    assert(PP("1,3,2") == 7);
-    assert(PP("1,2.4,3.6") == 9.6);
-    assert(PP("1,2,A") == -1);
-    assert(PP("1,A,3") == -1);
-    assert(PP("1") == -1);
+  assert(PP("1,3,2") == 7);
+  assert(PP("1,2.4,3.6") == 9.6);
+  assert(PP("1,2,A") == -1);
+  assert(PP("1,A,3") == -1);
+  assert(PP("1") == -1);
 }
 
 void main(string[] args)
 {
-    if (args.length < 2)
-    {
-        writeln(helpString);
-        exit(0);
-    }
-    else if (args[1] == "--help")
-    {
-        writeln(helpString);
-        exit(0);
-    }
-    else if (args[1] == "--vcf")
-        vcfFile(args[2 .. $]);
-    // else if (args[1] == "snptest")
-    //     snpTest(args[2 .. $]);
-    else if (args[1] == "--match")
-        matchIds(args[2 .. $]);
-    else
-    {
-        writeln(helpString);
-        exit(0);
-    }
+  if (args.length < 2)
+  {
+    writeln(helpString);
+    exit(0);
+  }
+  else if (args[1] == "--help")
+  {
+    writeln(helpString);
+    exit(0);
+  }
+  else if (args[1] == "--vcf")
+    vcfFile(args[2 .. $]);
+  // else if (args[1] == "snptest")
+  //     snpTest(args[2 .. $]);
+  else if (args[1] == "--match")
+    matchIds(args[2 .. $]);
+  else
+  {
+    writeln(helpString);
+    exit(0);
+  }
 }
 
 void vcfFile(string[] args)
 {
-    if (args.length == 0 || args.length > 2)
+  if (args.length == 0 || args.length > 2)
+  {
+    writeln(
+      "Need parsing options and (optional) input file. Run genotype_utilities --help for help file.");
+    exit(0);
+  }
+
+  const auto options = args[0].split(":").filter!(x => functions.countUntil(x) != -1).array;
+
+  if (options.length == 0)
+  {
+    writeln("No suitable options to run. Run genotype_utilities --help for help file.");
+    exit(0);
+  }
+
+  auto functionArray = new typeof(&PP)[options.length];
+
+  mixin(genFunctionPointer(functions));
+
+  File inFile;
+  try
+  {
+    if (args.length == 2)
+      inFile = File(args[1]);
+    else
+      inFile = stdin;
+  }
+  catch (Exception e)
+  {
+    writeln(e.msg);
+    exit(0);
+  }
+
+  char[][] infoFields;
+  char[][] indVCF;
+  long[] mapping;
+  double dosage;
+
+  foreach (line; inFile.byLine)
+  {
+    if (line[0 .. 2] == "##")
+      continue;
+    else if (line[0 .. 2] == "#C")
     {
-        writeln(
-            "Need parsing options and (optional) input file. Run genotype_utilities --help for help file.");
-        exit(0);
+      auto splitLine = line.strip.splitter("\t");
+      stdout.writeln(join(splitLine.take(5), "\t"), "\t", join(splitLine.drop(9), "\t"));
     }
-
-    const auto options = args[0].split(":").filter!(x => functions.countUntil(x) != -1).array;
-
-    if (options.length == 0)
+    else
     {
-        writeln("No suitable options to run. Run genotype_utilities --help for help file.");
-        exit(0);
-    }
-
-    auto functionArray = new typeof(&PP)[options.length];
-
-    mixin(genFunctionPointer(functions));
-
-    File inFile;
-    try
-    {
-        if (args.length == 2)
-            inFile = File(args[1]);
-        else
-            inFile = stdin;
-    }
-    catch (Exception e)
-    {
-        writeln(e.msg);
-        exit(0);
-    }
-
-    char[][] infoFields;
-    char[][] indVCF;
-    long[] mapping;
-    double dosage;
-
-    foreach (line; inFile.byLine)
-    {
-        if (line[0 .. 2] == "##")
+      auto splitLine = line.strip.splitter("\t");
+      stdout.write(join(splitLine.take(5), "\t"));
+      infoFields = splitLine.drop(8).front.split(":");
+      mapping = options.map!(x => infoFields.countUntil(x)).array;
+      foreach (ref e; splitLine.drop(9))
+      {
+        indVCF = e.split(":");
+        bool done = false;
+        foreach (ref f; zip(mapping, functionArray))
+        {
+          if (f[0] == -1)
             continue;
-        else if (line[0 .. 2] == "#C")
-        {
-            auto splitLine = line.strip.splitter("\t");
-            stdout.writeln(join(splitLine.take(5), "\t"), "\t", join(splitLine.drop(9),
-                "\t"));
-        }
-        else
-        {
-            auto splitLine = line.strip.splitter("\t");
-            stdout.write(join(splitLine.take(5), "\t"));
-            infoFields = splitLine.drop(8).front.split(":");
-            mapping = options.map!(x => infoFields.countUntil(x)).array;
-            foreach (ref e; splitLine.drop(9))
+          else
+          {
+            dosage = f[1](indVCF[f[0]]);
+            if (dosage != -1)
             {
-                indVCF = e.split(":");
-                bool done = false;
-                foreach (ref f; zip(mapping, functionArray))
-                {
-                    if (f[0] == -1)
-                        continue;
-                    else
-                    {
-                        dosage = f[1](indVCF[f[0]]);
-                        if (dosage != -1)
-                        {
-                            stdout.write("\t", dosage);
-                            done = true;
-                            break;
-                        }
-                    }
-                }
-                if (!done)
-                    stdout.write("\tNA");
+              stdout.write("\t", dosage);
+              done = true;
+              break;
             }
-            stdout.write("\n");
+          }
         }
+        if (!done)
+          stdout.write("\tNA");
+      }
+      stdout.write("\n");
     }
+  }
 }
 
 // void snpTest(string[] args)
@@ -290,52 +289,52 @@ void vcfFile(string[] args)
 
 void matchIds(string[] args)
 {
-    File idFile, inFile;
-    auto outFile = stdout;
-    long skip;
+  File idFile, inFile;
+  auto outFile = stdout;
+  long skip;
 
-    try
+  try
+  {
+    if (args.length == 3)
     {
-        if (args.length == 3)
-        {
-            idFile = File(args[0]);
-            inFile = File(args[1]);
-        }
-        else if (args.length == 2)
-        {
-            idFile = stdin;
-            inFile = File(args[0]);
-        }
-        else
-        {
-            writeln("Either pass 2 or three arguments to --match");
-            exit(0);
-        }
+      idFile = File(args[0]);
+      inFile = File(args[1]);
     }
-    catch (Exception e)
+    else if (args.length == 2)
     {
-        stdout.write(e.msg);
-        exit(0);
+      idFile = stdin;
+      inFile = File(args[0]);
     }
-
-    try
+    else
     {
-        skip = to!int(args[args.length - 1]);
+      writeln("Either pass 2 or three arguments to --match");
+      exit(0);
     }
-    catch (Exception e)
-    {
-        stdout.write(e.msg);
-        exit(0);
-    }
+  }
+  catch (Exception e)
+  {
+    stdout.write(e.msg);
+    exit(0);
+  }
 
-    auto ids = idFile.byLine.map!(to!string).array;
+  try
+  {
+    skip = to!int(args[args.length - 1]);
+  }
+  catch (Exception e)
+  {
+    stdout.write(e.msg);
+    exit(0);
+  }
 
-    auto line = inFile.readln.split;
+  auto ids = idFile.byLine.map!(to!string).array;
 
-    auto places = ids.map!(a => line.countUntil(a)).filter!(a => a != -1).array;
-    places = iota(skip).array ~ places;
+  auto line = inFile.readln.split;
 
-    line.indexed(places).join("\t").writeln;
+  auto places = ids.map!(a => line.countUntil(a)).filter!(a => a != -1).array;
+  places = iota(skip).array ~ places;
 
-    inFile.byLine.map!(a => a.split.indexed(places).join("\t")).join("\n").writeln;
+  line.indexed(places).join("\t").writeln;
+
+  inFile.byLine.map!(a => a.split.indexed(places).join("\t")).join("\n").writeln;
 }
