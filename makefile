@@ -8,7 +8,8 @@ np_gwas : src/main.d src/arg_parse.d src/calculation.d src/run_analysis.d src/re
 
 gdc : src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d src/regress.c
 	gcc -c src/regress.c -o bin/regress.o
-	gdc src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d bin/regress.o ${GSL} -O3 -o bin/np_gwas_gdc
+	gdc -frelease -finline-functions -O3 -Werror -Wall -fversion=Have_np_gwas src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d bin/regress.o ${GSL} -O3 -o bin/np_gwas
+	strip bin/np_gwas
 	rm -f bin/*.o
 
 dmd : src/main.d src/arg_parse.d src/calculation.d src/setup_all.d src/run_analysis.d src/regress.c
