@@ -30,7 +30,6 @@ version (unittest)
     void main()
 {
     import std.stdio;
-
     writeln("All unit tests completed successfully.");
 }
 
@@ -49,7 +48,7 @@ else
 
     fileSetup(fileArray, opts);
 
-    immutable(precision[]) rankPhenotype = cast(immutable) setup!(precision)(fileArray,
+    immutable(precision[]) rankPhenotype = cast(immutable) setup!precision(fileArray,
         opts);
 
     if (!opts.run)//simple analysis with no permutations

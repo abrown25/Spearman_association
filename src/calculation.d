@@ -9,7 +9,6 @@ enum double EPSILON = 0.00000001; //comparison for X>=Y is done X > Y - epsilon
 version (unittest)
 {
   import std.math : approxEqual;
-
 }
 
 class VarianceException : Exception
