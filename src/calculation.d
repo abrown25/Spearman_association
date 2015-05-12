@@ -151,6 +151,33 @@ unittest
   assert(rank!(double)(vector) == [5, 3.5, 1, 3.5, 2]);
 }
 
+pure ref T[] rank_discrete(T)(ref T[] rankArray)
+{
+  //easier to rank discrete genotypes
+  T[3] countGenotypes = 0;
+  T[3] rankGenotypes;
+
+  //count numbers of 0, 1, 2 alleles
+
+  foreach(ref e; rankArray)
+    countGenotypes[e]++;
+
+  rankGenotypes[0] = (countGenotypes[0] + 1) * countGenotypes[0] / 2;
+  rankGenotypes[1] = ((countGenotypes[1] + 1) / 2 + countGenotypes[0]) * countGenotypes[1];
+  rankGenotypes[1] = ((countGenotypes[2] + 1) / 2 + countGenotypes[0] + countGenotypes[1]) * countGenotypes[2];
+
+  foreach(ref e; rankArray)
+    e = rankGenotype[e];
+}
+
+unittest
+{
+  //Ranking of discrete genotypes
+
+  double[] vector = [0, 1, 0, 2, 2, 2, 1];
+  assert(rank!double(vector) == [1.5, 3.5, 1.5, 6, 6, 6, 3.5]);
+}
+
 pure void transform(T)(ref T[] vector)
 {
   //transforms array so mean =0 sum of squares = 1
