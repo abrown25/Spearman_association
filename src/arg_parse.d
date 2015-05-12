@@ -281,7 +281,7 @@ FILE FORMATS
 np_gwas-1.0.0                               8th March 2015                                 np_gwas(1)
 ";
 
-static immutable string versionString = "NP-GWAS, version 1.0.0";
+static immutable string versionString = "np_gwas, version 1.0.1";
 
 void giveHelp(immutable string quitString)
 {
