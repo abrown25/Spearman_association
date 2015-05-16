@@ -105,7 +105,7 @@ unittest
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit)
+  scope (exit)
   {
     if ("testtemp".exists)
       "testtemp".remove;
@@ -169,7 +169,7 @@ unittest
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit)
+  scope (exit)
   {
     if ("testtemp".exists)
       "testtemp".remove;
@@ -235,7 +235,7 @@ unittest
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit)
+  scope (exit)
   {
     if ("testtemp".exists)
       "testtemp".remove;
@@ -340,7 +340,7 @@ unittest
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit)
+  scope (exit)
   {
     if ("testtemp".exists)
       "testtemp".remove;
@@ -473,7 +473,7 @@ unittest
   Opts opts = new Opts(options);
   File[3] fileArray;
   fileSetup(fileArray, opts);
-  scope(exit)
+  scope (exit)
   {
     if ("testtemp".exists)
       "testtemp".remove;

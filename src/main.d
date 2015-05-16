@@ -19,7 +19,7 @@
 
 */
 
-import std.conv  : to;
+import std.conv : to;
 import std.stdio : File;
 
 import arg_parse : Opts, giveHelp, helpString;
@@ -27,38 +27,39 @@ import run_analysis : noPerm, simplePerm, pvalPerm, minPerm, fdrCalc;
 import setup_all : fileSetup, setup;
 
 version (unittest)
-    void main()
+  void main()
 {
-    import std.stdio;
-    writeln("All unit tests completed successfully.");
+  import std.stdio;
+
+  writeln("All unit tests completed successfully.");
 }
 
 else
-    void main(string[] args)
+  void main(string[] args)
 {
-    //set precision to either double or real (very costly in time and memory)
-    alias precision = double;
-    //print help string and quit if no options are given
-    if (args.length == 1)
-        giveHelp(helpString);
+  //set precision to either double or real (very costly in time and memory)
+  alias precision = double;
+  //print help string and quit if no options are given
+  if (args.length == 1)
+    giveHelp(helpString);
 
-    auto opts = new Opts(args.to!(string[]));
+  auto opts = new Opts(args.to!(string[]));
 
-    File[3] fileArray;
+  File[3] fileArray;
 
-    fileSetup(fileArray, opts);
+  fileSetup(fileArray, opts);
 
-    immutable(precision[]) rankPhenotype = cast(immutable) setup!precision(fileArray,
-        opts);
+  immutable(precision[]) rankPhenotype = cast(immutable) setup!precision(fileArray,
+    opts);
 
-    if (!opts.run)//simple analysis with no permutations
-        noPerm(fileArray, opts, rankPhenotype);
-    else if (!opts.pval && !opts.min && !opts.fdr)//print analysis and p values for permuted datasets
-        simplePerm(fileArray, opts, rankPhenotype);
-    else if (!opts.min && !opts.fdr)//calculates permutation p values
-        pvalPerm(fileArray, opts, rankPhenotype);
-    else if (opts.min)//calculates family wise error rate
-        minPerm(fileArray, opts, rankPhenotype);
-    else//calculates FDR
-        fdrCalc(fileArray, opts, rankPhenotype);
+  if (!opts.run) //simple analysis with no permutations
+    noPerm(fileArray, opts, rankPhenotype);
+  else if (!opts.pval && !opts.min && !opts.fdr) //print analysis and p values for permuted datasets
+    simplePerm(fileArray, opts, rankPhenotype);
+  else if (!opts.min && !opts.fdr) //calculates permutation p values
+    pvalPerm(fileArray, opts, rankPhenotype);
+  else if (opts.min) //calculates family wise error rate
+    minPerm(fileArray, opts, rankPhenotype);
+  else //calculates FDR
+    fdrCalc(fileArray, opts, rankPhenotype);
 }

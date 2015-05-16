@@ -28,6 +28,7 @@ class Opts
   //phenotype and genotype ids are given
   bool pid = false;
   bool gid = false;
+  bool noheader = false;
   //don't check ids
   bool nocheck = false;
   //rearrange to match phenotype and genotype ids;
@@ -53,7 +54,7 @@ class Opts
         "geno-skip|gs", &skip, "perm", &getPerms, "pheno-id|pid", &pid,
         "geno-id|gid", &gid, "fwer", &min, "pval", &pval, "fdr", &fdr,
         "pi", &getPi, "ttest", &ttest, "nocheck", &nocheck, "match",
-        &match, "help", &help, "version", &version_);
+        &match, "help", &help, "version", &version_, "noheader", &noheader);
     }
     catch (Exception e)
     {
@@ -222,6 +223,9 @@ OPTIONS
        --geno-id, --gid
                  Genotype IDs are in the first row, if phenotype IDs are also present then we check
                  for mismatches.
+
+       --noheader
+                 Suppress output of header line.
 
        --pheno-col, --pc INT
                  Column for phenotype values, default is 1 if phenotype IDs are not present, 2 other-

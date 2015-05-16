@@ -107,8 +107,7 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
   {
     splitLine = split(fileArray[F.gen].readln);
     genId = splitLine[opts.skip .. $];
-    headerLine ~= join(splitLine[0 .. opts.skip], "\t");
-    headerLine ~= "\t";
+    headerLine = join(splitLine[0 .. opts.skip], "\t") ~ "\t";
   }
   // no header line then write your own
   else if (opts.skip > 0)
@@ -210,7 +209,8 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
     exit(0);
   }
 
-  fileArray[F.out_].writeln(headerLine);
+  if (!opts.noheader)
+    fileArray[F.out_].writeln(headerLine);
 
   return phenotype;
 }

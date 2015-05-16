@@ -158,14 +158,15 @@ pure ref T[] rank_discrete(T)(ref T[] rankArray)
 
   //count numbers of 0, 1, 2 alleles
 
-  foreach(ref e; rankArray)
+  foreach (ref e; rankArray)
     countGenotypes[e]++;
 
   rankGenotypes[0] = (countGenotypes[0] + 1) * countGenotypes[0] / 2;
   rankGenotypes[1] = ((countGenotypes[1] + 1) / 2 + countGenotypes[0]) * countGenotypes[1];
-  rankGenotypes[1] = ((countGenotypes[2] + 1) / 2 + countGenotypes[0] + countGenotypes[1]) * countGenotypes[2];
+  rankGenotypes[1] = ((countGenotypes[2] + 1) / 2 + countGenotypes[0] + countGenotypes[1]) * countGenotypes[
+    2];
 
-  foreach(ref e; rankArray)
+  foreach (ref e; rankArray)
     e = rankGenotype[e];
 }
 
