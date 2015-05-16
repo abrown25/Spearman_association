@@ -1,4 +1,4 @@
-GSL = /usr/lib/libgsl.so /usr/lib/libgslcblas.so
+GSL = /usr/lib/libgsl.a /usr/lib/libgslcblas.a
 
 np_gwas : src/main.d src/arg_parse.d src/calculation.d src/run_analysis.d src/regress.c src/setup_all.d
 	gcc -c src/regress.c -o bin/regress.o
@@ -33,42 +33,26 @@ clean :
 	rm -f *.o np_gwas np_gwas_gdc np_gwas_dmd
 
 simple :
-	cat data/genotype.txt | np_gwas -pdata/phenotype.txt --pid --gid --pc 3 --gs 2
+	cat data/genotype.txt | ./bin/np_gwas -pdata/phenotype.txt --pid --gid --pc 3 --gs 2
 
 perm :
-	cat data/genotype.txt | np_gwas --pheno data/phenotype.txt --pid --gid --pc=3 --gs 2 --perm 4,12
+	cat data/genotype.txt | ./bin/np_gwas --pheno data/phenotype.txt --pid --gid --pc=3 --gs 2 --perm 4,12
 
 perm.p.calc :
-	cat data/genotype.txt | np_gwas -pdata/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 1000000,12 --pval
+	cat data/genotype.txt | ./bin/np_gwas -pdata/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 1000000,12 --pval
 
 fwer :
-	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --fwer
+	cat data/genotype.txt | ./bin/np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --fwer
 
 fdr :
-	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 5 --gs 2 --perm 100000,12 --fdr
+	cat data/genotype.txt | ./bin/np_gwas --p data/phenotype.txt --pid --gid --pc 5 --gs 2 --perm 100000,12 --fdr
 
 cov :
-	cat data/genotype.txt | np_gwas -p data/phenotype.txt --pid --gid nonsense --pc 3 --gs 2 --perm 100000,12 --pval --cov cov.txt
+	cat data/genotype.txt | ./bin/np_gwas -p data/phenotype.txt --pid --gid nonsense --pc 3 --gs 2 --perm 100000,12 --pval --cov cov.txt
 
 tabix.perm :
-	tabix genotype.txt.gz chr1:1-2000 | np_gwas --p data/phenotype.txt --pid --pc 3 --gs 2 --perm 4,12
+	tabix genotype.txt.gz chr1:1-2000 | ./bin/np_gwas --p data/phenotype.txt --pid --pc 3 --gs 2 --perm 4,12
 
 time :
-	time -f "Real : %E, User : %U, System : %S\n" np_gwas -gdata/large_genotype.txt --perm 1000,4 -oout --fwer data/large_phenotype.txt
+	time -f "Real : %E, User : %U, System : %S\n" ./bin/np_gwas -gdata/large_genotype.txt --perm 1000,4 -oout --fwer data/large_phenotype.txt
 
-all.tests :
-	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 -ooutput/simple
-	diff output/simple.txt output/simple
-	cat data/genotype.txt | np_gwas -pdata/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 1000000,12 --pval --o output/perm.p.calc
-	diff output/perm.p.calc.txt output/perm.p.calc
-	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 4,12 --o output/perm
-	diff output/perm.txt output/perm
-	tabix data/genotype.txt.gz chr1:1-2000 | np_gwas --p data/phenotype.txt --pid --pc 3 --gs 2 --perm 4,12 --o output/tabix
-	diff output/tabix.txt output/tabix
-	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --fwer --o output/fwer
-	diff output/fwer.txt output/fwer
-	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 5 --gs 2 --perm 100000,12 --fdr --o output/fdr
-	diff output/fdr.txt output/fdr
-	cat data/genotype.txt | np_gwas --p data/phenotype.txt --pid --gid --pc 3 --gs 2 --perm 100000,12 --pval --cov cov.txt --o output/cov
-	diff output/cov.txt output/cov
-	rm output/cov output/fwer output/tabix output/perm output/perm.p.calc output/simple output/fdr
