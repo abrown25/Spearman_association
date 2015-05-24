@@ -42,10 +42,10 @@ Commands:
        First option:    FORMAT FIELD, possible values of FORMAT column, separated by :, in order of preference. Available values are currently: GT (genotype threshold), PP (or equivalently GP, posterior probability), and DS (dosage). For example, GT:PP:DS means calculate dosage on GT if available and well-formed, then PP, then DS (reporting NA if none succeed).
        Second option:   VCF FILE NAME. Name of vcf file.
        
-     --match:           Rearranges genotype file to match file with sample (usually phenotype) IDS. Any individuals only present in phenotype file are ignored. Requires either 2 options, depending on whether IDs are given from the stdin. For example, if IDs are the second column of PHEN_FILE, genotypes are in GEN_FILE, and 3 columns are used for identifying SNPS, then the following command would work: cut -f2 PHEN_FILE | ./genotype_utilities --match GEN_FILE 3.
+     --match:           Rearranges genotype file to match file with sample (usually phenotype) IDS. Any individuals only present in phenotype file are ignored. Requires either 2 options, depending on whether the input file is given from the stdin. For example, if IDs are in ID_FILE, genotypes are in GEN_FILE, and 3 columns are used for identifying SNPS, then the following command would work: cat GEN_FILE | ./genotype_utilities --match ID_FILE 3.
 
-       First option:    ID file containing phenotype IDs. Can be taken from the stdin.
-       Second option:   File containing genotype data (First option if IDs are given by stdin).
+       First option:    ID file containing phenotype IDs.
+       Second option:   File containing genotype data (Can also be taken from the stdin.).
        Third option:    Number of columns containing SNP identification information (Second option if IDs are given by stdin). For example, this is 9 for vcf files. These columns will be written to stdout without parsing.
        
 ";
@@ -295,15 +295,15 @@ void matchIds(string[] args)
 
   try
   {
+    idFile = File(args[0]);
+    skip = to!int(args[args.length - 1]);
     if (args.length == 3)
     {
-      idFile = File(args[0]);
       inFile = File(args[1]);
     }
     else if (args.length == 2)
     {
-      idFile = stdin;
-      inFile = File(args[0]);
+      inFile = stdin;
     }
     else
     {
@@ -319,7 +319,6 @@ void matchIds(string[] args)
 
   try
   {
-    skip = to!int(args[args.length - 1]);
   }
   catch (Exception e)
   {
@@ -336,5 +335,5 @@ void matchIds(string[] args)
 
   line.indexed(places).join("\t").writeln;
 
-  inFile.byLine.map!(a => a.split.indexed(places).join("\t")).join("\n").writeln;
+  inFile.byLine.map!(a => a.split.indexed(places).joiner("\t")).joiner("\n").writeln;
 }
