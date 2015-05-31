@@ -64,7 +64,7 @@ string genErrorMsg(int x)
 }
 
 //simple analysis, gives corr, t stat and p value
-void noPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+void noPerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
 {
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
@@ -111,7 +111,7 @@ unittest
       "testtemp".remove;
   }
 
-  immutable(double[]) rankPhenotype = cast(immutable) setup!(double)(fileArray, opts);
+  const double[] rankPhenotype = setup!(double)(fileArray, opts);
   noPerm!(double)(fileArray, opts, rankPhenotype);
   foreach (ref e; fileArray)
     e.close;
@@ -122,13 +122,13 @@ unittest
 }
 
 //writes out statistics as above, then p values from analysis of opts.number permuted datasets
-void simplePerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+void simplePerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
 {
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  immutable T[] perms = cast(immutable) getPerm!(T)(opts, rankPhenotype);
+  const T[] perms = getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   string varErr = join("NaN".repeat(3 + nPerm), "\t");
@@ -175,7 +175,7 @@ unittest
       "testtemp".remove;
   }
 
-  immutable(double[]) rankPhenotype = cast(immutable) setup!(double)(fileArray, opts);
+  const double[] rankPhenotype = setup!(double)(fileArray, opts);
   simplePerm!(double)(fileArray, opts, rankPhenotype);
   foreach (ref e; fileArray)
     e.close;
@@ -186,13 +186,13 @@ unittest
 }
 
 //calculates permutation p values
-void pvalPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+void pvalPerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
 {
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  immutable T[] perms = cast(immutable) getPerm!(T)(opts, rankPhenotype);
+  const T[] perms = getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   mixin(genErrorMsg(4));
@@ -241,7 +241,7 @@ unittest
       "testtemp".remove;
   }
 
-  immutable(double[]) rankPhenotype = cast(immutable) setup!(double)(fileArray, opts);
+  const double[] rankPhenotype = setup!(double)(fileArray, opts);
   pvalPerm!(double)(fileArray, opts, rankPhenotype);
   foreach (ref e; fileArray)
     e.close;
@@ -252,7 +252,7 @@ unittest
 }
 
 //calculates family wise error rate
-void minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+void minPerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
 {
   import std.algorithm : max, sort;
   import std.range : iota, SearchPolicy, zip;
@@ -264,7 +264,7 @@ void minPerm(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-  immutable T[] perms = cast(immutable) getPerm!(T)(opts, rankPhenotype);
+  const T[] perms = getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
   T[] maxCor = new T[opts.number];
   mixin(genErrorMsg(4));
@@ -346,7 +346,7 @@ unittest
       "testtemp".remove;
   }
 
-  immutable(double[]) rankPhenotype = cast(immutable) setup!(double)(fileArray, opts);
+  const double[] rankPhenotype = setup!(double)(fileArray, opts);
 
   minPerm!(double)(fileArray, opts, rankPhenotype);
 
@@ -358,7 +358,7 @@ unittest
   assert(toHexString(hash.finish) == "AF331E54550D37EFB955D9E8B19B2ABCA74EFB2E");
 }
 
-void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotype)
+void fdrCalc(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
 {
   import std.algorithm : makeIndex, min, reverse, sort;
   import std.c.stdlib : exit;
@@ -370,7 +370,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-  immutable T[] perms = cast(immutable) getPerm!(T)(opts, rankPhenotype);
+  const T[] perms = getPerm!(T)(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   T[] permCor;
@@ -420,8 +420,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, immutable(T[]) rankPhenotyp
   adjusted[orderIndex[0]] = sortPerm.upperBound(fabs(realCor[orderIndex[0]]) - EPSILON).length.to!T;
 
   foreach (e; 1 .. orderIndex.length)
-    adjusted[orderIndex[e]] = sortPerm[0 .. (
-      sortPerm.length - cast(size_t) adjusted[orderIndex[e - 1]])].upperBound(
+    adjusted[orderIndex[e]] = sortPerm[0 .. (sortPerm.length - adjusted[orderIndex[e - 1]].to!size_t)].upperBound(
       fabs(realCor[orderIndex[e]]) - EPSILON).length.to!T + adjusted[orderIndex[e - 1]];
 
   size_t dupcount = 0;
@@ -481,7 +480,7 @@ unittest
       "AndrewWantsATempFile".remove;
   }
 
-  immutable(double[]) rankPhenotype = cast(immutable) setup!(double)(fileArray, opts);
+  const double[] rankPhenotype = setup!(double)(fileArray, opts);
   fdrCalc!(double)(fileArray, opts, rankPhenotype);
 
   foreach (ref e; fileArray)

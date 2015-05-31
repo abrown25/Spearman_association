@@ -219,7 +219,7 @@ unittest
   assert(approxEqual(0.0.reduce!((a, b) => a + (b - mean) * (b - mean))(x), 1));
 }
 
-pure nothrow T[3] correlation(T)(in T[] vector1, immutable(T[]) vector2)
+pure nothrow T[3] correlation(T)(in T[] vector1, in T[] vector2)
 {
   //calculates correlation, t stat and p value for two arrays
   import std.numeric : dotProduct;
@@ -237,15 +237,14 @@ unittest
   double[2] corFromR = [-0.2863051, 0.4225695];
 
   double[] genotype = [0.115, 2, 0.0964, 1, 1, 1, 0, 1, 0, 0.0563];
-  double[] tempPhen = [
+  double[] phen = [
     -1.3853088072, -0.785797093643, 1.14540423638, -0.785797093643,
     1.03820492508, -1.25652676836, -0.787662180447, -2.05355237841,
     -0.245457234103, 1.14277217712
   ];
 
-  transform(rank(tempPhen));
+  transform(rank(phen));
   transform(rank(genotype));
-  immutable double[] phen = cast(immutable) tempPhen;
   double[3] cor = correlation(genotype, phen);
 
   assert(approxEqual(cor[0], corFromR[0]));
@@ -260,7 +259,7 @@ pure nothrow corPvalue(T)(T results, immutable size_t len)
   return results;
 }
 
-T[] getPerm(T)(in Opts permOpts, immutable(T[]) vector)
+T[] getPerm(T)(in Opts permOpts, in T[] vector)
 {
   //takes array and generates a continuous array of permuted versions of this array
   import std.random : rndGen, randomShuffle;
@@ -288,7 +287,7 @@ unittest
     0.248565693244932, 0.523263392865814];
 
   double[] genotype = [0, 2, 0, 0, 0, 2, 0.252, 1, 0.018, 0.367];
-  double[] tempPhen = [
+  double[] phen = [
     -1.3853088072, -0.785797093643, 1.14540423638, -0.785797093643,
     1.03820492508, -1.25652676836, -0.787662180447, -2.05355237841,
     -0.245457234103, 1.14277217712
@@ -297,9 +296,8 @@ unittest
   string[] options = ["dummy", "--perm", "4,12", "--p", ""];
   auto testOpts = new Opts(options);
 
-  transform(rank(tempPhen));
+  transform(rank(phen));
   transform(rank(genotype));
-  immutable double[] phen = cast(immutable) tempPhen;
 
   double[] perms = getPerm(testOpts, phen);
   for (auto i = 0; i < 4; i++)

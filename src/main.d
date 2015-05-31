@@ -49,8 +49,7 @@ else
 
   fileSetup(fileArray, opts);
 
-  immutable(precision[]) rankPhenotype = cast(immutable) setup!precision(fileArray,
-    opts);
+  const precision[] rankPhenotype = setup!precision(fileArray, opts);
 
   if (!opts.run) //simple analysis with no permutations
     noPerm(fileArray, opts, rankPhenotype);
