@@ -354,7 +354,18 @@ void plinkConvert(string[] args)
 
   string input = args[0];
 
-  auto famFile = File(input ~ ".fam");
+  File bimFile;
+  File famFile;
+
+  try
+  {
+    famFile = File(input ~ ".fam");
+  }
+  catch (Exception e)
+  {
+    stderr.writeln(e.msg);
+    exit(0);
+  }
 
   string[] id;
 
@@ -371,7 +382,16 @@ void plinkConvert(string[] args)
 
   size_t nSnps = 0;
 
-  auto bimFile = File(input ~ ".bim");
+  try
+  {
+    bimFile = File(input ~ ".bim");
+  }
+  catch (Exception e)
+  {
+    stderr.writeln(e.msg);
+    exit(0);
+  }
+
   foreach (line; bimFile.byLine)
   {
     if (line.split.length < 6)
@@ -384,13 +404,22 @@ void plinkConvert(string[] args)
 
   bimFile.seek(0);
 
-  size_t nBytes = nInd / 4;
-  size_t offset = nInd - nBytes * 4;
+  size_t nBytes = nInd >> 2;
+  size_t offset = nInd & 3;
+
   if (offset != 0)
     nBytes++;
 
-  auto bedFile = read(input ~ ".bed");
-  auto bytes = cast(ubyte[]) bedFile;
+  ubyte[] bytes;
+  try
+  {
+    bytes = cast(ubyte[]) read(input ~ ".bed");
+  }
+  catch (Exception e)
+  {
+    stderr.writeln(e.msg);
+    exit(0);
+  }
 
   if (bytes[0] != 108 || bytes[1] != 27 || bytes[2] != 1)
   {
