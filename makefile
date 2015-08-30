@@ -37,7 +37,7 @@ dmd_test : ${DSOURCES} src/regress.o
 	rm -f unittest src/*.o *.o
 
 genotype_utilities : src/genotype_utilities.d
-	gdc -frelease -finline-functions -O3 -Werror -Wall src/genotype_utilities.d -of="bin/genotype_utilities"
+	gdc -frelease -finline-functions -O3 -Werror -Wall src/genotype_utilities.d -o bin/genotype_utilities
 
 .PHONY : test static ldc dmd ldc_test dmd_test clean install
 
