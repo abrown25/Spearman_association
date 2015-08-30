@@ -1,5 +1,6 @@
 module calculation;
 
+import std.conv;
 import std.exception : enforce;
 import std.math : fabs, sqrt;
 import arg_parse : Opts;
@@ -62,7 +63,6 @@ void covariates(string covF, ref double[] phen)
 {
   //given name of covariate file, and phenotype, produces residuals
   import std.array : split;
-  import std.conv : to, ConvException;
   import std.stdio : File;
   import run_analysis : InputException;
 
@@ -157,25 +157,37 @@ pure ref T[] rank_discrete(T)(ref T[] rankArray)
   T[3] rankGenotypes;
 
   //count numbers of 0, 1, 2 alleles
-
+  size_t value;
   foreach (ref e; rankArray)
-    countGenotypes[e]++;
+  {
+    if (e == 0)
+      countGenotypes[0]++;
+    else if (e == 1)
+      countGenotypes[1]++;
+    else if (e == 2)
+      countGenotypes[2]++;
+    else
+      throw new VarianceException("");
+  }
 
   rankGenotypes[0] = (countGenotypes[0] + 1) * countGenotypes[0] / 2;
   rankGenotypes[1] = ((countGenotypes[1] + 1) / 2 + countGenotypes[0]) * countGenotypes[1];
-  rankGenotypes[1] = ((countGenotypes[2] + 1) / 2 + countGenotypes[0] + countGenotypes[1]) * countGenotypes[
+  rankGenotypes[2] = ((countGenotypes[2] + 1) / 2 + countGenotypes[0] + countGenotypes[1]) * countGenotypes[
     2];
 
   foreach (ref e; rankArray)
-    e = rankGenotype[e];
+  {
+    value = e.to!size_t;
+    e = rankGenotypes[value] / countGenotypes[value];
+  }
+  return rankArray;
 }
 
 unittest
 {
   //Ranking of discrete genotypes
-
   double[] vector = [0, 1, 0, 2, 2, 2, 1];
-  assert(rank!double(vector) == [1.5, 3.5, 1.5, 6, 6, 6, 3.5]);
+  assert(rank_discrete!double(vector) == [1.5, 3.5, 1.5, 6, 6, 6, 3.5]);
 }
 
 pure void transform(T)(ref T[] vector)
