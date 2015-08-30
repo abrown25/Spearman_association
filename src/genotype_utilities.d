@@ -357,6 +357,15 @@ void plinkConvert(string[] args)
   File bimFile;
   File famFile;
 
+  class InputException : Exception
+  {
+    //thrown if fam file has too few fields
+    pure nothrow this(string s)
+    {
+      super(s);
+    }
+  }
+
   try
   {
     famFile = File(input ~ ".fam");
@@ -368,16 +377,26 @@ void plinkConvert(string[] args)
   }
 
   string[] id;
+  string getID(string line)
+  {
+    auto splitLine = line.splitter;
+    splitLine.popFront;
+    if (splitLine.empty)
+      throw new InputException("");
+    else
+      return splitLine.front;
+  }
 
   try
   {
-    id = famFile.byLine.map!(a => a.idup.split[1]).array;
+    id = famFile.byLine.map!(a => getID(a.idup)).array;
   }
-  catch (RangeError e)
+  catch (InputException e)
   {
     stderr.writeln("Lines in ", input, ".fam have fewer than 2 fields.");
     exit(0);
   }
+
   size_t nInd = id.length;
 
   size_t nSnps = 0;
