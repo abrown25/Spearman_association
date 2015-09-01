@@ -1,15 +1,34 @@
 import std.stdio;
 import std.array;
 import std.algorithm;
+import std.bitmanip;
 import std.conv;
 import std.c.stdlib : exit;
 import std.file;
 import std.string;
 import std.range;
 
+struct Crumbs
+{
+  //bitfield for storing plink bed file data
+  mixin(bitfields!(uint, "one", 2,
+		   uint, "two", 2,
+		   uint, "three", 2,
+		   uint, "four", 2
+		   ));
+}
+
+class InputException : Exception
+{
+  //thrown if fam file has too few fields
+  pure nothrow this(string s)
+  {
+    super(s);
+  }
+}
+
 // Usage is vcf_parse DS:PP:GT vcfFile.vcf, options can be altered to change preferential order for extracting fields.
 // If you write a new function for a field, add it to the vector below
-
 immutable auto functions = ["PP", "GP", "DS", "GT"];
 
 alias GP = PP;
@@ -357,15 +376,6 @@ void plinkConvert(string[] args)
   File bimFile;
   File famFile;
 
-  class InputException : Exception
-  {
-    //thrown if fam file has too few fields
-    pure nothrow this(string s)
-    {
-      super(s);
-    }
-  }
-
   try
   {
     famFile = File(input ~ ".fam");
@@ -429,10 +439,19 @@ void plinkConvert(string[] args)
   if (offset != 0)
     nBytes++;
 
-  ubyte[] bytes;
+  Crumbs[] crumbs;
+
   try
   {
-    bytes = cast(ubyte[]) read(input ~ ".bed");
+    auto bytes = cast(ubyte[]) std.file.read(input ~ ".bed", 3);
+
+    if (bytes[0] != 108 || bytes[1] != 27 || bytes[2] != 1)
+    {
+      stderr.writeln("The magic numbers imply that ", input, ".bed is not a valid bed file.");
+      exit(0);
+    }
+
+    crumbs = cast(Crumbs[]) std.file.read(input ~ ".bed");
   }
   catch (Exception e)
   {
@@ -440,12 +459,7 @@ void plinkConvert(string[] args)
     exit(0);
   }
 
-  if (bytes[0] != 108 || bytes[1] != 27 || bytes[2] != 1)
-  {
-    stderr.writeln("The magic numbers imply that ", input, ".bed is not a valid bed file.");
-    exit(0);
-  }
-  if ((nBytes * nSnps + 3) != bytes.length)
+  if ((nBytes * nSnps + 3) != crumbs.length)
   {
     stderr.writeln(
       "Number of SNPs in bed file does not match the numbers of individuals and SNPs in bim and fam file.");
@@ -454,13 +468,13 @@ void plinkConvert(string[] args)
 
   writeln("CHROM\tID\tPOS\tREF\tALT\t", id.joiner("\t"));
 
-  auto writeByte(ubyte inByte)
+  auto writeByte(Crumbs inByte)
   {
-    return [outputString[(inByte & 0x03)], outputString[(inByte & 0x0C) >> 2],
-      outputString[(inByte & 0x30) >> 4], outputString[(inByte & 0xC0) >> 6]].joiner("\t");
+    return [outputString[inByte.one], outputString[inByte.two],
+      outputString[inByte.three], outputString[inByte.four]].joiner("\t");
   }
 
-  foreach (snpID, currSNP; zip(bimFile.byLine, bytes[3 .. $].chunks(nBytes)))
+  foreach (snpID, currSNP; zip(bimFile.byLine, crumbs[3 .. $].chunks(nBytes)))
   {
     snpID.split.indexed([0, 1, 3, 4, 5]).joiner("\t").write;
     stdout.write("\t");
@@ -469,11 +483,11 @@ void plinkConvert(string[] args)
     else
     {
       currSNP[0 .. ($ - 1)].map!(writeByte).joiner("\t").write;
-      stdout.write("\t", outputString[(currSNP[$ - 1] & 0x03)]);
+      stdout.write("\t", outputString[currSNP[$ - 1].one]);
       if (offset > 1)
-        stdout.write("\t", outputString[(currSNP[$ - 1] & 0x0C) >> 2]);
+        stdout.write("\t", outputString[currSNP[$ - 1].two]);
       if (offset > 2)
-        stdout.write("\t", outputString[(currSNP[$ - 1] & 0x30) >> 4]);
+        stdout.write("\t", outputString[currSNP[$ - 1].three]);
       writeln();
     }
   }
