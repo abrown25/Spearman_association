@@ -11,11 +11,8 @@ import std.range;
 struct Crumbs
 {
   //bitfield for storing plink bed file data
-  mixin(bitfields!(uint, "one", 2,
-		   uint, "two", 2,
-		   uint, "three", 2,
-		   uint, "four", 2
-		   ));
+  mixin(bitfields!(uint, "one", 2, uint, "two", 2, uint, "three", 2, uint, "four",
+    2,));
 }
 
 class InputException : Exception
@@ -126,27 +123,31 @@ pure auto convDouble(const char[] x)
 
 unittest
 {
-  assert(GT("|||") == -1);
-  assert(GT("3\4") == -1);
-  assert(GT("0|0") == 0);
-  assert(GT("3333|4") == -1);
-  assert(GT("3|0") == 1);
-  assert(GT("3/4") == 2);
+  assert(GT("|||".to!(char[])) == -1);
+  assert(GT("3\4".to!(char[])) == -1);
+  assert(GT("0|0".to!(char[])) == 0);
+  assert(GT("3333|4".to!(char[])) == -1);
+  assert(GT("3|0".to!(char[])) == 1);
+  assert(GT("3/4".to!(char[])) == 2);
 }
 
 pure auto DS(const char[] x)
 {
-  return convDouble(x);
+  double value = convDouble(x);
+  if (value >= 0 && value <= 2)
+    return value;
+  else
+    return -1.0;
 }
 
 unittest
 {
-  assert(DS("0.542653") == 0.542653);
-  assert(DS("40.542653") == -1);
-  assert(DS("0l542353") == -1);
-  assert(DS("") == -1);
-  assert(DS("4") == 4);
-  assert(DS("0.") == 0);
+  assert(DS("0.542653".to!(char[])) == 0.542653);
+  assert(DS("40.542653".to!(char[])) == -1);
+  assert(DS("0l542353".to!(char[])) == -1);
+  assert(DS("".to!(char[])) == -1);
+  assert(DS("4".to!(char[])) == -1);
+  assert(DS("0.".to!(char[])) == 0);
 }
 
 pure auto PP(const char[] x)
@@ -167,7 +168,16 @@ unittest
   assert(PP("1") == -1);
 }
 
-void main(string[] args)
+version (unittest)
+  void main()
+{
+  import std.stdio;
+
+  writeln("All unit tests completed successfully.");
+}
+
+else
+  void main(string[] args)
 {
   if (args.length < 2)
   {
@@ -187,6 +197,8 @@ void main(string[] args)
     matchIds(args[2 .. $]);
   else if (args[1] == "--plink")
     plinkConvert(args[2 .. $]);
+  else if (args[1] == "--filter")
+    filterGenotype(args[2 .. $]);
   else
   {
     writeln(helpString);
@@ -339,16 +351,7 @@ void matchIds(string[] args)
     exit(0);
   }
 
-  try
-  {
-  }
-  catch (Exception e)
-  {
-    stderr.write(e.msg);
-    exit(0);
-  }
-
-  auto ids = idFile.byLine.map!(to!string).array;
+  auto ids = idFile.byLine.map!(a => a.split[0].to!string).array;
 
   auto line = inFile.readln.split;
 
@@ -492,4 +495,83 @@ void plinkConvert(string[] args)
     }
   }
 
+}
+
+unittest
+{
+  Crumbs S = Crumbs(0b_00_01_10_11);
+  assert(S.one == 3);
+}
+
+void filterGenotype(string[] args)
+{
+  string chromosome;
+  bool exclude;
+  long window = 1_000_000;
+  long bpLocation;
+  File genFile;
+  try
+  {
+    if (args[0] == "exclude")
+    {
+      exclude = true;
+      window = 5_000_000;
+      args = args[1 .. $];
+    }
+    if (args.length > 2 && args[$ - 2] == "window")
+    {
+      window = args[$ - 1].to!long;
+      args = args[0 .. ($ - 2)];
+    }
+    if (args.length == 3)
+    {
+      genFile = File(args[0]);
+      chromosome = args[1];
+      bpLocation = args[2].to!long;
+    }
+    else if (args.length == 2)
+    {
+      genFile = stdin;
+      chromosome = args[0];
+      bpLocation = args[1].to!long;
+    }
+    else
+    {
+      stderr.writeln("Need genotype file, chromosome and location.");
+      exit(0);
+    }
+  }
+  catch (Exception e)
+  {
+    stderr.writeln(e.msg);
+    exit(0);
+  }
+  long snpLow = max(0, bpLocation - window);
+  long snpHigh = bpLocation + window;
+
+  char[][] snpID;
+  long snpLoc;
+
+  genFile.readln.write;
+
+  if (exclude)
+  {
+    foreach (ref line; genFile.byLine)
+    {
+      snpID = line.splitter.take(2).array;
+      snpLoc = snpID[1].to!long;
+      if (snpID[0] != chromosome || snpLoc < snpLow || snpLoc > snpHigh)
+        writeln(line);
+    }
+  }
+  else
+  {
+    foreach (ref line; genFile.byLine)
+    {
+      snpID = line.splitter.take(2).array;
+      snpLoc = snpID[1].to!long;
+      if (snpID[0] == chromosome || snpLoc >= snpLow || snpLoc <= snpHigh)
+        writeln(line);
+    }
+  }
 }

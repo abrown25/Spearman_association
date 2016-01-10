@@ -33,6 +33,9 @@ class Opts
   bool nocheck = false;
   //rearrange to match phenotype and genotype ids;
   bool match = false;
+  //phenotype given as rows not columns
+  bool row = false;
+  int rowskip = 0;
   //number of genotype columns to skip, and phenotype column
   int skip = 0;
   int phenC = 0;
@@ -50,11 +53,12 @@ class Opts
     try
     {
       getopt(args, "pheno|p", &phenotype, "geno|g", &genotype, "out|o",
-        &output, "cov|c", &cov, "pheno-col|pc", &getPhenColumn,
-        "geno-skip|gs", &skip, "perm", &getPerms, "pheno-id|pid", &pid,
-        "geno-id|gid", &gid, "fwer", &min, "pval", &pval, "fdr", &fdr,
-        "pi", &getPi, "ttest", &ttest, "nocheck", &nocheck, "match",
-        &match, "help", &help, "version", &version_, "noheader", &noheader);
+        &output, "cov|c", &cov, "pheno-col|pc", &getPhenColumn, "row", &row,
+        "row-skip", &rowskip, "geno-skip|gs", &skip, "perm", &getPerms,
+        "pheno-id|pid", &pid, "geno-id|gid", &gid, "fwer", &min, "pval",
+        &pval, "fdr", &fdr, "pi", &getPi, "ttest", &ttest, "nocheck",
+        &nocheck, "match", &match, "help", &help, "version", &version_, "noheader",
+        &noheader);
     }
     catch (Exception e)
     {

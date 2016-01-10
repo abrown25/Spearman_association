@@ -100,7 +100,7 @@ unittest
 {
   string[] options = [
     "dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt", "--o",
-    "testtemp", "--pid", "--gid", "--pc", "3", "--gs", "2"
+    "testtemp", "--pid", "--gid", "--pc", "3", "--gs", "2", "--nocheck"
   ];
   Opts opts = new Opts(options);
   File[3] fileArray;
@@ -164,7 +164,7 @@ unittest
 {
   string[] options = [
     "dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt",
-    "-otesttemp", "--pid", "--perm", "4,12", "--gid", "--pc", "3", "--gs", "2"
+    "-otesttemp", "--pid", "--perm", "4,12", "--gid", "--pc", "3", "--gs", "2", "--nocheck"
   ];
   Opts opts = new Opts(options);
   File[3] fileArray;
@@ -229,8 +229,8 @@ unittest
 {
   string[] options = [
     "dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt", "--o",
-    "testtemp", "--pid", "--perm", "1000000,12", "--geno-id", "--pc", "3", "--gs",
-    "2", "--pval"
+    "testtemp", "--pid", "--perm", "1000000,12", "--geno-id", "--pc", "3",
+    "--gs", "2", "--pval", "--nocheck"
   ];
   Opts opts = new Opts(options);
   File[3] fileArray;
@@ -334,8 +334,8 @@ unittest
 {
   string[] options = [
     "dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt", "--o",
-    "testtemp", "--pid", "--perm", "100000,12", "--gid", "--pc", "3", "--gs", "2",
-    "--fwer"
+    "testtemp", "--pid", "--perm", "100000,12", "--gid", "--pc", "3", "--gs",
+    "2", "--fwer", "--nocheck"
   ];
   Opts opts = new Opts(options);
   File[3] fileArray;
@@ -466,8 +466,8 @@ unittest
 {
   string[] options = [
     "dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt", "--o",
-    "testtemp", "--pid", "--perm", "100000,12", "--gid", "--pc", "5", "--gs", "2",
-    "--fdr"
+    "testtemp", "--pid", "--perm", "100000,12", "--gid", "--pc", "5", "--gs",
+    "2", "--fdr", "--nocheck"
   ];
   Opts opts = new Opts(options);
   File[3] fileArray;
@@ -476,8 +476,6 @@ unittest
   {
     if ("testtemp".exists)
       "testtemp".remove;
-    if ("AndrewWantsATempFile".exists)
-      "AndrewWantsATempFile".remove;
   }
 
   const double[] rankPhenotype = setup!(double)(fileArray, opts);

@@ -73,30 +73,60 @@ void fileSetup(ref File[3] fileArray, Opts opts)
 
 T[] setup(T)(ref File[3] fileArray, Opts opts)
 {
+  import std.array : array;
+  import std.algorithm : map, splitter;
+  import std.range : drop, take;
+
   T[] phenotype;
   string[] phenId;
   //reading in phenotype from column opts.phenC, if --pid specified, get IDs
-  foreach (line; fileArray[F.phen].byLine)
+  try
   {
-    auto phenLine = split(line);
-    try
+    if (opts.row)
     {
-      enforce(phenLine.length >= opts.phenC, new InputException(""));
-      phenotype ~= to!T(phenLine[opts.phenC]);
+      int phenColumn = opts.phenC;
+      if (opts.pid)
+      {
+        phenId = fileArray[F.phen].readln.idup.split[opts.rowskip .. $];
+        phenColumn--;
+      }
+
+      phenotype = fileArray[F.phen].byLine.drop(phenColumn).front.idup.splitter.drop(opts.rowskip).map!(
+        a => a.to!T).array;
+
+      enforce(phenotype.length != 0,
+        new InputException(
+        "Failed to run analysis: row " ~ to!string(opts.phenC + 1) ~ " in phenotype file doesn't exist."));
+
+      if (opts.pid)
+        enforce(phenotype.length == phenId.length,
+          new InputException(
+          "Failed to run analysis: Phenotype IDs and data have different lengths."));
     }
-    catch (ConvException e)
+    else
     {
-      stderr.writeln("Failed to run analysis: Non-numeric data in phenotype");
-      exit(0);
+      foreach (line; fileArray[F.phen].byLine)
+      {
+        auto phenLine = split(line);
+
+        enforce(phenLine.length > opts.phenC,
+          new InputException(
+          "Failed to run analysis: column " ~ to!string(opts.phenC + 1) ~ " in phenotype file doesn't exist."));
+        phenotype ~= to!T(phenLine[opts.phenC]);
+        if (opts.pid)
+          phenId ~= phenLine[0].idup;
+      }
     }
-    catch (InputException e)
-    {
-      stderr.writeln("Failed to run analysis: column ", opts.phenC + 1,
-        " in phenotype file doesn't exist");
-      exit(0);
-    }
-    if (opts.pid)
-      phenId ~= phenLine[0].idup;
+  }
+  catch (ConvException e)
+  {
+    stderr.writeln("Failed to run analysis: Non-numeric data in phenotype");
+    exit(0);
+  }
+  catch (InputException e)
+  {
+    stderr.writeln(e.msg);
+    exit(0);
   }
 
   string headerLine;
@@ -213,4 +243,90 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
     fileArray[F.out_].writeln(headerLine);
 
   return phenotype;
+}
+
+version (unittest)
+{
+  import std.math : approxEqual;
+}
+
+unittest
+{
+  string[] options = [
+    "dummy", "--p", "data/phenotype.txt", "--g", "data/genotype.txt", "--o",
+    "/dev/null", "--ttest", "--pid", "--pc", "3"
+  ];
+  Opts opts = new Opts(options);
+  File[3] fileArray;
+  fileSetup(fileArray, opts);
+
+  const double[] rankPhenotype = setup!(double)(fileArray, opts);
+
+  double[] valueFromR = [
+    -0.288243461282365, -0.113328088218807, 0.45012512455932,
+    -0.113328088218807, 0.418848325283882, -0.250669619340339,
+    -0.113872251655051, -0.483212251570077, 0.0443231235511582, 0.4493571868910
+  ];
+  assert(approxEqual(rankPhenotype, valueFromR));
+}
+
+unittest
+{
+  string[] options = [
+    "dummy", "--p", "data/tphenotype.txt", "--g", "data/genotype.txt", "--o",
+    "/dev/null", "--ttest", "--pid", "--pc", "3", "--row"
+  ];
+  Opts opts = new Opts(options);
+  File[3] fileArray;
+  fileSetup(fileArray, opts);
+
+  const double[] rankPhenotype = setup!(double)(fileArray, opts);
+
+  double[] valueFromR = [
+    -0.288243461282365, -0.113328088218807, 0.45012512455932,
+    -0.113328088218807, 0.418848325283882, -0.250669619340339,
+    -0.113872251655051, -0.483212251570077, 0.0443231235511582, 0.4493571868910
+  ];
+  assert(approxEqual(rankPhenotype, valueFromR));
+}
+
+unittest
+{
+  string[] options = [
+    "dummy", "--p", "data/tphenotype_row", "--g", "data/genotype.txt", "--o",
+    "/dev/null", "--ttest", "--pid", "--pc", "3", "--row", "--row-skip", "2"
+  ];
+  Opts opts = new Opts(options);
+  File[3] fileArray;
+  fileSetup(fileArray, opts);
+
+  const double[] rankPhenotype = setup!(double)(fileArray, opts);
+
+  double[] valueFromR = [
+    -0.288243461282365, -0.113328088218807, 0.45012512455932,
+    -0.113328088218807, 0.418848325283882, -0.250669619340339,
+    -0.113872251655051, -0.483212251570077, 0.0443231235511582, 0.4493571868910
+  ];
+  assert(approxEqual(rankPhenotype, valueFromR));
+}
+
+unittest
+{
+  string[] options = [
+    "dummy", "--p", "data/tphenotype.txt", "--g", "data/genotype.txt", "--o",
+    "/dev/null", "--ttest", "--pid", "--pc", "3", "--row", "--match", "--gid", "--gs",
+    "2"
+  ];
+  Opts opts = new Opts(options);
+  File[3] fileArray;
+  fileSetup(fileArray, opts);
+
+  const double[] rankPhenotype = setup!(double)(fileArray, opts);
+
+  double[] valueFromR = [
+    -0.288243461282365, -0.113328088218807, 0.45012512455932,
+    -0.113328088218807, 0.418848325283882, -0.250669619340339,
+    -0.113872251655051, -0.483212251570077, 0.4493571868910, 0.0443231235511582
+  ];
+  assert(approxEqual(rankPhenotype, valueFromR));
 }
