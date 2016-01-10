@@ -47,7 +47,7 @@ string readGenotype(string x)
   if (opts.ttest)
     transform(rankGenotype);
   else
-    transform(rank(rankGenotype));
+    transform(rank(rankGenotype, orderBuffer));
 ";
   return readGenotype1 ~ x ~ readGenotype2;
 }
@@ -70,6 +70,8 @@ void noPerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
+  auto orderBuffer = new size_t[nInd];
+
   mixin(genErrorMsg(3));
   /*variance error if SNP is monomorphic (write NA), non numeric data give NaN
    */
@@ -78,7 +80,7 @@ void noPerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
     try
     {
       mixin(readGenotype("fileArray[F.out_]"));
-      cor = correlation!(T)(rankGenotype, rankPhenotype);
+      cor = correlation(rankGenotype, rankPhenotype);
       fileArray[F.out_].writeln(join(to!(string[])(cor), "\t"));
     }
     catch (VarianceException e)
@@ -112,7 +114,7 @@ unittest
   }
 
   const double[] rankPhenotype = setup!(double)(fileArray, opts);
-  noPerm!(double)(fileArray, opts, rankPhenotype);
+  noPerm(fileArray, opts, rankPhenotype);
   foreach (ref e; fileArray)
     e.close;
   SHA1 hash;
@@ -128,7 +130,9 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  const T[] perms = getPerm!(T)(opts, rankPhenotype);
+  auto orderBuffer = new size_t[nInd];
+
+  const T[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   string varErr = join("NaN".repeat(3 + nPerm), "\t");
@@ -140,10 +144,10 @@ void simplePerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
     try
     {
       mixin(readGenotype("fileArray[F.out_]"));
-      cor = correlation!(T)(rankGenotype, rankPhenotype);
+      cor = correlation(rankGenotype, rankPhenotype);
       fileArray[F.out_].write(join(to!(string[])(cor), "\t"), "\t");
       fileArray[F.out_].writeln(chunks(perms,
-        nInd).map!(a => to!string(corPvalue!(T)(dotProduct(rankGenotype, a), nInd))).join("\t"));
+        nInd).map!(a => to!string(corPvalue(dotProduct(rankGenotype, a), nInd))).join("\t"));
     }
     catch (VarianceException e)
     {
@@ -176,7 +180,7 @@ unittest
   }
 
   const double[] rankPhenotype = setup!(double)(fileArray, opts);
-  simplePerm!(double)(fileArray, opts, rankPhenotype);
+  simplePerm(fileArray, opts, rankPhenotype);
   foreach (ref e; fileArray)
     e.close;
   SHA1 hash;
@@ -192,7 +196,9 @@ void pvalPerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
 
-  const T[] perms = getPerm!(T)(opts, rankPhenotype);
+  auto orderBuffer = new size_t[nInd];
+
+  const T[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   mixin(genErrorMsg(4));
@@ -202,7 +208,7 @@ void pvalPerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
     try
     {
       mixin(readGenotype("fileArray[F.out_]"));
-      cor = correlation!(T)(rankGenotype, rankPhenotype);
+      cor = correlation(rankGenotype, rankPhenotype);
       T corReal = fabs(cor[0]) - EPSILON;
       fileArray[F.out_].write(join(to!(string[])(cor), "\t"));
 
@@ -242,7 +248,7 @@ unittest
   }
 
   const double[] rankPhenotype = setup!(double)(fileArray, opts);
-  pvalPerm!(double)(fileArray, opts, rankPhenotype);
+  pvalPerm(fileArray, opts, rankPhenotype);
   foreach (ref e; fileArray)
     e.close;
   SHA1 hash;
@@ -264,7 +270,10 @@ void minPerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-  const T[] perms = getPerm!(T)(opts, rankPhenotype);
+
+  auto orderBuffer = new size_t[nInd];
+
+  const T[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
   T[] maxCor = new T[opts.number];
   mixin(genErrorMsg(4));
@@ -275,7 +284,7 @@ void minPerm(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
     try
     {
       mixin(readGenotype("tmpFile"));
-      cor = correlation!(T)(rankGenotype, rankPhenotype);
+      cor = correlation(rankGenotype, rankPhenotype);
       T corReal = fabs(cor[0]) - EPSILON;
       tmpFile.writef("%a\t%g\t%g", cor[0], cor[1], cor[2]);
 
@@ -348,7 +357,7 @@ unittest
 
   const double[] rankPhenotype = setup!(double)(fileArray, opts);
 
-  minPerm!(double)(fileArray, opts, rankPhenotype);
+  minPerm(fileArray, opts, rankPhenotype);
 
   foreach (ref e; fileArray)
     e.close;
@@ -370,7 +379,10 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
   T[3] cor;
   immutable size_t nInd = rankPhenotype.length;
   immutable size_t skip = opts.skip;
-  const T[] perms = getPerm!(T)(opts, rankPhenotype);
+
+  auto orderBuffer = new size_t[nInd];
+
+  const T[] perms = getPerm(opts, rankPhenotype);
   immutable size_t nPerm = perms.length / nInd;
 
   T[] permCor;
@@ -382,7 +394,7 @@ void fdrCalc(T)(ref File[3] fileArray, in Opts opts, in T[] rankPhenotype)
     try
     {
       mixin(readGenotype("tmpFile"));
-      cor = correlation!(T)(rankGenotype, rankPhenotype);
+      cor = correlation(rankGenotype, rankPhenotype);
       T corReal = fabs(cor[0]) - EPSILON;
       realCor ~= cor[0];
       tmpFile.write(join(to!(string[])(cor), "\t"));
@@ -479,7 +491,7 @@ unittest
   }
 
   const double[] rankPhenotype = setup!(double)(fileArray, opts);
-  fdrCalc!(double)(fileArray, opts, rankPhenotype);
+  fdrCalc(fileArray, opts, rankPhenotype);
 
   foreach (ref e; fileArray)
     e.close;

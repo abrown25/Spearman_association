@@ -231,7 +231,10 @@ T[] setup(T)(ref File[3] fileArray, Opts opts)
     if (opts.ttest)
       transform(phenotype);
     else
-      transform(rank(phenotype));
+    {
+      auto orderBuffer = new size_t[phenotype.length];
+      transform(rank(phenotype, orderBuffer));
+    }
   }
   catch (VarianceException e)
   {

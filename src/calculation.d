@@ -113,13 +113,12 @@ unittest
     assert(approxEqual(e, residualsFromR[i]));
 }
 
-pure ref T[] rank(T)(ref T[] rankArray)
+pure ref T[] rank(T)(ref T[] rankArray, size_t[] orderIndex)
 {
   //ranks array, giving ties mean rank
   import std.algorithm : makeIndex;
 
   immutable size_t len = rankArray.length;
-  auto orderIndex = new size_t[len];
   makeIndex!("a < b")(rankArray, orderIndex);
 
   T sumrank = 0.0;
@@ -146,48 +145,47 @@ unittest
 {
   //Simple test of ranking with ties
   double[] vector = [10, 9, 2, 9, 3];
+  auto orderBuffer = new size_t[5];
 
-  assert(rank!(double)(vector) == [5, 3.5, 1, 3.5, 2]);
+  assert(rank(vector, orderBuffer) == [5, 3.5, 1, 3.5, 2]);
 }
 
 pure ref T[] rank_discrete(T)(ref T[] rankArray)
 {
+  import std.conv : to;
+
   //easier to rank discrete genotypes
   T[3] countGenotypes = 0;
   T[3] rankGenotypes;
 
   //count numbers of 0, 1, 2 alleles
-  size_t value;
   foreach (ref e; rankArray)
-  {
-    if (e == 0)
-      countGenotypes[0]++;
-    else if (e == 1)
-      countGenotypes[1]++;
-    else if (e == 2)
-      countGenotypes[2]++;
-    else
-      throw new VarianceException("");
-  }
-
-  rankGenotypes[0] = (countGenotypes[0] + 1) * countGenotypes[0] / 2;
-  rankGenotypes[1] = ((countGenotypes[1] + 1) / 2 + countGenotypes[0]) * countGenotypes[1];
-  rankGenotypes[2] = ((countGenotypes[2] + 1) / 2 + countGenotypes[0] + countGenotypes[1]) * countGenotypes[
-    2];
+    countGenotypes[e.to!size_t]++;
+  rankGenotypes[0] = (countGenotypes[0] + 1) / 2;
+  rankGenotypes[1] = (2 * countGenotypes[0] + countGenotypes[1] + 1) / 2;
+  rankGenotypes[2] = (2 * countGenotypes[0] + 2 * countGenotypes[1] + countGenotypes[2] + 1) / 2;
 
   foreach (ref e; rankArray)
-  {
-    value = e.to!size_t;
-    e = rankGenotypes[value] / countGenotypes[value];
-  }
+    e = rankGenotypes[e.to!size_t];
   return rankArray;
 }
 
 unittest
 {
   //Ranking of discrete genotypes
+  import std.array : array;
+  import std.algorithm : map;
+  import std.conv : to;
+  import std.random;
+  import std.range : iota;
+
   double[] vector = [0, 1, 0, 2, 2, 2, 1];
-  assert(rank_discrete!double(vector) == [1.5, 3.5, 1.5, 6, 6, 6, 3.5]);
+  assert(rank_discrete(vector) == [1.5, 3.5, 1.5, 6, 6, 6, 3.5]);
+
+  auto ranVector = iota(20).map!(a => uniform(0, 3).to!double).array;
+  auto ranVector2 = ranVector.dup;
+  auto orderBuffer = new size_t[20];
+  assert(rank_discrete(ranVector) == rank(ranVector2, orderBuffer));
 }
 
 pure void transform(T)(ref T[] vector)
@@ -224,7 +222,7 @@ unittest
   foreach (ref e; x)
     e = uniform(0.0, 10.0);
 
-  transform!(double)(x);
+  transform(x);
   auto mean = 0.0.reduce!((a, b) => a + b)(x);
 
   assert(approxEqual(mean, 0.0));
@@ -255,8 +253,9 @@ unittest
     -0.245457234103, 1.14277217712
   ];
 
-  transform(rank(phen));
-  transform(rank(genotype));
+  auto orderBuffer = new size_t[phen.length];
+  transform(rank(phen, orderBuffer));
+  transform(rank(genotype, orderBuffer));
   double[3] cor = correlation(genotype, phen);
 
   assert(approxEqual(cor[0], corFromR[0]));
@@ -307,14 +306,15 @@ unittest
 
   string[] options = ["dummy", "--perm", "4,12", "--p", ""];
   auto testOpts = new Opts(options);
+  auto orderBuffer = new size_t[genotype.length];
 
-  transform(rank(phen));
-  transform(rank(genotype));
+  transform(rank(phen, orderBuffer));
+  transform(rank(genotype, orderBuffer));
 
   double[] perms = getPerm(testOpts, phen);
   for (auto i = 0; i < 4; i++)
   {
     auto singlePerm = dotProduct(genotype, perms[i * 10 .. (i + 1) * 10]);
-    assert(approxEqual(corPvalue!(double)(singlePerm, 10), permPvalsR[i]));
+    assert(approxEqual(corPvalue(singlePerm, 10), permPvalsR[i]));
   }
 }
